@@ -16,4 +16,19 @@
 - GitHub repo created in Phase 0 as private; Phase 9 makes it public and enables Pages.
 - End of every phase: commit, push, update this file.
 
-**Next:** Phase 1 (find NHTSA chunk filenames and sizes, report before downloading). Waiting for "proceed".
+## Phase 1: Download (done)
+
+**Done**
+- Chunk URLs under `https://static.nhtsa.gov/odi/ffdd/cmpl/`: `COMPLAINTS_RECEIVED_2020-2024.zip` and `COMPLAINTS_RECEIVED_2025-2026.zip` exist. `2025-2029` returns 404 (the later chunk is named `2025-2026`).
+- `src/01_download.py` downloads and unzips both into `data/raw/` (gitignored).
+- Sizes: 2020-2024 zip 75,874,098 B, txt 326,690,943 B; 2025-2026 zip 43,215,634 B, txt 192,196,195 B.
+- Lines (= rows; every line has exactly 51 tab-separated fields): 418,884 (2020-2024) + 210,347 (2025-2026) = 629,231 rows.
+- LDATE range: 20200101 to 20261101.
+
+**Notes for Phase 2**
+- Rows repeat ODINO (one per component), so complaint count will be lower than 629,231.
+- Newer rows show mojibake (e.g. "dealerâs") when read as latin-1; the file is probably UTF-8 in places. Check encoding handling in Phase 2.
+
+**Decisions (Tejas):** download the two chunks above.
+
+**Next:** Phase 2 (explore). Waiting for "proceed".

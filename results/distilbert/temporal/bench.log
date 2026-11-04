@@ -1,0 +1,31 @@
+W1103 22:33:48.664000 46718 venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/redirects.py:35] NOTE: Redirects are currently not supported in MacOs.
+Loading weights:   0%|          | 0/100 [00:00<?, ?it/s]Loading weights: 100%|██████████| 100/100 [00:00<00:00, 16369.93it/s]
+[transformers] [1mDistilBertForSequenceClassification LOAD REPORT[0m from: distilbert-base-uncased
+Key                     | Status     | 
+------------------------+------------+-
+vocab_layer_norm.weight | UNEXPECTED | 
+vocab_layer_norm.bias   | UNEXPECTED | 
+vocab_transform.weight  | UNEXPECTED | 
+vocab_projector.bias    | UNEXPECTED | 
+vocab_transform.bias    | UNEXPECTED | 
+classifier.weight       | MISSING    | 
+pre_classifier.weight   | MISSING    | 
+pre_classifier.bias     | MISSING    | 
+classifier.bias         | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+device=mps  train 50000  steps/epoch 3125  total steps (3 epochs) 9375
+token lengths (train, after truncation to 256): mean 117, median 106; truncated 7.1%
+  step 10  loss 2.2842  last-10 avg 0.443s/step
+  step 20  loss 2.3100  last-10 avg 0.164s/step
+  step 30  loss 2.2969  last-10 avg 0.168s/step
+  step 40  loss 2.3206  last-10 avg 0.191s/step
+  step 50  loss 2.2898  last-10 avg 0.174s/step
+
+50 steps: total 11.4s, mean 0.228s/step; steady (steps 11-50) 0.174s/step
+eval: 640 val texts in 1.1s -> full val pass (7125) ~ 12s; test pass (7320) ~ 13s
+
+PROJECTION for 3 epochs: training 27 min + 3 val passes 0.6 min + 1 test pass 0.2 min = 28 min (0.5 h)
+MPS memory allocated: 0.81 GB

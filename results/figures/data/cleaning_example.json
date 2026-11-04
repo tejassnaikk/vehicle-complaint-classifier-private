@@ -1,0 +1,35 @@
+{
+  "odino": "11308255",
+  "raw_fields": {
+    "odino": "11308255",
+    "make": "GMC",
+    "model": "SIERRA 1500",
+    "year": "2008",
+    "compdesc": "AIR BAGS",
+    "ldate": "20200210"
+  },
+  "raw_text": "TL* TAKATA RECALL. THE CONTACT OWNS A 2008 GMC SIERRA 1500. THE CONTACT RECEIVED NOTIFICATION OF NHTSA CAMPAIGN NUMBER: 16V383000 (AIR BAGS). THE CONTACT STATED THAT THE AIR BAG WARNING LIGHT WAS ILLUMINATED. THE CONTACT STATED THAT MANUFACTURER EXCEEDED A REASONABLE AMOUNT OF TIME FOR THE RECALL REPAIR. A DEALER WAS NOT CONTACTED. THE MANUFACTURER WAS MADE AWARE OF THE ISSUE. THE FAILURE MILEAGE WAS 63,800. PARTS DISTRIBUTION DISCONNECT. *BF*TP",
+  "clean_row": {
+    "odino": "11308255",
+    "ldate": "20200210",
+    "make": "GMC",
+    "model": "SIERRA 1500",
+    "year": "2008",
+    "label": "AIR BAGS",
+    "is_transcript": "True"
+  },
+  "clean_text": "takata recall. the contact owns a 2008 gmc sierra 1500. the contact received notification of. the contact stated that the air bag warning light was illuminated. the contact stated that manufacturer exceeded a reasonable amount of time for the recall repair. a dealer was not contacted. the manufacturer was made aware of the issue. the failure mileage was 63,800.",
+  "removed_raw_words": [
+    "TL*",
+    "NHTSA",
+    "CAMPAIGN",
+    "NUMBER:",
+    "16V383000",
+    "(AIR",
+    "BAGS).",
+    "PARTS",
+    "DISTRIBUTION",
+    "DISCONNECT.",
+    "*BF*TP"
+  ]
+}

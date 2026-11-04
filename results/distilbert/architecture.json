@@ -1,0 +1,10 @@
+{
+  "pretrained": "distilbert-base-uncased",
+  "n_layers": 6,
+  "n_heads": 12,
+  "dim": 768,
+  "hidden_dim_feed_forward": 3072,
+  "vocab_size": 30522,
+  "classifier_dropout": 0.2,
+  "n_params": 66961162
+}

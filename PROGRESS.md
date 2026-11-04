@@ -337,3 +337,38 @@ Occlusion on CPU: remove one whitespace-separated word, importance = drop in the
 ELECTRICAL SYSTEM is the weakest class for every model on both splits (temporal MLP 0.771, BiLSTM 0.757, DistilBERT 0.801). Next are FUEL/PROPULSION SYSTEM and ENGINE. The pair ENGINE / FUEL/PROPULSION SYSTEM is the top or near-top confusion for all models; STRUCTURE predicted as VISIBILITY/WIPER is the other recurring one. 497 of 7,320 temporal test complaints (6.8%) are wrong for all three models, so these errors are not model-specific; many are plausibly ambiguous or multi-system complaints (see `errors_all_models.csv`).
 
 **Next:** Phase 7 (figures: architecture diagrams, pipeline diagram, before/after cleaning, class balance, copy to `docs/img/`). Waiting for "proceed".
+
+## Spec change (Tejas): Claude Code writes ALL website text
+
+Decision recorded before Phase 7. `CLAUDE.md` was updated: the "leave the prose for me" instructions for the Introduction and Conclusion and the `<!-- DRAFT: rewrite in my own words -->` requirement were removed, and a "Website writing rules" section was added:
+- Plain, direct sentences; specific numbers from `results/` instead of adjectives; no hype words (revolutionary, cutting-edge, robust, leverage, delve, seamless, crucial, and similar); no em-dashes.
+- Introduction and Conclusion: 100% non-technical (no model names, no metric jargon such as F1 or confusion matrix), paragraphs of 7 to 10 complete sentences. The Introduction covers the topic only (vehicle safety complaints, who files them, why they matter, the problem of sorting them).
+- Every page has visuals, only figures we generate or US government public-domain material with the source credited; no images from other websites.
+- Every number on the site must trace to a file in `results/`.
+- `about.html`: I will write it with project facts only (project, course, data source, tools, repository link, author name). I will not invent any biography or claims about the author; Tejas can add a bio later. (My reading of "ALL website text"; tell me if you want something different.)
+Phase 7's spec in `CLAUDE.md` now also lists the extra plain-language figures below and the Results-page figures.
+
+## Phase 7: Figures (done, awaiting 'proceed' for Phase 8)
+
+`src/09_make_figures.py` makes every figure from files in `results/` and `data/`, saves them to `results/figures/` (PNG; SVG for the four diagrams) and copies them to `docs/img/` (36 images, 3.8 MB). Nothing is retrained. Chart data is saved next to the figures so every number traces to a file.
+
+**Style:** light surface, one blue for single-series bars; fixed model colors everywhere (MLP blue, BiLSTM orange, DistilBERT aqua = the validated categorical slots 1 to 3, checked with the dataviz skill's validator for all pairs: CVD and normal-vision separation pass; aqua is below 3:1 contrast on the light surface, so those charts carry direct value labels and a data file). Every figure was opened and checked by eye; I fixed a hidden highlight layer, word spacing and clipped text in the cleaning example, overflowing box titles in the diagrams, a legend covering a bar, a clipped footnote, and a truncated-axis bar chart (now a dot chart).
+
+**Technical figures (Data, Models, Results pages):**
+- `fig_arch_mlp`, `fig_arch_bilstm`, `fig_arch_distilbert` (.png and .svg): block diagrams with sizes read from `results/<model>/temporal/config.json` and `metrics.json`. New file `results/distilbert/architecture.json` (6 layers, 12 heads, 768 dimensions, feed-forward 3,072, vocabulary 30,522, classifier dropout 0.2, 66,961,162 parameters) comes from the Hugging Face config and the saved parameter count.
+- `fig_pipeline` (.png and .svg): raw file, cleaned dataset, splits, models, evaluation, with counts from the new `results/data_funnel.json` (raw counts computed from the raw files, later steps parsed from `results/leakage_audit.txt`): 629,231 rows, 432,893 complaints, 304,879 single-label, 229,063 in the 10 classes, minus 10,295 no-failure complaints, 1,690 duplicates, 18,573 short texts = 198,505.
+- `fig_cleaning_example`: complaint 11308255, raw row vs cleaned row, removed words highlighted (TL* marker, the campaign number with its component name, "parts distribution disconnect", reviewer tags). It shows the dangling "notification of." side effect. Only published columns plus the raw component label are shown. Data: `results/figures/data/cleaning_example.json`.
+- `fig_class_balance`: cleaned pool (198,464 complaints up to 2026-10-31) vs temporal sample (64,445), data in the new `results/class_balance.csv` (also has the random-split counts).
+- `fig_per_class_f1`: per-class test F1, three models, temporal (from `results/eval/per_class_f1_all.csv`).
+- `fig_split_comparison`: test macro-F1 temporal vs random with 95% bootstrap intervals, from `results/summary_table.csv`. Dot chart; the axis does not start at zero and says so.
+- Copied from existing results: `curves_<model>_<split>.png` (6) and `confusion_<model>_<split>_counts.png` and `_normalized.png` (12).
+
+**Plain-language figures (Introduction and Conclusion; no model names or metric jargon):**
+- `fig_complaints_per_year`: unique complaints by year received: 2020 58,601; 2021 49,195; 2022 53,447; 2023 62,994; 2024 67,762; 2025 74,369; 2026 (January to October) 66,423. Data: new `results/eda/complaints_per_year.csv`.
+- `fig_quote_card_1` to `_3`: air bags (June 2026), fuel system (July 2026), brakes (October 2026). Real owner-written complaints, chosen by hand from a seed-42 random sample of temporal-test complaints for readability and because they contain no names, places, phone numbers or brand names. Capital letters restored; wording unchanged. Data: `results/figures/data/quote_cards.json`.
+- `fig_identified_correctly`: out of every 100 complaints of each kind, how many were sorted into the right group (best model, temporal test): Air bags 96, Steering 96, Automatic braking and collision warning 91, Body and frame 90, Brakes 90, Windshield glass and wipers 89, Transmission and drive parts 89, Engine and cooling 88, Fuel system 82, Electrical system 81. Plain-English class names; data `results/figures/data/identified_correctly.csv` (from the DistilBERT per-class recall).
+- `fig_mixups`: most common mix-ups on the same test set: fuel system complaints put under Engine 54 of 800, Engine complaints put under Fuel system 25 of 800; transmission complaints put under Engine 43 of 800, Engine put under transmission 23 of 800; electrical complaints put under Engine 33, transmission 30, Fuel system 21, Body and frame 17 (each of 800). Data `results/figures/data/mixups.csv`.
+
+**Notes for Phase 8:** word-importance HTML snippets are in `results/eval/word_importance/` (not images, not yet copied to `docs/`). The figure data files and `results/data_funnel.json` are the sources for numbers in page text. DistilBERT per-class numbers are only for the temporal test set.
+
+**Next:** Phase 8 (website). Waiting for "proceed".

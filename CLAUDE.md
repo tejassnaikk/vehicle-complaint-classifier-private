@@ -13,7 +13,7 @@ Deep learning class project (open project, individual). Classify NHTSA vehicle o
 2. Before any long-running job (download, training run over ~5 minutes), tell me the expected time and size first.
 3. Give shell commands as copy-paste zsh. Verify each step worked (file exists, row counts, shapes) before moving on.
 4. Never invent results or numbers. Every number on the website must come from a file in `results/`.
-5. Commit to git at the end of each phase with a clear message. Do not push to GitHub until I say so.
+5. At the end of every phase: commit with a clear message, push to origin, and update `PROGRESS.md` with what was done, key numbers, decisions I made, and what's next. The GitHub repo `tejassnaikk/vehicle-complaint-classifier` is private from Phase 0; Phase 9 makes it public and enables Pages.
 6. Keep it simple. No frameworks, databases, Docker, or cloud services unless I ask. Plain Python scripts + a static HTML site.
 7. Fixed random seed 42 everywhere.
 
@@ -21,8 +21,8 @@ Deep learning class project (open project, individual). Classify NHTSA vehicle o
 
 - MacBook Air M4, 16 GB RAM, zsh. Internal disk space is tight.
 - The repo lives on the internal disk. Do not put the git repo, venv, or any SQLite file on the external SSD.
-- The large raw NHTSA download can go on the external SSD at `/Volumes/Tejas SSD/nhtsa_raw/` (read-only use). Make the raw path a config value so it can be changed.
-- Use PyTorch with the MPS backend. Fall back to CPU automatically if MPS fails. If DistilBERT is too slow locally, prepare a Colab notebook instead (see Phase 5).
+- The raw NHTSA download goes in `data/raw/` on the internal disk (gitignored). Do not use the external SSD. The raw path is a config value (`RAW_DIR` in `config.py`).
+- Python 3.12 venv built with uv (`venv/`). Use PyTorch with the MPS backend. Fall back to CPU automatically if MPS fails. If DistilBERT is too slow locally, prepare a Colab notebook instead (see Phase 5).
 
 ## Repo layout
 
@@ -46,7 +46,7 @@ vehicle-complaint-classifier/
   notebooks/
     distilbert_colab.ipynb  # only if needed
   data/
-    raw/                    # gitignored (or symlink to SSD)
+    raw/                    # gitignored
     interim/                # gitignored
     clean/                  # published sampled dataset (must be < 50 MB)
   models/                   # gitignored
@@ -147,4 +147,4 @@ Draft explanatory text on the Data, Models, and Results pages, but wrap every dr
 ### Phase 9: Reproducibility and release
 - README: exact steps to reproduce from a fresh clone (venv, download, scripts in order, expected outputs and runtimes).
 - Check every link on the site, every image loads, every number matches `results/`.
-- Ask me before creating the GitHub repo `tejassnaikk/vehicle-complaint-classifier` and enabling Pages from `/docs`.
+- Ask me before making the GitHub repo public and enabling Pages from `/docs`.

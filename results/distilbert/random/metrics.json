@@ -1,0 +1,20 @@
+{
+  "val": {
+    "accuracy": 0.9022566086395873,
+    "macro_f1": 0.9028827846316021,
+    "weighted_f1": 0.902108942752069,
+    "n": 7755
+  },
+  "test": {
+    "accuracy": 0.9059718818521862,
+    "macro_f1": 0.9065866017007653,
+    "weighted_f1": 0.9057097177859342,
+    "n": 7753
+  },
+  "best_epoch": 3,
+  "epochs_run": 3,
+  "wall_time_s": 2579.4,
+  "device": "mps",
+  "checkpoint": "distilbert_random.pt",
+  "n_params": 66961162
+}

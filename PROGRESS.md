@@ -234,4 +234,46 @@ For the MLP the same top pair is ENGINE / FUEL/PROPULSION (81), then ELECTRICAL 
 
 **Files:** `results/bilstm/<split>/` (config.json, metrics.json, history.csv with per-epoch times, per_class_test.csv, test_predictions.csv, curves.png, train.log) and `results/bilstm/bench.log`. Checkpoints in `models/` (gitignored): `bilstm_<split>.pt` and `bilstm_<split>_vocab.json` (needed for Phase 6 word importance).
 
-**Next:** Phase 5.3 DistilBERT (`07_train_distilbert.py`, temporal only; time 50 steps first). Waiting for "proceed".
+
+## Phase 5.3: DistilBERT (done, Phase 5 complete, awaiting 'proceed' for Phase 6)
+
+**Built:** `src/07_train_distilbert.py` (`--bench`, or `--full --split temporal|random`). The spec said temporal only; Tejas asked for both splits.
+
+**Setup (also in `results/distilbert/<split>/config.json`):** `distilbert-base-uncased`, max length 256 (7.1% of temporal train texts truncated), batch 16, dynamic padding to the longest text in the batch, AdamW lr 2e-5, weight decay 0.01 (not on bias and LayerNorm), 10% linear warmup then linear decay, gradient clipping 1.0, 3 epochs, seed 42, MPS, fp32. Best epoch chosen by validation macro-F1; test scored once with the best checkpoint.
+
+**Benchmark (50 steps, MPS):** 0.174 s/step steady, 3,125 steps/epoch, projected 28 min for 3 epochs (`results/distilbert/temporal/bench.log`). Actual: 32 min temporal, 43 min random (epochs took 9.7 to 11.3 min temporal and 12.5 to 15.5 min random).
+
+**Stall and rerun (random split):** The first random-split run, chained after the temporal run with nohup, stalled overnight: the Mac went to sleep and swap filled up. Tejas killed it, restarted the Mac, and relaunched the random run from Terminal with `caffeinate` and `TOKENIZERS_PARALLELISM=false`. Same script, settings and seed. The log and outputs in `results/distilbert/random/` are from that rerun only (one clean run, 3 epochs), and its slower epochs are probably a leftover effect of the memory pressure. Test was scored once, at the end of the final run. The temporal run was not affected. Lesson for the README: run long jobs under `caffeinate -i`.
+
+### Full comparison (accuracy / macro-F1; test n = 7,320 temporal, 7,753 random)
+
+| Model | Split | Val acc | Val macro-F1 | Test acc | Test macro-F1 | Best epoch / run | Train time |
+|---|---|---|---|---|---|---|---|
+| MLP | Temporal | 0.8698 | 0.8727 | 0.8762 | 0.8771 | 1 / 4 | 24 s |
+| MLP | Random | 0.8864 | 0.8874 | 0.8851 | 0.8860 | 1 / 4 | 21 s |
+| BiLSTM | Temporal | 0.8648 | 0.8683 | 0.8687 | 0.8690 | 5 / 8 | 34 min |
+| BiLSTM | Random | 0.8852 | 0.8860 | 0.8835 | 0.8840 | 4 / 7 | 30 min |
+| DistilBERT | Temporal | 0.8901 | 0.8941 | 0.8913 | 0.8921 | 3 / 3 | 32 min |
+| DistilBERT | Random | 0.9023 | 0.9029 | 0.9060 | 0.9066 | 3 / 3 | 43 min |
+
+**Random minus temporal gap (test):** MLP +0.88 pts accuracy / +0.90 pts macro-F1; BiLSTM +1.48 / +1.50; DistilBERT +1.47 / +1.45. (Validation macro-F1 gap: MLP +1.47, BiLSTM +1.78, DistilBERT +0.88.) A random split overstates performance by about 1 to 1.5 points for every model, which is a small inflation.
+
+**Reading the table:** DistilBERT is best on both splits: +1.5 pts test macro-F1 over the MLP on temporal and +2.1 pts on random. The BiLSTM is last on temporal and slightly behind the MLP on random. With about 7,300 test texts the standard error on accuracy is roughly 0.4 pts, so MLP vs BiLSTM (0.8 pts on temporal, 0.2 on random) is not a clear difference, while DistilBERT's lead is larger.
+
+**DistilBERT weakest classes on test (F1):**
+- Temporal: ELECTRICAL SYSTEM 0.801 (precision 0.791, recall 0.812), FUEL/PROPULSION SYSTEM 0.848 (0.874, 0.824), ENGINE 0.851 (0.821, 0.882).
+- Random: ELECTRICAL SYSTEM 0.815, ENGINE 0.863, FUEL/PROPULSION SYSTEM 0.879.
+
+**ELECTRICAL SYSTEM across models (test F1, temporal / random):** MLP 0.771 / 0.769; BiLSTM 0.757 / 0.771; DistilBERT 0.801 / 0.815. DistilBERT improves it by about 3 to 4.5 points, but it is still the weakest class for every model on both splits.
+
+**Top 3 confused pairs, temporal test (errors in both directions combined):**
+- DistilBERT (796 errors of 7,320): ENGINE and FUEL/PROPULSION 79 (54 true FUEL/PROPULSION predicted ENGINE); STRUCTURE and VISIBILITY/WIPER 71 (52 true STRUCTURE predicted VISIBILITY/WIPER); ELECTRICAL SYSTEM and ENGINE 68.
+- BiLSTM (961): ENGINE / FUEL/PROPULSION 93; ELECTRICAL / FUEL/PROPULSION 78; ENGINE / POWER TRAIN 77.
+- MLP (906): ENGINE / FUEL/PROPULSION 81; ELECTRICAL / FUEL/PROPULSION 76; STRUCTURE / VISIBILITY/WIPER 72.
+ENGINE / FUEL/PROPULSION is the top or near-top confusion for all three models, so it is probably a label overlap and not a model weakness. DistilBERT cuts the ELECTRICAL / FUEL/PROPULSION confusion out of its top 3.
+
+**Transcript vs owner-written accuracy (temporal test, early look for Phase 6):** DistilBERT 0.8915 owner-written vs 0.8904 transcript; BiLSTM 0.866 vs 0.878; MLP 0.875 vs 0.881. No sign that transcripts are easier for DistilBERT.
+
+**Files:** `results/distilbert/<split>/` (config.json, metrics.json, history.csv, per_class_test.csv, test_predictions.csv, curves.png, train.log; temporal also bench.log). Checkpoints in `models/` (gitignored, about 268 MB each): `distilbert_temporal.pt`, `distilbert_random.pt`.
+
+**Next:** Phase 6 (evaluate, `08_evaluate.py`): confusion matrices, error examples, summary table, word-importance highlights. Waiting for "proceed".

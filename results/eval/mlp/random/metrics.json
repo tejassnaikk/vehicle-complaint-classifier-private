@@ -1,0 +1,129 @@
+{
+  "model": "mlp",
+  "split_scheme": "random",
+  "accuracy": 0.8850767444860054,
+  "macro_f1": 0.8860121414209512,
+  "weighted_f1": 0.8848294205109336,
+  "n": 7753,
+  "per_class": [
+    {
+      "class": "ENGINE",
+      "precision": 0.8372093023255814,
+      "recall": 0.855,
+      "f1": 0.8460111317254174,
+      "support": 800.0
+    },
+    {
+      "class": "POWER TRAIN",
+      "precision": 0.9028727770177839,
+      "recall": 0.825,
+      "f1": 0.8621815806662312,
+      "support": 800.0
+    },
+    {
+      "class": "ELECTRICAL SYSTEM",
+      "precision": 0.7657992565055762,
+      "recall": 0.7725,
+      "f1": 0.7691350342252644,
+      "support": 800.0
+    },
+    {
+      "class": "STEERING",
+      "precision": 0.9388004895960832,
+      "recall": 0.95875,
+      "f1": 0.9486703772418058,
+      "support": 800.0
+    },
+    {
+      "class": "SERVICE BRAKES",
+      "precision": 0.8933823529411765,
+      "recall": 0.91125,
+      "f1": 0.9022277227722773,
+      "support": 800.0
+    },
+    {
+      "class": "AIR BAGS",
+      "precision": 0.9429280397022333,
+      "recall": 0.95,
+      "f1": 0.9464508094645081,
+      "support": 800.0
+    },
+    {
+      "class": "STRUCTURE",
+      "precision": 0.8973684210526316,
+      "recall": 0.8525,
+      "f1": 0.8743589743589744,
+      "support": 800.0
+    },
+    {
+      "class": "FUEL/PROPULSION SYSTEM",
+      "precision": 0.8596273291925466,
+      "recall": 0.865,
+      "f1": 0.8623052959501558,
+      "support": 800.0
+    },
+    {
+      "class": "VISIBILITY/WIPER",
+      "precision": 0.9047619047619048,
+      "recall": 0.95,
+      "f1": 0.926829268292683,
+      "support": 740.0
+    },
+    {
+      "class": "FORWARD COLLISION AVOIDANCE",
+      "precision": 0.9189627228525121,
+      "recall": 0.9249592169657422,
+      "f1": 0.9219512195121952,
+      "support": 613.0
+    }
+  ],
+  "top_confused_directed": [
+    {
+      "true": "POWER TRAIN",
+      "pred": "ENGINE",
+      "count": 53
+    },
+    {
+      "true": "STRUCTURE",
+      "pred": "VISIBILITY/WIPER",
+      "count": 50
+    },
+    {
+      "true": "ENGINE",
+      "pred": "FUEL/PROPULSION SYSTEM",
+      "count": 39
+    },
+    {
+      "true": "ELECTRICAL SYSTEM",
+      "pred": "STRUCTURE",
+      "count": 36
+    },
+    {
+      "true": "FUEL/PROPULSION SYSTEM",
+      "pred": "ELECTRICAL SYSTEM",
+      "count": 36
+    }
+  ],
+  "top_confused_pairs": [
+    {
+      "pair": "ENGINE / POWER TRAIN",
+      "count": 77
+    },
+    {
+      "pair": "ENGINE / FUEL/PROPULSION SYSTEM",
+      "count": 71
+    },
+    {
+      "pair": "ELECTRICAL SYSTEM / STRUCTURE",
+      "count": 63
+    },
+    {
+      "pair": "ELECTRICAL SYSTEM / ENGINE",
+      "count": 61
+    },
+    {
+      "pair": "ELECTRICAL SYSTEM / FUEL/PROPULSION SYSTEM",
+      "count": 60
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "n_bootstrap": 1000,
+  "seed": 42,
+  "macro_f1_95ci": {
+    "mlp": {
+      "temporal": {
+        "macro_f1": 0.877059403497538,
+        "ci_low": 0.8686920183492622,
+        "ci_high": 0.884294602176982
+      },
+      "random": {
+        "macro_f1": 0.8860121414209512,
+        "ci_low": 0.8786140869632598,
+        "ci_high": 0.8929337845571493
+      }
+    },
+    "bilstm": {
+      "temporal": {
+        "macro_f1": 0.8689887829401552,
+        "ci_low": 0.8604484076737808,
+        "ci_high": 0.8764114402139599
+      },
+      "random": {
+        "macro_f1": 0.884019228758295,
+        "ci_low": 0.8772418380610499,
+        "ci_high": 0.8908411977754362
+      }
+    },
+    "distilbert": {
+      "temporal": {
+        "macro_f1": 0.8920704269048757,
+        "ci_low": 0.8849478366825104,
+        "ci_high": 0.8988456197502249
+      },
+      "random": {
+        "macro_f1": 0.9065866017007653,
+        "ci_low": 0.9000345565339353,
+        "ci_high": 0.9128391206173931
+      }
+    }
+  },
+  "paired_difference_macro_f1_95ci": {
+    "temporal": {
+      "bilstm minus mlp": {
+        "difference": -0.008070620557382724,
+        "ci_low": -0.014613210887115828,
+        "ci_high": -0.0016363423673295325,
+        "ci_excludes_zero": true
+      },
+      "distilbert minus mlp": {
+        "difference": 0.015011023407337731,
+        "ci_low": 0.009291413304269991,
+        "ci_high": 0.0214586316910922,
+        "ci_excludes_zero": true
+      },
+      "distilbert minus bilstm": {
+        "difference": 0.023081643964720455,
+        "ci_low": 0.017256642061778425,
+        "ci_high": 0.029631128210956162,
+        "ci_excludes_zero": true
+      }
+    },
+    "random": {
+      "bilstm minus mlp": {
+        "difference": -0.001992912662656221,
+        "ci_low": -0.007615557158409413,
+        "ci_high": 0.0036543094797605994,
+        "ci_excludes_zero": false
+      },
+      "distilbert minus mlp": {
+        "difference": 0.020574460279814133,
+        "ci_low": 0.014849114211425207,
+        "ci_high": 0.0263074243367565,
+        "ci_excludes_zero": true
+      },
+      "distilbert minus bilstm": {
+        "difference": 0.022567372942470354,
+        "ci_low": 0.01688183898931862,
+        "ci_high": 0.028120150432354413,
+        "ci_excludes_zero": true
+      }
+    }
+  },
+  "mcnemar_exact_temporal": [
+    {
+      "model_a": "mlp",
+      "model_b": "bilstm",
+      "both_correct": 6089,
+      "both_wrong": 636,
+      "only_mlp_correct": 325,
+      "only_bilstm_correct": 270,
+      "accuracy_a": 0.8762295081967213,
+      "accuracy_b": 0.8687158469945355,
+      "chi2_continuity_corrected": 4.900840336134454,
+      "p_value_exact": 0.02676028459114952,
+      "significant_at_0.05": true,
+      "significant_bonferroni_0.0167": false
+    },
+    {
+      "model_a": "mlp",
+      "model_b": "distilbert",
+      "both_correct": 6205,
+      "both_wrong": 587,
+      "only_mlp_correct": 209,
+      "only_distilbert_correct": 319,
+      "accuracy_a": 0.8762295081967213,
+      "accuracy_b": 0.8912568306010928,
+      "chi2_continuity_corrected": 22.501893939393938,
+      "p_value_exact": 1.9362419281977032e-06,
+      "significant_at_0.05": true,
+      "significant_bonferroni_0.0167": true
+    },
+    {
+      "model_a": "bilstm",
+      "model_b": "distilbert",
+      "both_correct": 6170,
+      "both_wrong": 607,
+      "only_bilstm_correct": 189,
+      "only_distilbert_correct": 354,
+      "accuracy_a": 0.8687158469945355,
+      "accuracy_b": 0.8912568306010928,
+      "chi2_continuity_corrected": 49.532228360957646,
+      "p_value_exact": 1.3205218227178955e-12,
+      "significant_at_0.05": true,
+      "significant_bonferroni_0.0167": true
+    }
+  ],
+  "note": "McNemar compares paired per-text correctness on the same temporal test set (exact binomial, two-sided). Bootstrap resamples test texts with replacement (seed 42); the same resamples are used for all models within a split."
+}

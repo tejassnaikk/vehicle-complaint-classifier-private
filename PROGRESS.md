@@ -277,3 +277,63 @@ ENGINE / FUEL/PROPULSION is the top or near-top confusion for all three models, 
 **Files:** `results/distilbert/<split>/` (config.json, metrics.json, history.csv, per_class_test.csv, test_predictions.csv, curves.png, train.log; temporal also bench.log). Checkpoints in `models/` (gitignored, about 268 MB each): `distilbert_temporal.pt`, `distilbert_random.pt`.
 
 **Next:** Phase 6 (evaluate, `08_evaluate.py`): confusion matrices, error examples, summary table, word-importance highlights. Waiting for "proceed".
+
+## Phase 6: Evaluate (done, awaiting 'proceed' for Phase 7)
+
+`src/08_evaluate.py` uses only saved predictions (`results/<model>/<split>/test_predictions.csv`) and saved checkpoints. Nothing was retrained. Check built in: the accuracy and macro-F1 recomputed from the predictions match the training-run metrics exactly for all 6 runs, and the reloaded BiLSTM and DistilBERT checkpoints reproduce the saved prediction and confidence for all 6 word-importance examples. Added `scipy==1.18.1` to `requirements.txt`.
+
+**Per model and split** (`results/eval/<model>/<split>/`, all 6 combinations): `metrics.json` (accuracy, macro-F1, weighted-F1, per-class precision/recall/F1, top confused pairs), `per_class.csv`, `confusion_matrix.csv`, `confusion_counts.png`, `confusion_normalized.png`, `error_examples.csv` (15 random misclassified, seed 42, first 300 characters, with make/model/year, confidence, is_transcript), `correct_examples.csv` (5 random correct with confidence >= 0.95). Also `results/eval/per_class_f1_all.csv` (per-class F1, every model x split) and `results/eval/errors_all_models.csv` (15 sampled of the 497 temporal test complaints, 6.8%, that all three models got wrong).
+
+### Summary table (`results/summary_table.csv`, `.md`, `.json`)
+
+| Model | Split | Val acc | Val macro-F1 | Test acc | Test macro-F1 (95% CI) | Train time |
+|---|---|---|---|---|---|---|
+| MLP (TF-IDF) | temporal | 0.8698 | 0.8727 | 0.8762 | 0.8771 (0.8687 to 0.8843) | 24 s |
+| MLP (TF-IDF) | random | 0.8864 | 0.8874 | 0.8851 | 0.8860 (0.8786 to 0.8929) | 21 s |
+| BiLSTM | temporal | 0.8648 | 0.8683 | 0.8687 | 0.8690 (0.8604 to 0.8764) | 34 min |
+| BiLSTM | random | 0.8852 | 0.8860 | 0.8835 | 0.8840 (0.8772 to 0.8908) | 30 min |
+| DistilBERT | temporal | 0.8901 | 0.8941 | 0.8913 | 0.8921 (0.8849 to 0.8988) | 32 min |
+| DistilBERT | random | 0.9023 | 0.9029 | 0.9060 | 0.9066 (0.9000 to 0.9128) | 43 min |
+
+### Significance (`results/significance.json`; 1,000 bootstrap resamples of the test texts, seed 42, same resamples for all models within a split)
+
+Paired bootstrap difference in test macro-F1 (95% CI):
+
+| Comparison | Temporal | Random |
+|---|---|---|
+| BiLSTM minus MLP | -0.0081 (-0.0146 to -0.0016) | -0.0020 (-0.0076 to +0.0037), includes 0 |
+| DistilBERT minus MLP | +0.0150 (+0.0093 to +0.0215) | +0.0206 (+0.0148 to +0.0263) |
+| DistilBERT minus BiLSTM | +0.0231 (+0.0173 to +0.0296) | +0.0226 (+0.0169 to +0.0281) |
+
+McNemar's test (exact, two-sided), temporal test, on paired per-text correctness:
+
+| Pair | Only first right | Only second right | p-value |
+|---|---|---|---|
+| MLP vs BiLSTM | 325 | 270 | 0.027 |
+| MLP vs DistilBERT | 209 | 319 | 1.9e-06 |
+| BiLSTM vs DistilBERT | 189 | 354 | 1.3e-12 |
+
+Reading: DistilBERT is clearly better than both other models on both splits (CIs exclude 0; p < 1e-5). MLP vs BiLSTM is a weak result: on temporal the BiLSTM is slightly worse (p = 0.027 would not survive a Bonferroni correction for 3 tests, threshold 0.017; the bootstrap CI barely excludes 0), and on random there is no difference. The bootstrap CIs for single models overlap between MLP and BiLSTM, so those two should be described as roughly equal, with the MLP slightly ahead on temporal.
+
+### Transcript vs owner-written, temporal test (`results/transcript_vs_owner.csv`, `.json`)
+1,596 transcripts (21.8%) and 5,724 owner-written texts. Macro-F1 (95% bootstrap CI within group):
+
+| Model | Owner-written | Transcript | Transcript, classes with 30+ texts only (9 classes) |
+|---|---|---|---|
+| MLP | 0.8770 (0.8688 to 0.8853) | 0.8574 (0.8229 to 0.8827) | 0.8786 |
+| BiLSTM | 0.8679 (0.8590 to 0.8762) | 0.8598 (0.8259 to 0.8836) | 0.8734 |
+| DistilBERT | 0.8937 (0.8859 to 0.9014) | 0.8633 (0.8273 to 0.8882) | 0.8885 |
+
+Accuracy is similar or higher on transcripts (MLP 0.881, BiLSTM 0.878, DistilBERT 0.890 vs 0.875, 0.866, 0.892 owner-written). The lower transcript macro-F1 is a small-class artifact: only 7 transcripts are VISIBILITY/WIPER (412 owner-written), so that class's F1 is very noisy. Without it, transcript macro-F1 is within the owner-written range for every model. Conclusion: no evidence that transcripts are easier or harder; a template shortcut does not appear to be driving the scores.
+
+### Word importance (`results/eval/word_importance/`)
+Occlusion on CPU: remove one whitespace-separated word, importance = drop in the log-odds of the predicted class (log-odds, because probability-based occlusion saturates at 0 for confident predictions). 6 temporal-test complaints (25 to 90 words, seed 42): 2 right for both models, 2 wrong for both, 2 right for DistilBERT but wrong for BiLSTM. Files: `example<N>_<model>.html` (small snippets for the website; blue = supports the predicted class, orange = argues against; hover shows the value), `preview.html` (all 12 on one page), `word_importance.json` (all values and the selection rule).
+- Example 4 (true ELECTRICAL SYSTEM, both models predict FORWARD COLLISION AVOIDANCE with 95% and 99% confidence): the word "autopilot" drives it (log-odds drop 6.3 for BiLSTM, 4.0 for DistilBERT); the BiLSTM also leans on "tesla" (2.5). A clear case of a keyword pulling a complaint into a plausible but different class.
+- Example 6 (true ENGINE, BiLSTM predicts POWER TRAIN): "transmission" (4.6) and "first" (2.2) drive the BiLSTM; DistilBERT, correct, relies on "hoses", "engine".
+- Example 3 (true SERVICE BRAKES, predicted POWER TRAIN by BiLSTM and STEERING by DistilBERT): "fishtailed" for BiLSTM; "barrier." and "language" for DistilBERT; the wrong words are accident wording, not brake wording.
+- Caveats for the website: single-word occlusion underestimates words that are repeated or have close substitutes (in confident correct examples the DistilBERT importances are small because several words each carry the same evidence); the examples are illustrations, not proof.
+
+### Weak classes (all models, test F1; full table in `results/eval/per_class_f1_all.csv`)
+ELECTRICAL SYSTEM is the weakest class for every model on both splits (temporal MLP 0.771, BiLSTM 0.757, DistilBERT 0.801). Next are FUEL/PROPULSION SYSTEM and ENGINE. The pair ENGINE / FUEL/PROPULSION SYSTEM is the top or near-top confusion for all models; STRUCTURE predicted as VISIBILITY/WIPER is the other recurring one. 497 of 7,320 temporal test complaints (6.8%) are wrong for all three models, so these errors are not model-specific; many are plausibly ambiguous or multi-system complaints (see `errors_all_models.csv`).
+
+**Next:** Phase 7 (figures: architecture diagrams, pipeline diagram, before/after cleaning, class balance, copy to `docs/img/`). Waiting for "proceed".

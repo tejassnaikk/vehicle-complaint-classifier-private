@@ -1,0 +1,111 @@
+{
+  "split": "temporal test",
+  "n_bootstrap": 1000,
+  "rows": [
+    {
+      "model": "mlp",
+      "group": "owner-written",
+      "n": 5724,
+      "accuracy": 0.8749126484975541,
+      "macro_f1": 0.8769754098701033,
+      "macro_f1_ci_low": 0.8688141563029259,
+      "macro_f1_ci_high": 0.8852517145434365,
+      "macro_f1_classes_with_30plus_texts": 0.8769754098701033,
+      "n_classes_with_30plus_texts": 10,
+      "min_class_support": 412,
+      "smallest_class": "VISIBILITY/WIPER"
+    },
+    {
+      "model": "bilstm",
+      "group": "owner-written",
+      "n": 5724,
+      "accuracy": 0.86617749825297,
+      "macro_f1": 0.867940112467503,
+      "macro_f1_ci_low": 0.8589914819987394,
+      "macro_f1_ci_high": 0.876182587536564,
+      "macro_f1_classes_with_30plus_texts": 0.867940112467503,
+      "n_classes_with_30plus_texts": 10,
+      "min_class_support": 412,
+      "smallest_class": "VISIBILITY/WIPER"
+    },
+    {
+      "model": "distilbert",
+      "group": "owner-written",
+      "n": 5724,
+      "accuracy": 0.8915094339622641,
+      "macro_f1": 0.8936896598516736,
+      "macro_f1_ci_low": 0.8859156775689564,
+      "macro_f1_ci_high": 0.9014215027524861,
+      "macro_f1_classes_with_30plus_texts": 0.8936896598516736,
+      "n_classes_with_30plus_texts": 10,
+      "min_class_support": 412,
+      "smallest_class": "VISIBILITY/WIPER"
+    },
+    {
+      "model": "mlp",
+      "group": "transcript",
+      "n": 1596,
+      "accuracy": 0.8809523809523809,
+      "macro_f1": 0.8573916090181489,
+      "macro_f1_ci_low": 0.822944835220081,
+      "macro_f1_ci_high": 0.8826732355715067,
+      "macro_f1_classes_with_30plus_texts": 0.8785832692794248,
+      "n_classes_with_30plus_texts": 9,
+      "min_class_support": 7,
+      "smallest_class": "VISIBILITY/WIPER"
+    },
+    {
+      "model": "bilstm",
+      "group": "transcript",
+      "n": 1596,
+      "accuracy": 0.8778195488721805,
+      "macro_f1": 0.8597517168510139,
+      "macro_f1_ci_low": 0.8258758611598895,
+      "macro_f1_ci_high": 0.8835527441172605,
+      "macro_f1_classes_with_30plus_texts": 0.8734083403607756,
+      "n_classes_with_30plus_texts": 9,
+      "min_class_support": 7,
+      "smallest_class": "VISIBILITY/WIPER"
+    },
+    {
+      "model": "distilbert",
+      "group": "transcript",
+      "n": 1596,
+      "accuracy": 0.8903508771929824,
+      "macro_f1": 0.8633119358098732,
+      "macro_f1_ci_low": 0.8272512101164274,
+      "macro_f1_ci_high": 0.8881671439718527,
+      "macro_f1_classes_with_30plus_texts": 0.8885284135261218,
+      "n_classes_with_30plus_texts": 9,
+      "min_class_support": 7,
+      "smallest_class": "VISIBILITY/WIPER"
+    }
+  ],
+  "class_support_by_group": {
+    "owner-written": {
+      "ENGINE": 638,
+      "POWER TRAIN": 615,
+      "ELECTRICAL SYSTEM": 636,
+      "STEERING": 635,
+      "SERVICE BRAKES": 582,
+      "AIR BAGS": 505,
+      "STRUCTURE": 592,
+      "FUEL/PROPULSION SYSTEM": 621,
+      "VISIBILITY/WIPER": 412,
+      "FORWARD COLLISION AVOIDANCE": 488
+    },
+    "transcript": {
+      "ENGINE": 162,
+      "POWER TRAIN": 185,
+      "ELECTRICAL SYSTEM": 164,
+      "STEERING": 165,
+      "SERVICE BRAKES": 218,
+      "AIR BAGS": 216,
+      "STRUCTURE": 208,
+      "FUEL/PROPULSION SYSTEM": 179,
+      "VISIBILITY/WIPER": 7,
+      "FORWARD COLLISION AVOIDANCE": 92
+    }
+  },
+  "note": "Macro-F1 over all 10 classes within each group; groups have very different class mixes, so compare with the CIs."
+}

@@ -198,3 +198,40 @@ Random-split test macro-F1 is only 0.9 points above temporal (0.8860 vs 0.8771) 
 **Files:** per run in `results/mlp/<split>/`: `config.json`, `metrics.json`, `history.csv`, `per_class_test.csv`, `test_predictions.csv` (with confidence and is_transcript, for Phase 6), `curves.png`, `train.log`. Checkpoints and the fitted TF-IDF in `models/` (gitignored, about 120 MB): `mlp_<split>.pt`, `mlp_<split>_tfidf.pkl`.
 
 **Next:** Phase 5.2 BiLSTM (`06_train_bilstm.py`). Waiting for "proceed".
+
+## Phase 5.2: BiLSTM (done, awaiting 'proceed' for DistilBERT)
+
+**Built:** `src/06_train_bilstm.py` (`--bench`, or `--split temporal|random --device mps|cpu`), reusing `src/common.py`.
+
+**Setup (also in `results/bilstm/<split>/config.json`):** own regex tokenizer (lowercase, words and numbers only, punctuation dropped); vocab from train only, min freq 2 (cap 30k, not reached: 20,860 tokens temporal, 21,277 random, including PAD and UNK); max length 256 tokens; trainable embedding 128; 2-layer bidirectional LSTM, hidden 128, dropout 0.3; packed sequences, and max-pool and mean-pool over time are masked so padding is excluded; dropout 0.3; linear output. Adam lr 1e-3, batch 64 (my choice, not in the spec), gradient clipping 1.0, max 15 epochs, early stopping on validation macro-F1 with patience 3, seed 42. About 3.3M parameters. Test evaluated once per run with the best checkpoint; nothing tuned on test.
+
+**Device timing (1 full training epoch, temporal train, batch 64):** MPS 252 s, CPU 380 s. MPS was used for both runs (about 250 s per epoch).
+
+**Truncation at 256 tokens:** train 4.4% (temporal) / 5.1% (random). Temporal val 6.8%, test 9.1%: later complaints are longer, so the temporal test set is truncated more than train.
+
+**Results (accuracy / macro-F1):**
+
+| Split scheme | Val acc | Val macro-F1 | Test acc | Test macro-F1 | Best epoch / run | Wall time |
+|---|---|---|---|---|---|---|
+| Temporal | 0.8648 | 0.8683 | 0.8687 | 0.8690 | 5 / 8 | 2,024 s (34 min) |
+| Random | 0.8852 | 0.8860 | 0.8835 | 0.8840 | 4 / 7 | 1,786 s (30 min) |
+
+Compared with the MLP (test macro-F1 temporal 0.8771, random 0.8860): the BiLSTM is lower by 0.8 points (temporal) and 0.2 points (random). It is about 80 times slower to train. The random-minus-temporal gap is 1.5 points for the BiLSTM (0.8840 vs 0.8690) and 0.9 points for the MLP.
+
+**3 weakest classes on test (F1):**
+- Temporal: ELECTRICAL SYSTEM 0.757 (precision 0.774, recall 0.741), FUEL/PROPULSION SYSTEM 0.826 (0.838, 0.814), ENGINE 0.841 (0.816, 0.866).
+- Random: ELECTRICAL SYSTEM 0.771, ENGINE 0.840, POWER TRAIN 0.856.
+
+**Did ELECTRICAL SYSTEM improve?** No on the temporal split: F1 0.757 vs 0.771 for the MLP. On the random split it is about the same (0.771 vs 0.769).
+
+**Top 3 confused class pairs, temporal test set (BiLSTM; 961 errors out of 7,320):**
+1. ENGINE and FUEL/PROPULSION SYSTEM: 93 errors (60 true FUEL/PROPULSION predicted ENGINE, 33 the other way).
+2. ELECTRICAL SYSTEM and FUEL/PROPULSION SYSTEM: 78 errors (40 and 38).
+3. ENGINE and POWER TRAIN: 77 errors (48 true POWER TRAIN predicted ENGINE, 29 the other way).
+For the MLP the same top pair is ENGINE / FUEL/PROPULSION (81), then ELECTRICAL / FUEL/PROPULSION (76), then STRUCTURE / VISIBILITY/WIPER (72; for the BiLSTM this pair is fourth in size, with 49 STRUCTURE predicted VISIBILITY/WIPER as its largest direction).
+
+**Early look at transcripts (temporal test, accuracy):** BiLSTM owner-written 0.866 vs transcript 0.878; MLP 0.875 vs 0.881. Small gaps; the full breakdown is for Phase 6.
+
+**Files:** `results/bilstm/<split>/` (config.json, metrics.json, history.csv with per-epoch times, per_class_test.csv, test_predictions.csv, curves.png, train.log) and `results/bilstm/bench.log`. Checkpoints in `models/` (gitignored): `bilstm_<split>.pt` and `bilstm_<split>_vocab.json` (needed for Phase 6 word importance).
+
+**Next:** Phase 5.3 DistilBERT (`07_train_distilbert.py`, temporal only; time 50 steps first). Waiting for "proceed".

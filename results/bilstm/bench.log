@@ -1,0 +1,3 @@
+vocab 20860; benchmarking 1 full training epoch (50000 texts, batch 64)
+mps: 1 epoch = 252.1s  (train loss 0.7709)
+cpu: 1 epoch = 379.5s  (train loss 0.7586)

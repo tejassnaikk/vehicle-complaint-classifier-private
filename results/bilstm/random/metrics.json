@@ -1,0 +1,26 @@
+{
+  "val": {
+    "accuracy": 0.8852353320438426,
+    "macro_f1": 0.8860426605320828,
+    "weighted_f1": 0.8849808316802948,
+    "n": 7755
+  },
+  "test": {
+    "accuracy": 0.8835289565329549,
+    "macro_f1": 0.884019228758295,
+    "weighted_f1": 0.8830056890818438,
+    "n": 7753
+  },
+  "best_epoch": 4,
+  "epochs_run": 7,
+  "wall_time_s": 1786.5,
+  "device": "mps",
+  "checkpoint": "bilstm_random.pt",
+  "vocab_size": 21277,
+  "pct_truncated": {
+    "train": 0.05061312815580669,
+    "val": 0.05544809800128949,
+    "test": 0.04772346188572166
+  },
+  "n_params": 3388042
+}

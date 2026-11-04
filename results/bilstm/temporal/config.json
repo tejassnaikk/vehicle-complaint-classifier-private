@@ -1,0 +1,19 @@
+{
+  "model": "bilstm",
+  "vocab_max": 30000,
+  "vocab_min_freq": 2,
+  "max_len": 256,
+  "embed_dim": 128,
+  "hidden": 128,
+  "num_layers": 2,
+  "dropout": 0.3,
+  "lr": 0.001,
+  "batch_size": 64,
+  "grad_clip": 1.0,
+  "max_epochs": 15,
+  "patience": 3,
+  "tokenizer": "[a-z0-9]+(?:'[a-z]+)?",
+  "seed": 42,
+  "split_scheme": "temporal",
+  "device": "mps"
+}

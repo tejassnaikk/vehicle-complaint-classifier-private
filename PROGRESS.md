@@ -107,4 +107,69 @@ Then: exact duplicate texts dropped 3,671; texts under 20 words dropped 18,573.
 
 **Brand bias note (for the website discussion):** Brand and model names are kept. They appear among the distinctive terms: "kia" in ENGINE, "tesla" in FORWARD COLLISION AVOIDANCE, "ford explorer" and "subaru" in STRUCTURE and VISIBILITY/WIPER, "ford f-150" and "jeep cherokee" in POWER TRAIN. Some well-known problems are tied to specific models, so part of the accuracy may come from recognising a model's known defect instead of reading the symptom. Results can differ for models not seen in training.
 
-**Next:** Phase 4 (split and sample). Waiting for "proceed".
+**Next:** superseded by the second cleaning round below.
+
+### Phase 3: second cleaning round (Tejas) - supersedes the funnel and per-class numbers above
+
+Two more rules, added after rule 10 and before the duplicate / 20-word checks:
+
+11. **Drop** complaints containing "the contact had not experienced a failure" or close variants (subject contact/client/vehicle/consumer/owner; had/has/have/did not experience(d) a/an/any/the failure/issue/problem). Reason: these are recall-availability calls, not failure descriptions. **10,295 complaints dropped** (10,132 exact phrase, 163 variants).
+    Example (whole complaint dropped): `...the manufacturer had exceeded a reasonable amount of time for the recall repair. the manufacturer was made aware of the issue. the contact had not experienced a failure.`
+    Dropped per class (share of the class before this rule): AIR BAGS 3,201 (19.5%); FUEL/PROPULSION 1,690 (10.0%); SERVICE BRAKES 1,673 (7.8%); ELECTRICAL 1,192 (4.3%); ENGINE 1,195 (2.1%); STRUCTURE 576 (3.9%); POWER TRAIN 547 (1.5%); STEERING 210 (0.9%); VISIBILITY/WIPER 10 (0.1%); FORWARD COLLISION AVOIDANCE 1 (0.0%).
+12. **Strip** the "parts distribution disconnect" template (and variants: part/parts, disconnect/disconnects/disconnection, optional leading "the", optional trailing "for"), keep the rest of the text. The phrase was in 4,145 texts; **3,067 of them were also dropped by rule 11**; the other 1,078 were stripped.
+    Before: `...the failure mileage was approximately 53,000. parts distribution disconnect.` After: `...the failure mileage was approximately 53,000.`
+13. Re-collapse whitespace (0 changed).
+
+Then duplicates dropped: 1,690 (was 3,671; most duplicates were the template calls now removed). Texts under 20 words dropped: 18,573.
+Residuals: 18 texts still contain "not experienced a failure" in other constructions, 6 contain "parts distribution" in other wording. Left as is.
+
+**Updated funnel:** 629,231 rows -> 432,893 ODINOs -> 304,879 single merged label -> 229,063 in the 10 classes -> 218,768 after rule 11 -> 217,078 after duplicates -> **198,505** after the 20-word minimum.
+
+**Updated per-class totals:** ENGINE 51,627; POWER TRAIN 32,267; ELECTRICAL 24,141; STEERING 21,108; SERVICE BRAKES 18,246; FUEL/PROPULSION 13,868; STRUCTURE 12,314; AIR BAGS 11,389; VISIBILITY/WIPER 7,407; FORWARD COLLISION AVOIDANCE 6,138.
+
+**Updated per-class train/val/test (temporal windows, before caps):**
+
+| Class | train | val | test |
+|---|---|---|---|
+| ENGINE | 42,156 | 4,695 | 4,764 |
+| POWER TRAIN | 25,654 | 3,117 | 3,490 |
+| ELECTRICAL SYSTEM | 19,073 | 2,669 | 2,393 |
+| STEERING | 18,437 | 1,194 | 1,472 |
+| SERVICE BRAKES | 15,548 | 1,321 | 1,374 |
+| FUEL/PROPULSION SYSTEM | 11,448 | 1,114 | 1,303 |
+| STRUCTURE | 10,350 | 907 | 1,056 |
+| AIR BAGS | 10,031 | 636 | 721 |
+| VISIBILITY/WIPER | 6,541 | 446 | 419 |
+| FORWARD COLLISION AVOIDANCE | 5,112 | 443 | 580 |
+
+`is_transcript` share per class now: ENGINE 31.4%, STRUCTURE 30.3%, POWER TRAIN 30.1%, AIR BAGS 27.9%, STEERING 26.7%, FUEL/PROPULSION 26.0%, SERVICE BRAKES 25.7%, ELECTRICAL 20.7%, FCA 12.9%, VISIBILITY/WIPER 3.8%.
+
+## Phase 4: Split and sample (done, awaiting 'proceed')
+
+`src/04_split_and_sample.py` reads `data/interim/complaints_clean.parquet`, drops the 41 complaints dated after 2026-10-31 (partial November) from the pool for both schemes (198,505 -> 198,464), and writes `data/clean/complaints_temporal.csv` and `data/clean/complaints_random.csv`. Columns: odino, ldate, make, model, year, label, text, is_transcript, split. Seed 42. Caps: train 5,000, val/test 800 per class, sampled randomly within each class.
+
+- **Temporal:** train 2020-01-01..2025-10-31, val 2025-11-01..2026-04-30, test 2026-05-01..2026-10-31 (checked: ranges do not overlap). 64,445 rows, 43.2 MB.
+- **Random:** stratified 80/10/10 on the same pool (two `train_test_split` calls), then the same caps. 65,416 rows, 43.3 MB.
+- Both files are under 50 MB. Checked: ODINOs unique, texts unique, all 10 classes present, CSV re-read gives 9 columns.
+
+Per-class counts kept (available before caps in brackets):
+
+| Class | Temporal train | val | test | Random train | val | test |
+|---|---|---|---|---|---|---|
+| ENGINE | 5,000 | 800 | 800 | 5,000 | 800 | 800 |
+| POWER TRAIN | 5,000 | 800 | 800 | 5,000 | 800 | 800 |
+| ELECTRICAL SYSTEM | 5,000 | 800 | 800 | 5,000 | 800 | 800 |
+| STEERING | 5,000 | 800 | 800 | 5,000 | 800 | 800 |
+| SERVICE BRAKES | 5,000 | 800 | 800 | 5,000 | 800 | 800 |
+| AIR BAGS | 5,000 | 636 | 721 | 5,000 | 800 | 800 |
+| STRUCTURE | 5,000 | 800 | 800 | 5,000 | 800 | 800 |
+| FUEL/PROPULSION SYSTEM | 5,000 | 800 | 800 | 5,000 | 800 | 800 |
+| VISIBILITY/WIPER | 5,000 | 446 | 419 | 5,000 | 741 | 740 |
+| FORWARD COLLISION AVOIDANCE | 5,000 | 443 | 580 | 4,908 | 614 | 613 |
+| **Total** | **50,000** | **7,125** | **7,320** | **49,908** | **7,755** | **7,753** |
+
+Classes below the cap (all rows kept): temporal AIR BAGS val 636 / test 721, VISIBILITY/WIPER val 446 / test 419, FORWARD COLLISION AVOIDANCE val 443 / test 580; random VISIBILITY/WIPER val 741 / test 740, FORWARD COLLISION AVOIDANCE train 4,908 / val 614 / test 613.
+
+Notes for later phases: the temporal and random sets are not the same size or class mix for small classes, so report macro-F1 as well as accuracy. Both CSVs are committed to git (about 86 MB together); regenerating and re-committing them will grow the repo history, so avoid re-committing unless the data changes.
+
+**Next:** Phase 5 (models). Waiting for "proceed".

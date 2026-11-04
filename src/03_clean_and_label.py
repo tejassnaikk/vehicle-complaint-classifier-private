@@ -89,6 +89,11 @@ ITEM = rf"{ID}(?:\s*\([^()]*\))?"
 CAMPAIGN_RE = re.compile(rf"\s*\bnhtsa\s+(?:campaign|recall)(?:\s+(?:numbers?|nos?\.?|#))?\s*:?\s*{ITEM}(?:\s*(?:,|and|&)?\s*{ITEM})*")
 PAREN_RE = re.compile(r"\s*\(\s*([^()]{2,150}?)\s*\)")
 ID_RE = re.compile(rf"\s*\b(?:{ID}|\d{{2,3}}[ve]-?\d{{3,7}})\b")
+# Recall-availability calls: owner/contact reports no failure at all -> drop the whole complaint.
+NOFAIL_RE = re.compile(r"\b(?:contact|client|vehicle|consumer|owner)\s+(?:had|has|have|did)\s+not\s+(?:yet\s+)?experience[d]?\s+"
+                       r"(?:a|an|any|the)?\s*(?:failures?|issues?|problems?)\b")
+# Template sentence "parts distribution disconnect" (and close variants) -> strip the phrase, keep the text.
+PDD_RE = re.compile(r"\s*\b(?:the\s+)?parts?\s+distribution\s+disconnect\w*(?:\s+for\b)?[\u201d\"]?\.?")
 TL_RE = re.compile(r"(?:^|\s)tl\*\s*")
 
 RULE_LOG = {}  # rule name -> (n changed, [(before, after), ...])
@@ -145,6 +150,25 @@ def clean_text(df, names, stems):
     t = run_rule("8 strip parenthesized component names", t, lambda x: PAREN_RE.sub(paren, x))
     t = run_rule("9 strip standalone recall IDs", t, lambda x: ID_RE.sub("", x))
     t = run_rule("10 re-collapse whitespace", t, lambda x: re.sub(r"\s+", " ", x).strip())
+    df = df.assign(text=t)
+
+    # Rule 11: drop "no failure" recall-availability complaints; rule 12: strip "parts distribution disconnect"
+    nf = df.text.str.contains(NOFAIL_RE)
+    pdd = df.text.str.contains(PDD_RE)
+    exact_nf = df.text.str.contains("the contact had not experienced a failure")
+    say(f"\n  rule 11 drop 'contact had not experienced a failure' (+variants): {nf.sum():,} texts "
+        f"({exact_nf.sum():,} exact phrase, {(nf & ~exact_nf).sum():,} variants)")
+    cls = pd.DataFrame({"dropped": df.label[nf].value_counts(), "class_total": df.label.value_counts()}).fillna(0).astype(int)
+    cls["pct_of_class"] = (cls.dropped / cls.class_total * 100).round(1)
+    say("  dropped per class:\n" + cls.to_string())
+    ex = df.text[nf].sample(3, random_state=42)
+    RULE_LOG["11 drop 'contact had not experienced a failure' complaints"] = (
+        int(nf.sum()), [(x[max(0, NOFAIL_RE.search(x).start() - 150): NOFAIL_RE.search(x).end() + 20], "[whole complaint dropped]") for x in ex])
+    say(f"  rule 12 'parts distribution disconnect' present in {pdd.sum():,} texts; "
+        f"overlap with rule 11: {(pdd & nf).sum():,}; remaining to strip after rule 11: {(pdd & ~nf).sum():,}")
+    df = df[~nf].reset_index(drop=True)
+    t = run_rule("12 strip 'parts distribution disconnect'", df.text, lambda x: PDD_RE.sub("", x))
+    t = run_rule("13 re-collapse whitespace", t, lambda x: re.sub(r"\s+", " ", x).strip())
     df = df.assign(text=t)
 
     dup = df.duplicated("text", keep="first")

@@ -46,7 +46,7 @@
 
 **Decisions needed (Tejas):** final class list, and whether to merge the renamed near-duplicates.
 
-## Phase 3: Clean and label (in progress, stopped at leakage audit)
+## Phase 3: Clean and label (done, awaiting 'proceed' for Phase 4)
 
 **Decisions (Tejas), recorded also in `config.py` as `MERGE_MAP` / `CLASSES`**
 - Merges applied to top_level BEFORE the multi-component rule: ENGINE AND ENGINE COOLING -> ENGINE; FUEL SYSTEM -> FUEL/PROPULSION SYSTEM (same physical systems, NHTSA renamed categories).
@@ -65,3 +65,46 @@
 - 11.9% of texts (24,656) contain NHTSA's call-centre phrasing "NHTSA campaign number: 19V757000 (ENGINE AND ENGINE COOLING)": the component name in parentheses, not written by the owner. The parenthetical matches the label 96.9% of the time. Rate by class: AIR BAGS 24.8%, FUEL/PROPULSION 22.3%, SERVICE BRAKES 16.8%, STRUCTURE 13.5%, STEERING 11.2%, POWER TRAIN 9.8%, ELECTRICAL 9.6%, ENGINE 8.8%, VISIBILITY/WIPER 1.0%, FCA 0.4%.
 - 29.2% of texts are call-centre transcripts ("The contact owns a 2018 ...", "TL* The contact ..."), not owner-written; rate varies by class (VISIBILITY/WIPER 3.9%, FCA 12.9%, AIR BAGS 34.8%). Also templated closers ("VIN tool confirms parts not available" 6,615; FOIA redaction text 6,915 docs).
 - Recall IDs (e.g. 19V757000) appear in about 12.9% of texts; they can map to one component.
+
+### Phase 3: leakage decisions and final cleaning (Tejas)
+
+Decisions: (1) strip NHTSA-inserted component names and the "NHTSA campaign number: ID (COMPONENT)" phrase; (2) strip standalone recall IDs, keep the word "recall"; (3) keep call-centre transcripts, strip the TL* marker only, add `is_transcript` column; (4) strip VIN-tool and FOIA boilerplate, keep the "failure mileage was approximately" sentence; (5) keep brand and model names; (6) keep the strict multi-component rule. After stripping, the 20-word minimum and the duplicate check are re-applied.
+
+**Cleaning rules, in the order applied** (`src/03_clean_and_label.py`; full examples in `results/cleaning_rules_log.txt`). Texts changed out of 229,063:
+1. Strip trailing reviewer tags (`*TR`, `*JB`, `*JS`, `*DT`, ...; one or more at the end): 5,266.
+   Before: `...EXTEND THE VIN'S TO ALL 2018 MODELS.  *TR` After: `...extend the vin's to all 2018 models.`
+2. Lowercase: 227,721.
+3. Collapse whitespace: 124,563.
+   Before: `...in oakland, california.  i had only driven...` After: `...in oakland, california. i had only driven...`
+4. `is_transcript` flag set (TL* marker or text starts "the contact"): 62,756 texts (27.4%). Then strip the TL* marker: 8,249.
+   Before: `tl* the contact owns a 2015 jeep grand cherokee.` After: `the contact owns a 2015 jeep grand cherokee.`
+5. Strip FOIA redaction text (including truncated versions; NHTSA cuts text at 2,048 characters): 6,759.
+   Before: `...while driving. information redacted pursuant to the freedom of information act (foia), 5 u.s.c. 552(b)(6).` After: `...while driving.`
+   The `[xxx]` redaction markers are left in (3.4% of texts, spread like the class base rates).
+6. Strip any sentence containing "vin tool" (covers "vin tool confirms parts not available" and variants like "vin tools confirms", "vin tool showed no open recall"): 8,521.
+   Before: `...the contact had not experienced a failure. vin tool confirms parts not available.` After: `...the contact had not experienced a failure.`
+7. Strip "nhtsa campaign/recall number: ID" plus the parenthesized component names that follow (singular or lists, with or without a space before the parenthesis; any parenthesis made only of component words, e.g. "(service brakes, hydraulics)"): 27,424.
+   Before: `...related the failure to nhtsa campaign number: 25v274000 (engine and engine cooling), but the vin was not included.` After: `...related the failure to, but the vin was not included.`
+   Known side effect: dangling words such as "related the failure to," stay behind.
+8. Strip any parenthesized string anywhere that exactly equals an NHTSA COMPDESC value or top-level name (before or after merging): 930.
+   Before: `...recall number: 197 - oil leak on alternator (engine and engine cooling). the vehicle was repaired` After: `...oil leak on alternator. the vehicle was repaired`
+9. Strip standalone recall IDs: `NNvNNNNNN` (2 or 3 digits, v or e, optional dash, 6 or 7 digits) and the short forms `NNv-NNN` or `NNvNNN...` (3 to 7 digits): 4,188.
+   Before: `...concerning nhtsa recall 22v-430 / honda campaign lcd.` After: `...concerning nhtsa recall / honda campaign lcd.`
+10. Re-collapse whitespace: 22.
+Then: exact duplicate texts dropped 3,671; texts under 20 words dropped 18,573.
+
+**Funnel:** 629,231 rows -> 432,893 ODINOs -> 304,879 single merged label -> 229,063 in the 10 classes -> 206,819 after duplicates and 20-word minimum. (Before stripping it was 207,095.)
+
+**Final counts per class:** ENGINE 52,589; POWER TRAIN 32,768; ELECTRICAL SYSTEM 25,153; STEERING 21,285; SERVICE BRAKES 19,616; FUEL/PROPULSION SYSTEM 15,202; AIR BAGS 13,952; STRUCTURE 12,698; VISIBILITY/WIPER 7,417; FORWARD COLLISION AVOIDANCE 6,139.
+
+**Per-class train/val/test (partial Nov 2026 excluded):** AIR BAGS 12,493/696/762; ELECTRICAL 19,900/2,799/2,448; ENGINE 43,042/4,758/4,777; FCA 5,113/443/580; FUEL/PROPULSION 12,627/1,203/1,369; POWER TRAIN 26,057/3,179/3,526; SERVICE BRAKES 16,820/1,385/1,408; STEERING 18,571/1,212/1,497; STRUCTURE 10,687/942/1,068; VISIBILITY/WIPER 6,551/446/419.
+
+**Residuals after stripping (honest list for the Data page):**
+- Parentheses equal to a COMPDESC/top-level name: 0. Parentheses made only of component words: 3,562, but these are owner abbreviations (tcm 138, abs 125, cvt 91, pcm 87, esc 73), kept.
+- Still present: "nhtsa campaign/recall" wording 1,908 texts (owner mentions), 7 malformed recall IDs, 18 texts with partial FOIA wording.
+- Call-centre template sentences remain in some classes, e.g. "parts distribution disconnect" (3,678 texts; FUEL/PROPULSION 991, AIR BAGS 655) and "the contact had not experienced a failure" (5,207, AIR BAGS 35%). These are kept per decision 3 but are a possible shortcut; Phase 6 reports transcript vs owner-written accuracy.
+- `is_transcript` share per class: AIR BAGS 38.9%, ENGINE 32.6%, FUEL/PROPULSION 32.5%, STRUCTURE 32.5%, POWER TRAIN 31.2%, SERVICE BRAKES 30.9%, STEERING 27.3%, ELECTRICAL 23.8%, FCA 12.9%, VISIBILITY/WIPER 3.9%.
+
+**Brand bias note (for the website discussion):** Brand and model names are kept. They appear among the distinctive terms: "kia" in ENGINE, "tesla" in FORWARD COLLISION AVOIDANCE, "ford explorer" and "subaru" in STRUCTURE and VISIBILITY/WIPER, "ford f-150" and "jeep cherokee" in POWER TRAIN. Some well-known problems are tied to specific models, so part of the accuracy may come from recognising a model's known defect instead of reading the symptom. Results can differ for models not seen in training.
+
+**Next:** Phase 4 (split and sample). Waiting for "proceed".

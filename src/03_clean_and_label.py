@@ -5,14 +5,17 @@ Steps (in order):
  2. Apply MERGE_MAP to top_level.
  3. Multi-component rule: keep ODINOs whose rows map to exactly ONE merged top_level (strict:
     rows with out-of-list labels count too), and that label must be in CLASSES. One row per ODINO.
- 4. Text cleaning: strip trailing reviewer tags (*TR etc.), lowercase, collapse whitespace,
-    drop exact duplicate texts, drop texts under 20 words.
- 5. Leakage audit (printed + saved to results/leakage_audit.txt). Nothing is removed for leakage here.
-Output: data/interim/complaints_clean.parquet
+ 4. Text cleaning (see RULES below, applied in order; each rule logs docs changed + examples):
+    reviewer tags, lowercase, whitespace, is_transcript flag, TL* marker, FOIA text, VIN-tool
+    sentences, NHTSA campaign phrase + component name, parenthesized component names, standalone
+    recall IDs. Then exact-duplicate texts dropped and texts under 20 words dropped (after stripping).
+ 5. Leakage audit (printed + saved to results/leakage_audit.txt).
+Output: data/interim/complaints_clean.parquet, results/cleaning_rules_log.txt
 """
 import csv
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -51,6 +54,19 @@ def load():
     return df
 
 
+def component_vocab(df):
+    """Names NHTSA uses for components, from the raw COMPDESC values (lowercase)."""
+    comp = {c.strip().lower() for c in df.compdesc.unique()}
+    tops = {top_level(c).lower() for c in comp}
+    names = comp | tops | {k.lower() for k in MERGE_MAP} | {v.lower() for v in MERGE_MAP.values()}
+    stems = {stem(w) for c in comp for w in re.findall(r"[a-z]+", c)} | {"and", "electric"}
+    return names, stems
+
+
+def stem(w):
+    return w[:-1] if len(w) > 3 and w.endswith("s") else w
+
+
 def label_complaints(df):
     df["top_level"] = df.compdesc.map(top_level).replace(MERGE_MAP)
     n_per = df.groupby("odino").top_level.nunique()
@@ -64,43 +80,118 @@ def label_complaints(df):
     return one.drop(columns=["compdesc", "top_level"])
 
 
-def clean_text(df):
-    n0 = len(df)
-    tag_trailing = df.text.str.contains(TAG_RE)
-    tag_any = df.text.str.contains(ANY_TAG_RE)
-    say(f"\nReviewer tags: trailing tag in {tag_trailing.sum():,} texts ({tag_trailing.mean():.2%}); "
-        f"any *XX token anywhere in {tag_any.sum():,}; non-trailing only: {(tag_any & ~tag_trailing).sum():,}")
-    say("  trailing tag counts:", df.text[tag_trailing].str.extract(r"(\*[A-Za-z]{2,3})\s*$")[0]
-        .str.upper().value_counts().head(12).to_dict())
-    ex = df.text[tag_trailing].head(3).str[-70:].tolist()
-    say("  examples (last 70 chars):", ex)
+# ---- stripping rules (applied to lowercased text) ----
+ID = r"\d{2,3}[ve]-?\d{6,7}"                      # NHTSA recall id, e.g. 19v757000
+FOIA_RE = re.compile(r"\s*\[?\s*(?:information\s+)?redacted[^.]{0,60}?pursuant to the freedom of information act"
+                     r"(?:\s*\(foia\))?[\s,]*(?:5\s*u\.?s\.?c\.?)?\s*(?:552\s*(?:\(b\)\s*(?:\(\d\))?)?)?\.?")  # tail optional: NHTSA truncates at 2048 chars
+VIN_RE = re.compile(r"[^.!?]*\bvin tools?\b[^.!?]*(?:[.!?]|$)")
+ITEM = rf"{ID}(?:\s*\([^()]*\))?"
+CAMPAIGN_RE = re.compile(rf"\s*\bnhtsa\s+(?:campaign|recall)(?:\s+(?:numbers?|nos?\.?|#))?\s*:?\s*{ITEM}(?:\s*(?:,|and|&)?\s*{ITEM})*")
+PAREN_RE = re.compile(r"\s*\(\s*([^()]{2,150}?)\s*\)")
+ID_RE = re.compile(rf"\s*\b(?:{ID}|\d{{2,3}}[ve]-?\d{{3,7}})\b")
+TL_RE = re.compile(r"(?:^|\s)tl\*\s*")
 
-    t = df.text.str.replace(TAG_RE, "", regex=True)          # rule 1: strip trailing reviewer tags
-    t = t.str.lower()                                         # rule 2: lowercase
-    t = t.str.replace(r"\s+", " ", regex=True).str.strip()    # rule 3: collapse whitespace
+RULE_LOG = {}  # rule name -> (n changed, [(before, after), ...])
+
+
+def snippet_pair(b, a, w=70):
+    i = next((k for k, (x, y) in enumerate(zip(b, a)) if x != y), min(len(a), len(b)))
+    j = len(b) - len(a)
+    return b[max(0, i - w): i + w + max(j, 0) + 20], a[max(0, i - w): i + w]
+
+
+def run_rule(name, series, fn):
+    new = series.map(fn)
+    ch = new != series
+    ex = series[ch].sample(min(3, ch.sum()), random_state=42).index if ch.any() else []
+    RULE_LOG[name] = (int(ch.sum()), [snippet_pair(series[i], new[i]) for i in ex])
+    say(f"  rule {name:34s} changed {ch.sum():7,} texts")
+    return new
+
+
+def clean_text(df, names, stems):
+    n0 = len(df)
+    say(f"\nReviewer tags: trailing tag in {df.text.str.contains(TAG_RE).sum():,} texts; "
+        f"mid-text *XX tokens (left alone): "
+        f"{(df.text.str.contains(ANY_TAG_RE) & ~df.text.str.contains(TAG_RE)).sum():,}")
+    say("  trailing tag counts:", df.text.str.extract(r"(\*[A-Za-z]{2,3})\s*$")[0]
+        .str.upper().value_counts().head(12).to_dict())
+    say("Applying rules in order:")
+    t = df.text
+    t = run_rule("1 strip trailing reviewer tags", t, lambda x: TAG_RE.sub("", x))
+    t = run_rule("2 lowercase", t, str.lower)
+    t = run_rule("3 collapse whitespace", t, lambda x: re.sub(r"\s+", " ", x).strip())
+    df = df.assign(text=t)
+    df["is_transcript"] = t.str.contains(TL_RE) | t.str.startswith("the contact")
+    say(f"  is_transcript flag (TL* marker or starts 'the contact'): {df.is_transcript.sum():,} "
+        f"({df.is_transcript.mean():.1%})")
+    t = run_rule("4 strip leading TL* marker", t, lambda x: TL_RE.sub("", x))
+    t = run_rule("5 strip FOIA redaction text", t, lambda x: FOIA_RE.sub("", x))
+    t = run_rule("6 strip VIN-tool sentences", t, lambda x: VIN_RE.sub("", x))
+
+    def campaign(m):
+        keep = []
+        for inner in re.findall(r"\(([^()]*)\)", m.group(0)):
+            toks = re.findall(r"[a-z]+", inner.lower())
+            comp_like = inner.strip().lower() in names or (toks and all(stem(w) in stems for w in toks) and len(inner) < 150)
+            if not comp_like:
+                keep.append(f" ({inner})")
+        return "".join(keep)
+
+    def paren(m):
+        return "" if re.sub(r"\s+", " ", m.group(1)).strip().lower() in names else m.group(0)
+
+    t = run_rule("7 strip 'nhtsa campaign number: ID (COMPONENT)'", t, lambda x: CAMPAIGN_RE.sub(campaign, x))
+    t = run_rule("8 strip parenthesized component names", t, lambda x: PAREN_RE.sub(paren, x))
+    t = run_rule("9 strip standalone recall IDs", t, lambda x: ID_RE.sub("", x))
+    t = run_rule("10 re-collapse whitespace", t, lambda x: re.sub(r"\s+", " ", x).strip())
     df = df.assign(text=t)
 
-    dup = df.duplicated("text", keep="first")                 # rule 4: exact duplicate texts
-    say(f"Exact duplicate texts dropped: {dup.sum():,}")
+    dup = df.duplicated("text", keep="first")
+    say(f"Exact duplicate texts dropped (after stripping): {dup.sum():,}")
     df = df[~dup]
     nw = df.text.str.split().str.len()
-    say(f"Texts under {MIN_WORDS} words dropped: {(nw < MIN_WORDS).sum():,}")  # rule 5
+    say(f"Texts under {MIN_WORDS} words dropped (after stripping): {(nw < MIN_WORDS).sum():,}")
     df = df[nw >= MIN_WORDS]
     say(f"Rows: {n0:,} -> {len(df):,}")
     return df.reset_index(drop=True)
 
 
-def audit(df, k=20):
-    say("\n" + "=" * 80 + "\nLEAKAGE AUDIT (nothing removed yet)\n" + "=" * 80)
+def write_rule_log():
+    lines = []
+    for name, (n, exs) in RULE_LOG.items():
+        lines.append(f"### {name}  ({n:,} texts changed)")
+        for b, a in exs:
+            lines.append(f"  BEFORE: ...{b}...")
+            lines.append(f"  AFTER : ...{a}...")
+        lines.append("")
+    (RESULTS_DIR / "cleaning_rules_log.txt").write_text("\n".join(lines))
+
+
+def audit(df, names, stems, k=20):
+    say("\n" + "=" * 80 + "\nLEAKAGE AUDIT (after stripping)\n" + "=" * 80)
     labels = sorted(df.label.unique())
     y = df.label.values
 
+    # 0. Residual component-name parentheticals and check bigrams
+    pa = df.text.str.findall(r"\(\s*([^()]{2,150}?)\s*\)")
+    exact = pa.map(lambda l: any(re.sub(r"\s+", " ", x).strip() in names for x in l))
+    like = pa.map(lambda l: any((lambda tk: tk and all(stem(w) in stems for w in tk))(re.findall(r"[a-z]+", x)) and len(x) < 60 for x in l))
+    say(f"\n0. Texts still containing a parenthesized string equal to a COMPDESC/top-level name: {exact.sum():,}")
+    say(f"   Texts containing a parenthesized string made only of component vocabulary words: {like.sum():,}")
+    resid = Counter(x.strip() for l in pa[like] for x in l if (lambda tk: tk and all(stem(w) in stems for w in tk))(re.findall(r"[a-z]+", x)))
+    say("   most common such parentheticals:", resid.most_common(8))
+    nhtsa_ph = df.text.str.contains(r"nhtsa (?:campaign|recall)").sum()
+    say(f"   Texts still containing 'nhtsa campaign/recall' wording: {nhtsa_ph:,}; recall-id pattern {ID}: "
+        f"{df.text.str.contains(ID).sum():,}; 'foia': {df.text.str.contains('foia').sum():,}; "
+        f"'vin tool': {df.text.str.contains('vin tool').sum():,}; 'tl*': {df.text.str.contains(r'tl[*]').sum():,}")
+
     # A. Distinctive unigrams+bigrams per class: log-odds with informative Dirichlet prior (Monroe et al.)
-    cv = CountVectorizer(ngram_range=(1, 2), min_df=30, binary=True, token_pattern=r"(?u)\b\w+\b|[^\w\s]")
+    cv = CountVectorizer(ngram_range=(2, 2), min_df=30, binary=True, token_pattern=r"(?u)\b\w+\b|[^\w\s]")
     X = cv.fit_transform(df.text)
     vocab = np.array(cv.get_feature_names_out())
     df_all = np.asarray(X.sum(0)).ravel()
-    say(f"\nA. Top {k} distinctive terms per class (document-frequency log-odds z-score; "
+    say(f"\nA. Top {k} distinctive BIGRAMS per class (document-frequency log-odds z-score; "
         f"vocab={len(vocab):,}, min_df=30). Format: term [docs in class / docs overall]")
     prior = df_all / df_all.sum() * 500
     for lab in labels:
@@ -161,11 +252,13 @@ def audit(df, k=20):
 
 def main():
     INTERIM_DIR.mkdir(parents=True, exist_ok=True)
-    df = load()
-    say(f"Raw rows: {len(df):,}")
-    df = label_complaints(df)
-    df = clean_text(df)
-    out = df[["odino", "ldate", "make", "model", "year", "label", "text"]]
+    RESULTS_DIR.mkdir(exist_ok=True)
+    raw = load()
+    names, stems = component_vocab(raw)
+    say(f"Raw rows: {len(raw):,}")
+    df = label_complaints(raw)
+    df = clean_text(df, names, stems)
+    out = df[["odino", "ldate", "make", "model", "year", "label", "text", "is_transcript"]]
     out.to_parquet(INTERIM_DIR / "complaints_clean.parquet", index=False)
     say(f"\nSaved {INTERIM_DIR / 'complaints_clean.parquet'}  shape={out.shape}")
     say("\nFinal counts per class:\n" + out.label.value_counts().to_string())
@@ -175,10 +268,11 @@ def main():
     w = np.where(d >= "2026-11-01", "excluded (partial Nov)", w)
     say("\nCounts per class per temporal window (after cleaning):\n"
         + pd.crosstab(out.label, w).reindex(columns=["train", "val", "test", "excluded (partial Nov)"]).to_string())
+    say("\nis_transcript share per class:\n" + out.groupby("label").is_transcript.mean().round(3).to_string())
 
-    audit(out)
-    (RESULTS_DIR).mkdir(exist_ok=True)
+    audit(out, names, stems)
     (RESULTS_DIR / "leakage_audit.txt").write_text("\n".join(OUT) + "\n")
+    write_rule_log()
 
 
 if __name__ == "__main__":

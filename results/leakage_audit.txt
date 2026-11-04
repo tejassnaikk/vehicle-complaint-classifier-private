@@ -2,168 +2,197 @@ Raw rows: 629,231
 ODINOs total: 432,893; single merged top_level: 304,879; multi top_level (dropped): 128,014
 Single-label and in class list: 229,063
 
-Reviewer tags: trailing tag in 5,266 texts (2.30%); any *XX token anywhere in 5,520; non-trailing only: 254
+Reviewer tags: trailing tag in 5,266 texts; mid-text *XX tokens (left alone): 254
   trailing tag counts: {'*TR': 3519, '*JB': 938, '*JS': 426, '*DT': 159, '*AS': 82, '*DL': 40, '*BF': 40, '*CC': 34, '*LN': 15, '*TP': 9, '*LD': 2, '*NO': 2}
-  examples (last 70 chars): [' EXCEEDED A REASONABLE AMOUNT OF TIME COMPLETING THE RECALL REPAIR.*JS', 'HICH POINT THE SMOKE BECAME FLAMES, THE VEHICLE WAS TOTALED. *JS*DT*JB', 'REFERRED THE CONTACT TO NHTSA. THE FAILURE MILEAGE WAS 160,000. *LN*JB']
-Exact duplicate texts dropped: 3,439
-Texts under 20 words dropped: 18,529
-Rows: 229,063 -> 207,095
+Applying rules in order:
+  rule 1 strip trailing reviewer tags     changed   5,266 texts
+  rule 2 lowercase                        changed 227,721 texts
+  rule 3 collapse whitespace              changed 124,563 texts
+  is_transcript flag (TL* marker or starts 'the contact'): 62,756 (27.4%)
+  rule 4 strip leading TL* marker         changed   8,249 texts
+  rule 5 strip FOIA redaction text        changed   6,759 texts
+  rule 6 strip VIN-tool sentences         changed   8,521 texts
+  rule 7 strip 'nhtsa campaign number: ID (COMPONENT)' changed  27,424 texts
+  rule 8 strip parenthesized component names changed     930 texts
+  rule 9 strip standalone recall IDs      changed   4,188 texts
+  rule 10 re-collapse whitespace          changed      22 texts
+Exact duplicate texts dropped (after stripping): 3,671
+Texts under 20 words dropped (after stripping): 18,573
+Rows: 229,063 -> 206,819
 
-Saved /Users/tena7850/Developer/vehicle-complaint-classifier/data/interim/complaints_clean.parquet  shape=(207095, 7)
+Saved /Users/tena7850/Developer/vehicle-complaint-classifier/data/interim/complaints_clean.parquet  shape=(206819, 8)
 
 Final counts per class:
 label
-ENGINE                         52628
-POWER TRAIN                    32790
-ELECTRICAL SYSTEM              25190
-STEERING                       21293
-SERVICE BRAKES                 19660
-FUEL/PROPULSION SYSTEM         15238
-AIR BAGS                       13994
-STRUCTURE                      12745
-VISIBILITY/WIPER                7418
+ENGINE                         52589
+POWER TRAIN                    32768
+ELECTRICAL SYSTEM              25153
+STEERING                       21285
+SERVICE BRAKES                 19616
+FUEL/PROPULSION SYSTEM         15202
+AIR BAGS                       13952
+STRUCTURE                      12698
+VISIBILITY/WIPER                7417
 FORWARD COLLISION AVOIDANCE     6139
 
 Counts per class per temporal window (after cleaning):
 col_0                        train   val  test  excluded (partial Nov)
 label                                                                 
-AIR BAGS                     12534   697   762                       1
-ELECTRICAL SYSTEM            19931  2804  2449                       6
-ENGINE                       43075  4761  4780                      12
+AIR BAGS                     12493   696   762                       1
+ELECTRICAL SYSTEM            19900  2799  2448                       6
+ENGINE                       43042  4758  4777                      12
 FORWARD COLLISION AVOIDANCE   5113   443   580                       3
-FUEL/PROPULSION SYSTEM       12656  1207  1372                       3
-POWER TRAIN                  26072  3183  3529                       6
-SERVICE BRAKES               16861  1388  1408                       3
-STEERING                     18577  1213  1498                       5
-STRUCTURE                    10725   951  1068                       1
-VISIBILITY/WIPER              6552   446   419                       1
+FUEL/PROPULSION SYSTEM       12627  1203  1369                       3
+POWER TRAIN                  26057  3179  3526                       6
+SERVICE BRAKES               16820  1385  1408                       3
+STEERING                     18571  1212  1497                       5
+STRUCTURE                    10687   942  1068                       1
+VISIBILITY/WIPER              6551   446   419                       1
+
+is_transcript share per class:
+label
+AIR BAGS                       0.389
+ELECTRICAL SYSTEM              0.238
+ENGINE                         0.326
+FORWARD COLLISION AVOIDANCE    0.129
+FUEL/PROPULSION SYSTEM         0.325
+POWER TRAIN                    0.312
+SERVICE BRAKES                 0.309
+STEERING                       0.273
+STRUCTURE                      0.325
+VISIBILITY/WIPER               0.039
 
 ================================================================================
-LEAKAGE AUDIT (nothing removed yet)
+LEAKAGE AUDIT (after stripping)
 ================================================================================
 
-A. Top 20 distinctive terms per class (document-frequency log-odds z-score; vocab=72,953, min_df=30). Format: term [docs in class / docs overall]
+0. Texts still containing a parenthesized string equal to a COMPDESC/top-level name: 0
+   Texts containing a parenthesized string made only of component vocabulary words: 3,562
+   most common such parentheticals: [('tcm', 138), ('abs', 125), ('cvt', 91), ('pcm', 87), ('esc', 73), ('bcm', 59), ('srs', 56), ('ecm', 53)]
+   Texts still containing 'nhtsa campaign/recall' wording: 1,908; recall-id pattern \d{2,3}[ve]-?\d{6,7}: 7; 'foia': 18; 'vin tool': 0; 'tl*': 0
 
-[AIR BAGS]  n=13,994
-  air [8019/11855] | bags [5471/6233] | air bags [5423/6151] | the air [2994/4552] | passenger [3815/10651] | bag [3679/4189] | airbag [4699/5044] | air bag [3613/4023] | seat [2209/4422] | deploy [2594/3019] | deployed [2210/2662] | not experienced [2592/8634] | the passenger [1906/4966] | a failure [2683/10864] | experienced a [2596/10383] | had not [2979/13540] | received [3865/21101] | contact had [2782/12327] | contact received [3016/14252] | airbags [2457/2640]
+A. Top 20 distinctive BIGRAMS per class (document-frequency log-odds z-score; vocab=62,861, min_df=30). Format: term [docs in class / docs overall]
 
-[ELECTRICAL SYSTEM]  n=25,190
-  battery [6599/10127] | electrical [5643/7406] | the battery [3840/5616] | screen [2374/3699] | electrical system [3307/3601] | system [6927/26985] | system ) [2449/2754] | start [4554/15074] | key [1689/2817] | radio [1640/2045] | camera [1482/2483] | battery . [1349/1804] | charging [1290/1895] | dead [1289/2177] | display [1351/2630] | battery was [1126/1558] | to start [2019/5551] | ( electrical [2429/2523] | charge [1443/3382] | wiring [1090/1985]
+[AIR BAGS]  n=13,952
+  the air [2994/4552] | air bag [3591/3999] | air bags [2142/2820] | not experienced [2556/8403] | the passenger [1906/4966] | a failure [2647/10635] | experienced a [2560/10154] | had not [2943/13309] | contact had [2746/12095] | contact received [2981/14022] | a reasonable [2831/13133] | reasonable amount [2791/12864] | exceeded a [2783/12802] | not deploy [1566/1863] | time for [2776/13169] | recall repair [3043/15487] | notification of [2840/14006] | received notification [2816/13853] | police report [1267/2946] | of time [2845/14180]
 
-[ENGINE]  n=52,628
-  engine [41999/57491] | the engine [24868/31100] | oil [15823/18515] | check engine [11871/17763] | check [13348/22642] | engine . [8487/9602] | the check [8460/12423] | coolant [9249/9872] | engine and [7003/7916] | engine light [7251/10869] | engine warning [5988/8417] | cylinder [5461/7331] | the oil [5738/6307] | and engine [5394/5896] | kia [5611/9088] | light [19811/49443] | cooling [4603/4891] | towed [10688/23294] | engine was [3440/4013] | smoke [3666/5150]
+[ELECTRICAL SYSTEM]  n=25,153
+  the battery [3840/5616] | battery . [1349/1804] | to start [2019/5551] | battery was [1126/1558] | the key [1002/1610] | the screen [923/1449] | battery and [850/1342] | the electrical [797/1125] | electrical system [902/1077] | the radio [852/1038] | start . [1238/3253] | instrument cluster [721/1144] | purchase , [646/880] | battery , [637/1006] | the instrument [1302/3934] | start the [1063/2848] | the ignition [763/1571] | key fob [620/854] | purchased a [811/1782] | of purchase [611/927]
+
+[ENGINE]  n=52,589
+  the engine [24868/31099] | check engine [11871/17763] | engine . [8488/9603] | the check [8460/12423] | engine light [7251/10869] | engine warning [5988/8417] | the oil [5737/6306] | engine was [3440/4013] | engine and [3368/4249] | oil change [3087/3963] | engine failure [5176/5365] | towed to [8821/18886] | my engine [2724/3068] | an oil [2403/2879] | engine , [2403/3060] | coming from [4738/9000] | engine is [2191/2597] | oil . [2739/2935] | an engine [2243/2525] | engine oil [2389/2537]
 
 [FORWARD COLLISION AVOIDANCE]  n=6,139
-  braking [2706/7616] | collision [2183/6020] | cruise [1789/3482] | cruise control [1690/3211] | in front [1653/4187] | behind [1632/5626] | front of [1418/4549] | emergency [1372/4520] | automatic [1109/2901] | behind me [1022/2522] | of me [984/2403] | tesla [907/2511] | forward [1344/6507] | braking system [865/2362] | front [2112/15992] | adaptive [868/1143] | engaged [859/2528] | lane [1268/6425] | emergency braking [967/1149] | control [2048/17165]
+  cruise control [1690/3211] | in front [1653/4187] | front of [1418/4549] | behind me [1022/2522] | of me [984/2403] | braking system [865/2362] | emergency braking [967/1149] | the automatic [592/1199] | for no [626/1553] | the brakes [1108/6123] | adaptive cruise [835/975] | forward collision [866/994] | me . [976/5419] | no reason [535/1462] | the forward [604/740] | braking . [436/1019] | the system [579/2301] | the cruise [405/954] | when there [388/833] | no cars [395/588]
 
-[FUEL/PROPULSION SYSTEM]  n=15,238
-  fuel [11530/14681] | the fuel [5034/6094] | pump [4564/9848] | system , [3578/5125] | tank [3459/4285] | fuel pump [3876/4527] | gas [3238/7923] | gasoline [3851/4208] | fuel system [4133/4351] | system [5212/26985] | ( fuel [3532/3655] | fuel tank [1813/2012] | smell [1227/2862] | odor [1192/2710] | strong [1021/1795] | the gas [1316/3573] | , gasoline [2871/2967] | tank . [1071/1284] | diesel [857/1366] | a fuel [1010/1226]
+[FUEL/PROPULSION SYSTEM]  n=15,202
+  the fuel [5033/6093] | fuel pump [3875/4526] | fuel tank [1812/2011] | the gas [1316/3573] | tank . [1071/1284] | a fuel [1010/1226] | gas tank [913/1089] | pump . [752/1438] | of gas [687/912] | of fuel [873/1007] | the tank [956/1070] | pressure fuel [893/1005] | fuel system [774/893] | fuel injectors [542/785] | the recall [3942/28291] | distribution disconnect [995/3689] | disconnect . [992/3677] | parts distribution [990/3683] | . parts [1008/3937] | the high [558/1309]
 
-[POWER TRAIN]  n=32,790
-  transmission [18804/21372] | the transmission [12188/13364] | gear [8189/10958] | shift [5388/7193] | shifting [3989/4728] | train [4231/4742] | gears [2785/3315] | gear . [2837/3282] | transmission . [3312/3640] | power train [4039/4289] | shifted [2343/3332] | reverse [2530/4205] | park [3811/8961] | accelerate [3195/6837] | shifter [2006/2641] | to shift [1979/2532] | clutch [1948/2197] | torque [1611/2176] | the gear [1596/2075] | neutral [1927/3454]
+[POWER TRAIN]  n=32,768
+  the transmission [12188/13364] | gear . [2837/3282] | transmission . [3313/3641] | to shift [1979/2532] | the gear [1596/2075] | to accelerate [2182/4538] | - 150 [1918/3725] | the accelerator [2287/5091] | transmission was [1787/1930] | f - [2053/4665] | accelerator pedal [1845/4013] | 150 . [1597/3186] | a transmission [1392/1555] | shift into [1124/1444] | ford f [1924/4341] | gear and [1131/1402] | transmission and [1233/1426] | ford focus [1253/2143] | in park [1621/3490] | jeep cherokee [977/1325]
 
-[SERVICE BRAKES]  n=19,660
-  brake [12466/18829] | brakes [10511/14312] | the brake [7432/10158] | pedal [6123/12875] | brake pedal [5249/6668] | the brakes [4213/6123] | abs [5353/6131] | braking [3864/7616] | brakes , [3874/4347] | hydraulic [4104/4533] | to stop [2848/5641] | the abs [3039/3344] | stop [5436/21284] | floor [1853/2820] | traction [1807/3217] | ( service [3369/3554] | the floor [1624/2185] | traction control [1601/2587] | depressed [1892/4401] | service [6300/30236]
+[SERVICE BRAKES]  n=19,616
+  the brake [7432/10158] | brake pedal [5249/6668] | the brakes [4213/6123] | to stop [2848/5641] | the abs [3040/3345] | the floor [1624/2185] | traction control [1600/2585] | pedal was [1618/3280] | brake system [1480/1815] | braking system [1341/2362] | brakes . [1273/1853] | stop the [1347/2552] | stop . [1729/4450] | the braking [870/1228] | was depressed [1131/2624] | and brake [871/1102] | the pedal [830/1081] | and traction [792/1080] | the floorboard [891/1055] | my brakes [831/1022]
 
-[STEERING]  n=21,293
-  steering [20204/24744] | wheel [10682/15592] | the steering [11599/13652] | steering wheel [9439/11696] | power steering [9546/10718] | the power [4605/6564] | power [9937/33520] | turn [5993/15841] | assist [3572/6517] | difficult [3044/4930] | to turn [3278/6282] | difficult to [2644/4073] | turning [2584/6020] | steer [2213/2653] | the wheel [1771/2326] | turn . [1571/2101] | steering assist [2802/2994] | straight [1482/2450] | wheel . [1448/2188] | to steer [1757/2055]
+[STEERING]  n=21,285
+  the steering [11598/13651] | steering wheel [9438/11695] | power steering [9546/10717] | the power [4605/6564] | to turn [3278/6282] | difficult to [2644/4073] | the wheel [1771/2326] | turn . [1571/2101] | steering assist [2802/2994] | wheel . [1448/2188] | to steer [1757/2055] | steering . [1855/2062] | turn the [1430/2812] | hard to [1228/2529] | wheel was [1196/1390] | steering column [1039/1239] | when turning [813/1210] | my steering [1061/1210] | wheel to [908/1106] | turn , [800/1465]
 
-[STRUCTURE]  n=12,745
-  door [3422/6810] | the door [1893/3093] | s side [1964/4951] | ford explorer [1661/3579] | explorer [1699/3818] | explorer . [1589/3137] | side [4137/22031] | open [2164/6861] | frame [1536/2902] | detached [1436/2097] | passenger [2571/10651] | driver [3058/15881] | trim [1612/1864] | side door [951/1545] | roof [938/1361] | structure [2034/2158] | driver ' [1178/3480] | doors [904/2132] | rust [852/1149] | pillar [1309/1445]
+[STRUCTURE]  n=12,698
+  the door [1893/3093] | s side [1964/4951] | ford explorer [1619/3537] | explorer . [1547/3095] | side door [951/1545] | driver ' [1178/3480] | the driver [1860/9362] | the frame [828/1093] | door . [743/1398] | to open [726/1495] | the passenger [1228/4966] | the front [1554/7827] | a - [989/1108] | passenger ’ [621/1403] | detached from [589/825] | driver ’ [615/1426] | the roof [541/730] | the rear [1298/6887] | not open [483/829] | open . [496/1024]
 
-[VISIBILITY/WIPER]  n=7,418
-  windshield [4906/7239] | the windshield [3119/4350] | crack [2145/3429] | glass [1468/2170] | windshield . [1550/2064] | cracked [1360/3605] | visibility [1020/1443] | wipers [1285/1526] | window [1007/3177] | rain [837/1724] | shattered [710/1124] | rock [717/1105] | the glass [721/1008] | my windshield [779/970] | view [619/1392] | wiper [1068/1196] | impact [781/2822] | the crack [815/976] | a crack [546/1066] | subaru [797/3440]
+[VISIBILITY/WIPER]  n=7,417
+  the windshield [3119/4350] | windshield . [1550/2064] | the glass [721/1008] | my windshield [779/970] | the crack [815/976] | a crack [546/1066] | windshield and [532/813] | windshield wipers [641/793] | passenger side [725/3569] | front windshield [433/708] | the window [408/1109] | windshield , [414/560] | crack . [403/554] | crack in [354/793] | a small [426/1501] | rear window [319/567] | the rain [300/586] | glass . [351/456] | a rock [304/458] | to see [603/3711]
 
 B. Highest-purity terms overall (df >= 100, share of docs in one class >= 90%); look for form artifacts or inserted component names
   POWER TRAIN                  'the transmission'             12188/13364
-  ENGINE                       'coolant'                      9249/9872
-  ENGINE                       'the oil'                      5738/6307
-  ENGINE                       'and engine'                   5394/5896
+  ENGINE                       'the oil'                      5737/6306
   ENGINE                       'engine failure'               5176/5365
-  ENGINE                       '( engine'                     5061/5165
-  AIR BAGS                     'airbag'                       4699/5044
-  ENGINE                       'cooling'                      4603/4891
-  SERVICE BRAKES               'hydraulic'                    4104/4533
-  FUEL/PROPULSION SYSTEM       'fuel system'                  4133/4351
-  POWER TRAIN                  'power train'                  4039/4289
-  FUEL/PROPULSION SYSTEM       'gasoline'                     3851/4208
-  ENGINE                       'engine cooling'               4023/4076
-  ENGINE                       'engine needed'                3975/4011
-  ENGINE                       'cooling )'                    3873/3904
-  FUEL/PROPULSION SYSTEM       '( fuel'                       3532/3655
-  POWER TRAIN                  'transmission .'               3312/3640
-  AIR BAGS                     '( air'                        3554/3601
-  ELECTRICAL SYSTEM            'electrical system'            3307/3601
-  AIR BAGS                     'bags )'                       3501/3556
-  SERVICE BRAKES               '( service'                    3369/3554
-  SERVICE BRAKES               'service brakes'               3405/3513
-  POWER TRAIN                  '( power'                      3398/3492
-  POWER TRAIN                  'train )'                      3353/3393
-  SERVICE BRAKES               'the abs'                      3039/3344
-  SERVICE BRAKES               ', hydraulic'                  3222/3321
-  SERVICE BRAKES               'hydraulic )'                  3174/3262
-  STEERING                     'rack'                         2994/3138
+  ENGINE                       'engine needed'                3974/4010
+  POWER TRAIN                  'transmission .'               3313/3641
+  SERVICE BRAKES               'the abs'                      3040/3345
   STEERING                     'steering assist'              2802/2994
-  ENGINE                       'engines'                      2768/2992
-  FUEL/PROPULSION SYSTEM       ', gasoline'                   2871/2967
   ENGINE                       'oil .'                        2739/2935
-  FUEL/PROPULSION SYSTEM       'gasoline )'                   2850/2925
-  ENGINE                       'consumption'                  2784/2920
   ENGINE                       'new engine'                   2762/2842
   ENGINE                       'of oil'                       2704/2829
-  ENGINE                       'misfire'                      2532/2753
   ENGINE                       'oil consumption'              2593/2670
-  AIR BAGS                     'airbags'                      2457/2640
-  STEERING                     'steering )'                   2586/2620
+  ENGINE                       'engine oil'                   2389/2537
+  ENGINE                       'coolant intrusion'            2452/2491
+  ENGINE                       'the coolant'                  2303/2439
+  AIR BAGS                     'the airbag'                   2120/2246
+  ENGINE                       'engine replacement'           1954/2037
+  FUEL/PROPULSION SYSTEM       'fuel tank'                    1812/2011
+  ENGINE                       'oil and'                      1778/1936
+  POWER TRAIN                  'transmission was'             1787/1930
+  ENGINE                       'oil pressure'                 1718/1876
+  ENGINE                       'head gasket'                  1744/1824
+  STEERING                     'steering rack'                1760/1774
+  ENGINE                       'engine had'                   1672/1760
+  SERVICE BRAKES               'brake booster'                1708/1729
+  POWER TRAIN                  'transmission failure'         1603/1675
+  POWER TRAIN                  'transmission needed'          1522/1569
+  POWER TRAIN                  'torque converter'             1413/1509
+  POWER TRAIN                  'transmission is'              1365/1482
+  ENGINE                       'low oil'                      1379/1456
+  ENGINE                       'engine block'                 1366/1414
+  SERVICE BRAKES               'brake fluid'                  1336/1388
+  STEERING                     'rack and'                     1330/1357
+  ENGINE                       'intrusion into'               1280/1345
+  ENGINE                       'engine has'                   1235/1338
+  ENGINE                       'white smoke'                  1201/1328
+  AIR BAGS                     'bag warning'                  1248/1327
+  ENGINE                       'the cylinder'                 1243/1320
+  ENGINE                       'oil in'                       1226/1285
+  ENGINE                       'cylinder #'                   1246/1282
+  ENGINE                       'oil was'                      1193/1281
 
 C. Repeated openers (first 5 words): count >= 150
-    7028  top class ENGINE (23%)  'tl* the contact owns a'
-    5339  top class ENGINE (37%)  'the contact owns a 2018'
-    5220  top class ENGINE (44%)  'the contact owns a 2017'
-    4359  top class ENGINE (33%)  'the contact owns a 2016'
-    4253  top class ENGINE (31%)  'the contact owns a 2019'
-    3561  top class ENGINE (27%)  'the contact owns a 2015'
-    3361  top class ENGINE (23%)  'the contact owns a 2013'
-    3360  top class ENGINE (26%)  'the contact owns a 2014'
-    3150  top class ENGINE (26%)  'the contact owns a 2020'
-    3019  top class ENGINE (27%)  'the contact owns a 2021'
-    2359  top class ENGINE (22%)  'the contact owns a 2022'
-    1934  top class ENGINE (22%)  'the contact owns a 2012'
+    5698  top class ENGINE (36%)  'the contact owns a 2018'
+    5631  top class ENGINE (43%)  'the contact owns a 2017'
+    4925  top class ENGINE (33%)  'the contact owns a 2016'
+    4642  top class ENGINE (30%)  'the contact owns a 2019'
+    4225  top class ENGINE (28%)  'the contact owns a 2015'
+    4129  top class ENGINE (25%)  'the contact owns a 2013'
+    4028  top class ENGINE (27%)  'the contact owns a 2014'
+    3343  top class ENGINE (25%)  'the contact owns a 2020'
+    3031  top class ENGINE (27%)  'the contact owns a 2021'
+    2495  top class ENGINE (24%)  'the contact owns a 2012'
+    2346  top class ENGINE (22%)  'the contact owns a 2022'
+    2266  top class ENGINE (25%)  'the contact owns a 2011'
 
 C. Repeated closers (last 6 words): count >= 150
-    6615  top class AIR BAGS (28%)  'vin tool confirms parts not available.'
-    5447  top class ENGINE (32%)  'information act (foia), 5 u.s.c. 552(b)(6)'
-    2468  top class FUEL/PROPULSION SYSTEM (25%)  'experienced a failure. parts distribution disconnect.'
-    1180  top class ELECTRICAL SYSTEM (19%)  'contact had not experienced a failure.'
-    1070  top class ENGINE (27%)  'failure. the failure mileage was unknown.'
-     920  top class ENGINE (22%)  'information act (foia), 5 u.s.c. 552(b)(6).'
-     615  top class ENGINE (39%)  'the failure mileage was approximately 100,000.'
-     465  top class ENGINE (35%)  'the failure mileage was approximately 80,000.'
-     426  top class ENGINE (34%)  'the failure mileage was approximately 60,000.'
-     402  top class ENGINE (35%)  'the failure mileage was approximately 120,000.'
-     388  top class ENGINE (36%)  'the failure mileage was approximately 70,000.'
-     373  top class ENGINE (33%)  'the failure mileage was approximately 130,000.'
+    5207  top class AIR BAGS (35%)  'contact had not experienced a failure.'
+    2438  top class FUEL/PROPULSION SYSTEM (25%)  'experienced a failure. parts distribution disconnect.'
+    1204  top class ENGINE (26%)  'failure. the failure mileage was unknown.'
+     654  top class ENGINE (38%)  'the failure mileage was approximately 100,000.'
+     493  top class ENGINE (35%)  'the failure mileage was approximately 80,000.'
+     457  top class ENGINE (32%)  'the failure mileage was approximately 60,000.'
+     439  top class ENGINE (34%)  'the failure mileage was approximately 120,000.'
+     418  top class ENGINE (36%)  'the failure mileage was approximately 70,000.'
+     404  top class ENGINE (27%)  'the failure mileage was approximately 50,000.'
+     400  top class ENGINE (34%)  'the failure mileage was approximately 90,000.'
+     398  top class ENGINE (31%)  'the failure mileage was approximately 130,000.'
+     345  top class ENGINE (32%)  'the failure mileage was approximately 150,000.'
 
 D. Form-artifact patterns (docs containing / class distribution of those docs)
-  redaction (foia/(b)(6))      6915 docs (3.3%);  top: ENGINE 31%, POWER TRAIN 14%, ELECTRICAL SYSTEM 12%
-  xxx run                      7072 docs (3.4%);  top: ENGINE 31%, POWER TRAIN 15%, ELECTRICAL SYSTEM 12%
-  nhtsa mention               38701 docs (18.7%);  top: ENGINE 23%, POWER TRAIN 15%, FUEL/PROPULSION SYSTEM 12%
+  redaction (foia/(b)(6))       215 docs (0.1%);  top: ENGINE 38%, POWER TRAIN 17%, ELECTRICAL SYSTEM 12%
+  xxx run                      7040 docs (3.4%);  top: ENGINE 31%, POWER TRAIN 15%, ELECTRICAL SYSTEM 12%
+  nhtsa mention               14766 docs (7.1%);  top: ENGINE 31%, POWER TRAIN 20%, STEERING 10%
   url                           997 docs (0.5%);  top: ENGINE 22%, ELECTRICAL SYSTEM 16%, POWER TRAIN 15%
-  vin mention                 23730 docs (11.5%);  top: ENGINE 24%, POWER TRAIN 15%, AIR BAGS 12%
-  'component' wording          3828 docs (1.8%);  top: ENGINE 22%, POWER TRAIN 18%, ELECTRICAL SYSTEM 14%
-  bracketed [..]               7045 docs (3.4%);  top: ENGINE 31%, POWER TRAIN 14%, ELECTRICAL SYSTEM 12%
-  owner/'consumer' voice       1933 docs (0.9%);  top: ENGINE 27%, POWER TRAIN 16%, AIR BAGS 13%
+  vin mention                 16631 docs (8.0%);  top: ENGINE 27%, POWER TRAIN 19%, STEERING 16%
+  'component' wording          3828 docs (1.9%);  top: ENGINE 22%, POWER TRAIN 18%, ELECTRICAL SYSTEM 14%
+  bracketed [..]               7012 docs (3.4%);  top: ENGINE 31%, POWER TRAIN 14%, ELECTRICAL SYSTEM 12%
+  owner/'consumer' voice       1931 docs (0.9%);  top: ENGINE 27%, POWER TRAIN 16%, AIR BAGS 13%
 
 E. Complaints per class per year
 ldate                        2020  2021  2022  2023  2024   2025  2026
 label                                                                 
-AIR BAGS                     2908  2104  1765  2173  2132   1657  1255
-ELECTRICAL SYSTEM            3631  3135  2838  3228  3471   4410  4477
-ENGINE                       5236  5218  6322  7611  9243  10820  8178
+AIR BAGS                     2904  2102  1764  2162  2118   1647  1255
+ELECTRICAL SYSTEM            3630  3135  2838  3224  3457   4395  4474
+ENGINE                       5236  5217  6320  7608  9232  10801  8175
 FORWARD COLLISION AVOIDANCE    78   448  1760  1186   933    837   897
-FUEL/PROPULSION SYSTEM       2447  1693  1692  1951  2905   2313  2237
-POWER TRAIN                  4016  3191  4070  4436  4892   6304  5881
-SERVICE BRAKES               2644  2410  2657  3329  3359   2883  2378
-STEERING                     3542  2737  2699  3620  3528   2799  2368
-STRUCTURE                    1800  1514  1332  1967  2139   2277  1716
-VISIBILITY/WIPER             1628  1199  1076  1089   840    850   736
+FUEL/PROPULSION SYSTEM       2447  1692  1691  1945  2894   2301  2232
+POWER TRAIN                  4015  3190  4069  4435  4888   6295  5876
+SERVICE BRAKES               2644  2410  2647  3322  3342   2875  2376
+STEERING                     3542  2737  2699  3619  3526   2796  2366
+STRUCTURE                    1800  1513  1330  1966  2138   2239  1712
+VISIBILITY/WIPER             1628  1199  1076  1089   839    850   736

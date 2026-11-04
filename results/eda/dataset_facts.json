@@ -1,0 +1,15 @@
+{
+  "complaints_through_oct_2026": 432791,
+  "days_covered": 2496,
+  "complaints_per_day_average": 173.39383012820514,
+  "complaints_with_multiple_component_rows": 138213,
+  "pct_complaints_with_multiple_component_rows": 31.927751199488096,
+  "multi_label_dropped_after_merge": 128014,
+  "pct_multi_label_dropped_after_merge": 29.57174174680579,
+  "cleaned_pool_complaints": 198464,
+  "median_words": 91.0,
+  "p95_words": 260.0,
+  "pct_transcripts_in_cleaned_pool": 26.613894711383423,
+  "first_complaint_date": "20200101",
+  "last_complaint_date": "20261101"
+}

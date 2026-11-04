@@ -22,7 +22,7 @@ import pandas as pd
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Rectangle
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from config import CLASSES, CLEAN_DIR, INTERIM_DIR, RAW_DIR, RESULTS_DIR, ROOT
+from config import CLASSES, CLEAN_DIR, INTERIM_DIR, PLAIN_NAMES, RAW_DIR, RESULTS_DIR, ROOT
 
 FIG = RESULTS_DIR / "figures"
 DATA = FIG / "data"
@@ -33,10 +33,7 @@ MODEL_COLOR = {"mlp": "#2a78d6", "bilstm": "#eb6834", "distilbert": "#1baf7a"}  
 BLUE, BLUE_DARK, BLUE_LIGHT = "#2a78d6", "#184f95", "#cde2fb"
 SURFACE, INK, INK2, MUTED, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#8b8a85", "#e6e5e1"
 RED_HL = "#f6c9c4"
-PLAIN = {"ENGINE": "Engine and cooling", "POWER TRAIN": "Transmission and drive parts", "ELECTRICAL SYSTEM": "Electrical system",
-         "STEERING": "Steering", "SERVICE BRAKES": "Brakes", "AIR BAGS": "Air bags", "STRUCTURE": "Body and frame",
-         "FUEL/PROPULSION SYSTEM": "Fuel system", "VISIBILITY/WIPER": "Windshield, glass and wipers",
-         "FORWARD COLLISION AVOIDANCE": "Automatic braking and collision warning"}
+PLAIN = PLAIN_NAMES
 SOURCE_NOTE = "Source: NHTSA vehicle owner complaints (US government data, public domain)"
 
 plt.rcParams.update({"font.family": "DejaVu Sans", "figure.facecolor": SURFACE, "axes.facecolor": SURFACE,
@@ -75,7 +72,7 @@ def build_funnel():
         assert m, pattern
         return int(m.group(1).replace(",", ""))
 
-    raw = pd.concat([pd.read_csv(RAW_DIR / f, sep="\t", header=None, usecols=[1, 16], names=["odino", "ldate"], quoting=csv.QUOTE_NONE,
+    raw = pd.concat([pd.read_csv(RAW_DIR / f, sep="\t", header=None, usecols=[1, 11, 16], names=["odino", "compdesc", "ldate"], quoting=csv.QUOTE_NONE,
                                  dtype=str, keep_default_na=False)
                      for f in ["COMPLAINTS_RECEIVED_2020-2024.txt", "COMPLAINTS_RECEIVED_2025-2026.txt"]])
     f = {
@@ -93,6 +90,22 @@ def build_funnel():
     r = r[r.ldate <= "20261031"]
     per_year = r.ldate.str[:4].value_counts().sort_index().rename_axis("year").rename("complaints").reset_index()
     per_year.to_csv(RESULTS_DIR / "eda" / "complaints_per_year.csv", index=False)
+    # dataset facts quoted on the website
+    rows_per = raw.groupby("odino").size()
+    pool = pd.read_parquet(INTERIM_DIR / "complaints_clean.parquet")
+    pool = pool[pool.ldate <= "20261031"]
+    words = pool.text.str.split().str.len()
+    d0, d1 = pd.Timestamp("2020-01-01"), pd.Timestamp("2026-10-31")
+    facts = {"complaints_through_oct_2026": int(per_year.complaints.sum()), "days_covered": int((d1 - d0).days + 1),
+             "complaints_per_day_average": float(per_year.complaints.sum() / ((d1 - d0).days + 1)),
+             "complaints_with_multiple_component_rows": int((rows_per > 1).sum()),
+             "pct_complaints_with_multiple_component_rows": float((rows_per > 1).mean() * 100),
+             "multi_label_dropped_after_merge": f["raw_complaints"] - f["single_label"],
+             "pct_multi_label_dropped_after_merge": float((f["raw_complaints"] - f["single_label"]) / f["raw_complaints"] * 100),
+             "cleaned_pool_complaints": int(len(pool)), "median_words": float(words.median()), "p95_words": float(words.quantile(0.95)),
+             "pct_transcripts_in_cleaned_pool": float(pool.is_transcript.mean() * 100),
+             "first_complaint_date": str(raw.ldate.min()), "last_complaint_date": str(raw.ldate.max())}
+    (RESULTS_DIR / "eda" / "dataset_facts.json").write_text(json.dumps(facts, indent=2))
     return f, per_year
 
 

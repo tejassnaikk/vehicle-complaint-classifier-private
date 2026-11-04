@@ -372,3 +372,29 @@ Phase 7's spec in `CLAUDE.md` now also lists the extra plain-language figures be
 **Notes for Phase 8:** word-importance HTML snippets are in `results/eval/word_importance/` (not images, not yet copied to `docs/`). The figure data files and `results/data_funnel.json` are the sources for numbers in page text. DistilBERT per-class numbers are only for the temporal test set.
 
 **Next:** Phase 8 (website). Waiting for "proceed".
+
+## Phase 8: Website (done, awaiting 'proceed' for Phase 9)
+
+**Built:** `docs/` with `index.html`, `introduction.html`, `data.html`, `models.html`, `results.html`, `conclusion.html`, `about.html`, one stylesheet `css/style.css`, and `.nojekyll`. No JavaScript, no frameworks, no external fonts or images. Same nav on every page (Introduction | Data & Prep | Models | Results | Conclusion | About; the site title links to `index.html`). Light design, phone-friendly (tested at 375 px wide in headless Chrome: no page-level overflow; tables scroll inside their own box). Every figure links to its full-size image.
+
+**How it is built:** `src/10_build_site.py` writes every page. All prose is in that script, and every number is read from a file in `results/` or computed from those files, so the site cannot drift from the results. New results files it writes: `results/environment.json` (package versions), `results/eval/error_overlap.json` (497 of 7,320 temporal test complaints wrong for all three models, 1,330 wrong for at least one), `results/eval/stub_analysis.json` (229 test texts keep only a "notification of;" stub; DistilBERT is right on 77.3% of them vs 89.5% of other texts). Earlier in this phase: `results/leakage_audit_before_stripping.txt` (the first audit, from commit 7919aef) and `results/eda/dataset_facts.json` (shares and medians quoted on the site). `PLAIN_NAMES` (plain-English class names) now lives in `config.py`.
+
+**Checks run by the build (`src/10_build_site.py`) and `src/check_site.py`:** no banned words (revolutionary, cutting-edge, robust, leverage, delve, seamless, crucial, powerful, and similar), no em-dashes or en-dashes, every image and internal link exists, one h1 per page, no empty alt text, balanced HTML tags, and no technical terms (model names, F1, confusion matrix, macro) on the Introduction or Conclusion. Introduction paragraphs have 9, 9, 9 and 10 sentences; Conclusion paragraphs have 10, 10, 10 and 10 (rule: 7 to 10). Of 708 numbers on the site, 705 appear literally in `results/`; the other 3 are derived: 102 (complaints received on 1 November 2026, raw complaints minus complaints through October), 204 (2025 complaints per day) and 15,427,466 (MLP parameters from its layer sizes).
+
+**Pages:**
+- Introduction: plain-language, topic only (why owners file complaints, what a complaint looks like with 3 quote cards, how many there are with the per-year chart, why sorting matters).
+- Data & Prep: source and links, fields kept and privacy, labels and merges, multi-component rule, the 13 cleaning rules with counts and real before/after examples (parsed from `results/cleaning_rules_log.txt`), the leakage audit with the giveaway terms table (from the first audit), what was kept and why, splits and class table, links to the CSVs and scripts.
+- Models: what we predict, the three models with diagrams, how each works, why chosen, a settings table (from the config and metrics files).
+- Results: summary table with intervals, McNemar and paired bootstrap tables, split comparison, per-class table and chart, confusion matrices (temporal shown, counts and random in collapsible sections), training curves, transcript vs owner-written, a "where the models fail" list, 15 random errors (DistilBERT) and 5 confident correct examples, and the 12 word-importance highlights.
+- Conclusion: plain-language findings with 2 figures (sorted correctly per 100; most common mix-ups).
+- About: project facts only, author name, tools and versions, data source and disclaimer.
+
+**Bugs found and fixed while checking by eye:** the paired-difference table first printed reversed labels (it said "MLP minus BiLSTM" for a BiLSTM-minus-MLP value); "89 times out of 10" in the Conclusion (now "out of 100"); a nonsense "0 complaints after October" expression; quote cards too small in a 3-column layout; per-class table too wide (now split into temporal and random).
+
+**Decisions for Tejas:**
+1. About page: project facts only, no biography. Add your own bio if you want one.
+2. I did not add a note that Claude Code helped write the code and text. If your course requires AI disclosure, add it to the About page.
+3. Links point to `github.com/tejassnaikk/vehicle-complaint-classifier`; they will work once the repo is public (Phase 9). The NHTSA links are unchecked until Phase 9.
+4. The word-importance snippets are included in the Results page as HTML; the cleaning examples show only published columns plus the raw component label.
+
+**Next:** Phase 9 (README, check every link and number, ask before making the repo public and enabling Pages from `/docs`). Waiting for "proceed".

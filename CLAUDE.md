@@ -42,6 +42,8 @@ vehicle-complaint-classifier/
     07_train_distilbert.py
     08_evaluate.py
     09_make_figures.py
+    10_build_site.py        # writes docs/*.html from results/ (all site text lives here)
+    check_site.py           # checks site numbers trace to results/, tag balance
     common.py               # shared: dataset loading, metrics, plotting helpers
   notebooks/
     distilbert_colab.ipynb  # only if needed

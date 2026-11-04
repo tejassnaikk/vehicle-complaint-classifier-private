@@ -1,0 +1,19 @@
+{
+  "description": "temporal test texts that contain the stub 'notification of;' left after the NHTSA campaign number and component name were removed",
+  "n_test": 7320,
+  "n_with_stub": 229,
+  "accuracy": {
+    "mlp": {
+      "with_stub": 0.8209606986899564,
+      "without_stub": 0.8780143844309688
+    },
+    "bilstm": {
+      "with_stub": 0.8165938864628821,
+      "without_stub": 0.8703990974474686
+    },
+    "distilbert": {
+      "with_stub": 0.7729257641921398,
+      "without_stub": 0.8950782682273304
+    }
+  }
+}

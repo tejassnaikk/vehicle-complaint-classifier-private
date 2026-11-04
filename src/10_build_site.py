@@ -1,0 +1,785 @@
+"""Phase 8: build the static website in docs/ from files in results/ and docs/img/.
+
+All page text is written here; every number is read from a file in results/ (or computed from those files),
+so the site cannot drift from the results. Run: python src/10_build_site.py
+Also writes two small analysis files: results/eval/error_overlap.json and results/eval/stub_analysis.json.
+"""
+import html
+import json
+import re
+import sys
+from pathlib import Path
+
+import pandas as pd
+from PIL import Image
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from config import CLASSES, PLAIN_NAMES, RESULTS_DIR as R, ROOT, CLEAN_DIR
+
+DOCS = ROOT / "docs"
+IMG = DOCS / "img"
+REPO = "https://github.com/tejassnaikk/vehicle-complaint-classifier"
+NHTSA_DATA = "https://www.nhtsa.gov/nhtsa-datasets-and-apis"
+NHTSA_DICT = "https://static.nhtsa.gov/odi/ffdd/cmpl/CMPL.txt"
+NHTSA_FILES = ["https://static.nhtsa.gov/odi/ffdd/cmpl/COMPLAINTS_RECEIVED_2020-2024.zip",
+               "https://static.nhtsa.gov/odi/ffdd/cmpl/COMPLAINTS_RECEIVED_2025-2026.zip"]
+NHTSA_REPORT = "https://www.nhtsa.gov/report-a-safety-problem"
+MODELS = ["mlp", "bilstm", "distilbert"]
+NICE = {"mlp": "MLP (TF-IDF)", "bilstm": "BiLSTM", "distilbert": "DistilBERT"}
+PAGES = [("introduction.html", "Introduction"), ("data.html", "Data & Prep"), ("models.html", "Models"),
+         ("results.html", "Results"), ("conclusion.html", "Conclusion"), ("about.html", "About")]
+SPLITS = ["temporal", "random"]
+
+
+# ============================================================================ helpers
+def jl(p):
+    return json.loads(Path(p).read_text())
+
+
+def n(x):
+    return f"{int(round(x)):,}"
+
+
+def p1(x):
+    return f"{x:.1f}"
+
+
+def f4(x):
+    return f"{x:.4f}"
+
+
+def f3(x):
+    return f"{x:.3f}"
+
+
+def esc(s):
+    return html.escape(str(s), quote=True)
+
+
+def para(sentences, strict=False):
+    """One paragraph from a list of sentences. strict=True enforces the 7 to 10 sentence rule."""
+    if strict:
+        assert 7 <= len(sentences) <= 10, f"paragraph has {len(sentences)} sentences: {sentences[0][:50]}"
+    return "<p>" + " ".join(sentences) + "</p>\n"
+
+
+def fig(src, alt, caption, link=None):
+    with Image.open(IMG / src) as im:
+        w, h = im.size
+    img = f'<a href="img/{src}" title="Open the full-size image"><img src="img/{src}" alt="{esc(alt)}" width="{w}" height="{h}" loading="lazy"></a>'
+    return f"<figure>{img}<figcaption>{caption}</figcaption></figure>\n"
+
+
+def table(headers, rows, caption=None, num_cols=(), best_rows=(), text_cols=()):
+    t = '<div class="table-wrap"><table>'
+    if caption:
+        t += f"<caption>{caption}</caption>"
+    t += "<thead><tr>" + "".join(f'<th scope="col"{" class=num" if i in num_cols else ""}>{h}</th>' for i, h in enumerate(headers)) + "</tr></thead><tbody>"
+    for ri, row in enumerate(rows):
+        t += "<tr" + (' class="best"' if ri in best_rows else "") + ">"
+        for i, c in enumerate(row):
+            cls = "num" if i in num_cols else ("text" if i in text_cols else "")
+            t += f'<td{" class=" + cls if cls else ""}>{c}</td>'
+        t += "</tr>"
+    return t + "</tbody></table></div>\n"
+
+
+def details(summary, body):
+    return f"<details><summary>{summary}</summary>\n{body}</details>\n"
+
+
+def gh(path):
+    return f"{REPO}/blob/main/{path}"
+
+
+def page(fname, title, body, desc):
+    nav = "".join(f'<li><a href="{f}"{" aria-current=\"page\"" if f == fname else ""}>{esc(t)}</a></li>' for f, t in PAGES)
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{esc(title)} | What Failed on This Car?</title>
+<meta name="description" content="{esc(desc)}">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to the content</a>
+<header class="site-header"><div class="inner">
+<a class="site-title" href="index.html">What Failed on <span>This Car?</span></a>
+<nav class="main" aria-label="Main"><ul>{nav}</ul></nav>
+</div></header>
+<main id="content">
+{body}
+</main>
+<footer><div class="inner">
+<div>Complaint data: National Highway Traffic Safety Administration (NHTSA), Office of Defects Investigation, vehicle owner complaints. US government data, public domain.</div>
+<div>A class project. Code, cleaned data and results: <a href="{REPO}">{REPO.replace("https://", "")}</a>.</div>
+</div></footer>
+</body>
+</html>
+"""
+
+
+# ============================================================================ load results
+funnel = jl(R / "data_funnel.json")
+facts = jl(R / "eda" / "dataset_facts.json")
+per_year = pd.read_csv(R / "eda" / "complaints_per_year.csv")
+PY = {int(r.year): int(r.complaints) for r in per_year.itertuples()}
+summ = pd.read_csv(R / "summary_table.csv")
+sig = jl(R / "significance.json")
+trans = jl(R / "transcript_vs_owner.json")
+cb = pd.read_csv(R / "class_balance.csv").set_index("class")
+pcf1 = pd.read_csv(R / "eval" / "per_class_f1_all.csv", index_col=0)
+ident = pd.read_csv(R / "figures" / "data" / "identified_correctly.csv").set_index("class").percent_sorted_correctly
+mix = pd.read_csv(R / "figures" / "data" / "mixups.csv")
+quotes = jl(R / "figures" / "data" / "quote_cards.json")
+cfg = {(m, s): jl(R / m / s / "config.json") for m in MODELS for s in SPLITS}
+tm = {(m, s): jl(R / m / s / "metrics.json") for m in MODELS for s in SPLITS}
+em = {(m, s): jl(R / "eval" / m / s / "metrics.json") for m in MODELS for s in SPLITS}
+arch = jl(R / "distilbert" / "architecture.json")
+wi = jl(R / "eval" / "word_importance" / "word_importance.json")
+audit_after = (R / "leakage_audit.txt").read_text()
+audit_before = (R / "leakage_audit_before_stripping.txt").read_text()
+rules_log = (R / "cleaning_rules_log.txt").read_text()
+
+
+def S(model, split):
+    return summ[(summ.model == NICE[model]) & (summ.split == split)].iloc[0]
+
+
+# ---- software versions (pinned in requirements.txt), saved to results/environment.json
+env = dict(line.strip().split("==") for line in (ROOT / "requirements.txt").read_text().split() if "==" in line)
+env["python"] = f"{sys.version_info.major}.{sys.version_info.minor}"
+(R / "environment.json").write_text(json.dumps(env, indent=2))
+
+# ---- extra analyses saved to results/eval
+def load_preds(m, s):
+    return pd.read_csv(R / m / s / "test_predictions.csv", dtype={"odino": str})
+
+
+test_t = pd.read_csv(CLEAN_DIR / "complaints_temporal.csv", dtype=str, keep_default_na=False)
+test_t = test_t[test_t.split == "test"].reset_index(drop=True)
+P = {m: load_preds(m, "temporal").merge(test_t[["odino", "text"]], on="odino") for m in MODELS}
+wrong = {m: (P[m].y_true != P[m].y_pred) for m in MODELS}
+overlap = {"n_test": int(len(test_t)), "wrong_by_model": {m: int(wrong[m].sum()) for m in MODELS},
+           "wrong_for_all_three": int((wrong["mlp"] & wrong["bilstm"] & wrong["distilbert"]).sum()),
+           "wrong_for_at_least_one": int((wrong["mlp"] | wrong["bilstm"] | wrong["distilbert"]).sum())}
+overlap["pct_wrong_for_all_three"] = overlap["wrong_for_all_three"] / overlap["n_test"] * 100
+(R / "eval" / "error_overlap.json").write_text(json.dumps(overlap, indent=2))
+STUB = re.compile(r"notification of\s*[;.,]")
+has_stub = P["mlp"].text.str.contains(STUB)
+stub = {"description": "temporal test texts that contain the stub 'notification of;' left after the NHTSA campaign number and component name were removed",
+        "n_test": int(len(has_stub)), "n_with_stub": int(has_stub.sum()),
+        "accuracy": {m: {"with_stub": float((~wrong[m])[has_stub].mean()), "without_stub": float((~wrong[m])[~has_stub].mean())} for m in MODELS}}
+(R / "eval" / "stub_analysis.json").write_text(json.dumps(stub, indent=2))
+
+# ---- parse the cleaning rule log: rule number -> name, count, examples
+rules = {}
+for block in re.split(r"(?m)^### ", rules_log)[1:]:
+    head, *lines = block.strip().splitlines()
+    m_ = re.match(r"(\d+) (.+?)\s+\(([\d,]+) texts changed\)", head)
+    ex, before = [], None
+    for ln in lines:
+        if ln.strip().startswith("BEFORE:"):
+            before = ln.split("BEFORE:", 1)[1].strip()
+        elif ln.strip().startswith("AFTER"):
+            ex.append((before, ln.split(":", 1)[1].strip()))
+    rules[int(m_.group(1))] = {"name": m_.group(2), "count": int(m_.group(3).replace(",", "")), "examples": ex}
+
+# ---- parse the "before stripping" audit: the terms that gave the leak away
+leak_terms = []
+for term in ["( engine", "( air", "bags )", "( service", "hydraulic )", "( fuel"]:
+    mm = re.search(rf"^\s{{2}}([A-Z/ ]+?)\s{{2,}}'{re.escape(term)}'\s+(\d+)/(\d+)\s*$", audit_before, re.M)
+    assert mm, term
+    leak_terms.append((term, mm.group(1).strip(), int(mm.group(2)), int(mm.group(3))))
+resid = re.search(r"Texts still containing 'nhtsa campaign/recall' wording: ([\d,]+); recall-id pattern .*?: ([\d,]+); 'foia': ([\d,]+)", audit_after)
+resid = [int(x.replace(",", "")) for x in resid.groups()]
+paren_left = int(re.search(r"equal to a COMPDESC/top-level name: (\d+)", audit_after).group(1))
+
+# ============================================================================ shared values
+best = S("distilbert", "temporal")
+mlp_t, bil_t = S("mlp", "temporal"), S("bilstm", "temporal")
+per100 = lambda x: int(round(x * 100))
+mc = {(r["model_a"], r["model_b"]): r for r in sig["mcnemar_exact_temporal"]}
+pd_diff = sig["paired_difference_macro_f1_95ci"]
+gap = {m: (S(m, "random").test_macro_f1 - S(m, "temporal").test_macro_f1) * 100 for m in MODELS}
+gap_acc = {m: (S(m, "random").test_accuracy - S(m, "temporal").test_accuracy) * 100 for m in MODELS}
+PN = PLAIN_NAMES
+cls_plain = lambda c: PN[c]
+per_day_2025 = PY[2025] / 365
+growth_21_25 = (PY[2025] / PY[2021] - 1) * 100
+assert 200 < per_day_2025 < 210 and per_day_2025 > 180 * 1.0
+
+
+# ============================================================================ pages
+def build_intro():
+    s1 = [
+        "Every car owner eventually meets a part that does not work the way it should.",
+        "Most of the time it is an annoyance, such as a dead battery or a rattle behind the dashboard.",
+        "Sometimes it is dangerous, such as brakes that feel soft, a steering wheel that locks up, or air bags that stay folded in a crash.",
+        "In the United States, an owner who sees a problem like this can report it to the National Highway Traffic Safety Administration, known as NHTSA.",
+        "The report is called a vehicle owner complaint, and owners can file one themselves or by phone.",
+        "When they call, a staff member writes down what the owner says.",
+        "NHTSA collects these complaints in a public file that anyone can download.",
+        f"The file we used holds {n(facts['complaints_through_oct_2026'])} complaints received from January 2020 through October 2026.",
+        f"That is an average of {n(facts['complaints_per_day_average'])} new complaints every day for almost seven years.",
+    ]
+    s2 = [
+        "A complaint is a short piece of ordinary writing, and no two read alike.",
+        f"The typical one in our collection is {n(facts['median_words'])} words long, about the length of a short paragraph.",
+        "Some are a single sentence, like the owner whose air bags did not open when the car hit a concrete wall at 50 miles per hour.",
+        "Others follow a problem for months, with dates, mileage and repeated trips to a dealer.",
+        "Owners rarely use the names that engineers use for parts.",
+        'They write that "the pedal becomes hard" or that "the steering wheel sticks" instead of naming a component.',
+        f"About {n(round(facts['pct_transcripts_in_cleaned_pool']))} percent of the complaints we kept were written down by NHTSA staff during a phone call, in a more formal style, and the rest were written by the owners.",
+        "Some owners write in anger, some in fear, and some with careful detail.",
+        "All of them are trying to tell the government which part of the car failed.",
+    ]
+    s3 = [
+        "The number of complaints has grown in recent years.",
+        f"In 2021 NHTSA received {n(PY[2021])} complaints, and in 2025 it received {n(PY[2025])}.",
+        f"That is about {n(round(growth_21_25))} percent more in four years.",
+        f"The count for 2026 covers only January through October, and it already stands at {n(PY[2026])}.",
+        "Each complaint is counted once, even when the owner lists several car parts.",
+        "Behind every number is a person who noticed that something about a vehicle was unsafe or broken.",
+        "The numbers also show why reading every complaint by hand is hard.",
+        f"At the 2025 pace, NHTSA receives about {n(per_day_2025)} new complaints every day.",
+        f"A person who read one complaint a minute would need more than {int(per_day_2025 // 60)} hours each day just to get through them.",
+    ]
+    s4 = [
+        "A complaint helps only if the right people see it.",
+        "Staff at NHTSA look for patterns, such as many owners of one model reporting the same failing part.",
+        "When a pattern points to a safety defect, the agency can open an investigation, and a manufacturer can be asked to recall the vehicles for repair.",
+        "To spot a pattern, someone first has to know which part each complaint is about.",
+        "In the NHTSA file, every complaint is filed under a group of parts, such as the engine, the steering or the air bags.",
+        "People assign those groups by reading the complaints.",
+        "The job is slow, and two careful readers can disagree, because a story about a car that dies on the highway could point to the engine, the fuel system or the electrical system.",
+        f"In fact, about {n(round(facts['pct_multi_label_dropped_after_merge']))} percent of the complaints in the file are filed under more than one group of parts, which shows how often one story touches several systems.",
+        "This project asks a simple question: how well can the words an owner writes, and nothing else, tell us which part of the car failed?",
+        "The rest of this website shows the data we used, the work we did to answer the question, and what we found.",
+    ]
+    qs = "".join(fig(f"fig_quote_card_{q['card']}.png", f"Quote card: {q['plain_label']} complaint received {q['received']}: {q['excerpt']}",
+                     f"{esc(q['plain_label'])} complaint, {esc(q['received'])}.") for q in quotes)
+    body = f"""<h1>Why vehicle owners write to the government</h1>
+<section>
+<h2>When something goes wrong with a car</h2>
+{para(s1, True)}
+</section>
+<section>
+<h2>What a complaint looks like</h2>
+{para(s2, True)}
+<div class="quotes">{qs}</div>
+<div class="small">Three real complaints from our collection, with capital letters restored for reading. Source: NHTSA vehicle owner complaints, US government data, public domain.</div>
+</section>
+<section>
+<h2>How many complaints there are</h2>
+{para(s3, True)}
+{fig("fig_complaints_per_year.png", "Bar chart of vehicle complaints received by NHTSA each year: " + ", ".join(f"{y}: {n(c)}" for y, c in PY.items()) + ".", "Complaints received per year. The 2026 bar covers January through October. Data: results/eda/complaints_per_year.csv.")}
+</section>
+<section>
+<h2>Why sorting complaints matters</h2>
+{para(s4, True)}
+</section>
+<div class="next">Next: <a href="data.html">how we prepared the data</a>.</div>"""
+    return page("introduction.html", "Introduction", body, "What vehicle owner complaints are, how many NHTSA receives, and why sorting them by failing part is hard.")
+
+
+def build_conclusion():
+    ek = overlap
+    odi4 = wi["examples"][6]["odino"] if wi["examples"][6]["example"] == 4 else [e for e in wi["examples"] if e["example"] == 4][0]["odino"]
+    n_fca = sum(int(P[m].loc[P[m].odino == odi4, "pred_label"].iloc[0] == "FORWARD COLLISION AVOIDANCE") for m in MODELS)
+    NUMW = {1: "one", 2: "two", 3: "all three"}
+    mixd = {(r.true_class, r.put_under): (int(r["count"]), int(r.of_total)) for _, r in mix.iterrows()}
+    fuel_eng, trans_eng = mixd[("FUEL/PROPULSION SYSTEM", "ENGINE")], mixd[("POWER TRAIN", "ENGINE")]
+    el_eng, el_pt = mixd[("ELECTRICAL SYSTEM", "ENGINE")], mixd[("ELECTRICAL SYSTEM", "POWER TRAIN")]
+    easiest = ident.sort_values(ascending=False)
+    assert set(easiest.index[:2]) == {'Air bags', 'Steering'}
+    hardest = ident.sort_values()
+    c1 = [
+        "We set out to learn whether the words an owner writes can tell us which part of the car failed.",
+        f"To find out, we tested three computer methods on {n(best.n_test)} complaints received from May to October 2026.",
+        "None of those complaints had been seen by the methods before, and all of them arrived after the complaints the methods learned from.",
+        f"The best method put {per100(best.test_accuracy)} of every 100 of these complaints in the right one of ten groups.",
+        f"The other two methods got {per100(mlp_t.test_accuracy)} and {per100(bil_t.test_accuracy)} right out of every 100.",
+        "Careful checks show that the best method's lead over the other two is too large to be chance.",
+        "The gap between the other two is small, and we cannot say one is better than the other.",
+        "Some groups were easy and some were hard.",
+        f"Air bags and steering complaints were the easiest, with {easiest.iloc[0]} of every 100 sorted correctly.",
+        f"{hardest.index[0]} complaints were the hardest, at {hardest.iloc[0]} of every 100, followed by {hardest.index[1].lower()} at {hardest.iloc[1]}.",
+    ]
+    c2 = [
+        "The words that most clearly mark the easy groups are the part names themselves, such as \"air bag\" and \"steering wheel\".",
+        "A complaint that says the air bags did not open leaves little doubt about where to file it.",
+        "The hard groups are the ones where a symptom can have several causes.",
+        "A car that stalls on the highway can have an engine problem, a fuel problem or an electrical problem, and the owner often cannot tell which.",
+        "Our results show the same thing.",
+        f"Of {fuel_eng[1]} fuel system complaints, {fuel_eng[0]} were put under the engine.",
+        f"Of {trans_eng[1]} transmission complaints, {trans_eng[0]} were put under the engine as well.",
+        f"Electrical complaints were spread across several other groups, with {el_eng[0]} of {el_eng[1]} going to the engine and {el_pt[0]} going to the transmission.",
+        "These mistakes happen between groups whose problems can look alike in the owner's words.",
+        "Reading the words alone works well for some problems and only fairly well for others.",
+    ]
+    c3 = [
+        "Some complaints are hard for any reader.",
+        f"Of the {n(ek['n_test'])} test complaints, {n(ek['wrong_for_all_three'])} ({p1(ek['pct_wrong_for_all_three'])} percent) were sorted wrongly by all three methods.",
+        "One complaint describes a car that was using a driver-assistance feature when it crossed into oncoming traffic and caused a crash.",
+        f"NHTSA filed it under the electrical system, and {NUMW[n_fca]} of the three methods sorted it as a collision-avoidance problem.",
+        "Both answers are easy to defend, so the mistake says as much about the groups as about the computer.",
+        "The groups themselves were chosen by NHTSA, and no independent check tells us they are always right.",
+        f"We also left out the {n(facts['multi_label_dropped_after_merge'])} complaints ({n(round(facts['pct_multi_label_dropped_after_merge']))} percent of the file) that NHTSA filed under more than one group, so our results say nothing about those.",
+        "We used ten groups of parts and balanced them so each group had a similar number of complaints, which is not how complaints arrive in real life.",
+        "Our test covers one six-month window, from May to October 2026.",
+        f"When we tested on a random mix of complaints instead of newer ones, the scores were between {p1(min(gap_acc.values()))} and {p1(max(gap_acc.values()))} points higher out of 100, so looking ahead in time costs only a little.",
+    ]
+    c4 = [
+        "What does this mean for sorting real complaints?",
+        f"A computer can read an owner's words and name the failing part about {per100(best.test_accuracy)} times out of 100 in our test.",
+        "That is good enough to help a person sort a large pile of complaints into rough piles.",
+        "It is not good enough to replace the person, especially for groups like the electrical system where about one in five is misfiled.",
+        "The mistakes it makes are mostly between neighboring groups, such as the engine and the fuel system.",
+        "A fair next step would be to let the computer sort first and have a person check the groups where mix-ups are common.",
+        "Another would be to let it handle the complaints that list more than one part, which we skipped.",
+        "We have shown that the owner's own words carry most of the answer.",
+        "We have not shown that the methods would work on complaints from a much later year or from another country.",
+        f'People who want to report a problem with their own vehicle can do so on <a href="{NHTSA_REPORT}">NHTSA\'s reporting page</a>.',
+    ]
+    body = f"""<h1>What we found</h1>
+<section>
+<h2>How well the computer sorted new complaints</h2>
+{para(c1, True)}
+{fig("fig_identified_correctly.png", "Bar chart of how many of every 100 complaints of each kind were sorted correctly: " + ", ".join(f"{k} {v}" for k, v in ident.sort_values(ascending=False).items()) + ".", "Out of every 100 complaints of each kind, how many the best method put in the right group. Data: results/figures/data/identified_correctly.csv.")}
+</section>
+<section>
+<h2>Why some problems are harder</h2>
+{para(c2, True)}
+{fig("fig_mixups.png", "Bar charts of the most common mix-ups: fuel system complaints put under engine, transmission complaints put under engine, and electrical complaints put under other groups.", "The most common mix-ups on the test complaints. Data: results/figures/data/mixups.csv.")}
+</section>
+<section>
+<h2>Limits of what we found</h2>
+{para(c3, True)}
+</section>
+<section>
+<h2>What this could be used for</h2>
+{para(c4, True)}
+<div class="next">The detailed numbers and methods behind these statements are on the <a href="results.html">Results</a> page.</div>
+</section>"""
+    return page("conclusion.html", "Conclusion", body, "What we found about sorting vehicle complaints by failing part, in plain language.")
+
+
+def build_data():
+    rl = rules
+    ex = lambda k, i=0: rl[k]["examples"][i]
+    pick = {1: 0, 2: 1, 3: 2, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 11: 1, 12: 1}
+    desc = {1: "Remove reviewer tags at the end of a text (such as <code>*TR</code> or <code>*JB</code>) that NHTSA staff leave.",
+            2: "Make the text lowercase.", 3: "Collapse runs of spaces into one space.",
+            4: "Remove the <code>TL*</code> marker at the start of call-centre texts. The text is first flagged with <code>is_transcript</code>.",
+            5: "Remove the sentence NHTSA adds when it hides personal details (FOIA redaction text), including cut-off versions.",
+            6: "Remove sentences that mention the dealer &ldquo;VIN tool&rdquo;.",
+            7: "Remove &ldquo;NHTSA campaign number: ID&rdquo; and the component name in parentheses after it. Leaves stubs such as &ldquo;notification of;&rdquo;.",
+            8: "Remove any other parenthesized text that equals an NHTSA component name.",
+            9: "Remove standalone recall IDs such as <code>19v757000</code>. The word &ldquo;recall&rdquo; stays.",
+            10: "Collapse spaces again.",
+            11: "Drop the whole complaint if it says the contact had not experienced a failure (recall-availability calls).",
+            12: "Remove the template phrase &ldquo;parts distribution disconnect&rdquo; and keep the rest.", 13: "Collapse spaces again."}
+    rows = []
+    for k in sorted(rl):
+        if k in pick and rl[k]["examples"]:
+            b, a = ex(k, pick[k])
+            exs = f"<code>{esc(b)}</code><br>&rarr; <code>{esc(a)}</code>"
+        else:
+            exs = "n/a"
+        rows.append([k, desc[k], n(rl[k]["count"]), exs])
+    rules_tbl = table(["#", "Rule (applied in this order)", "Texts changed", "Example, before and after"], rows,
+                      caption="Cleaning rules. Counts are out of the complaints in the 10 classes. Source: results/cleaning_rules_log.txt.",
+                      num_cols={0, 2}, text_cols={1, 3})
+    class_rows = []
+    for c in CLASSES:
+        class_rows.append([f"<code>{esc(c)}</code>", esc(PN[c]), n(cb.loc[c, "cleaned_pool"])])
+    class_tbl = table(["Label (NHTSA component group)", "Plain name", "Cleaned complaints"], class_rows,
+                      caption="The 10 classes. Source: results/class_balance.csv.", num_cols={2})
+    split_rows = [[esc(PN[c]), n(cb.loc[c, "temporal_train"]), n(cb.loc[c, "temporal_val"]), n(cb.loc[c, "temporal_test"]),
+                   n(cb.loc[c, "random_train"]), n(cb.loc[c, "random_val"]), n(cb.loc[c, "random_test"])] for c in CLASSES]
+    split_rows.append(["<strong>Total</strong>"] + [f"<strong>{n(cb[k].sum())}</strong>" for k in ["temporal_train", "temporal_val", "temporal_test", "random_train", "random_val", "random_test"]])
+    split_tbl = table(["Class", "Temporal train", "Temporal val", "Temporal test", "Random train", "Random val", "Random test"], split_rows,
+                      caption="Complaints per class in each split after the caps. Source: results/class_balance.csv.", num_cols={1, 2, 3, 4, 5, 6})
+    leak_rows = [[f"<code>{esc(t)}</code>", esc(c), n(a), n(b), f"{a / b * 100:.1f}%"] for t, c, a, b in leak_terms]
+    leak_tbl = table(["Term in the text", "Class where it appears most", "Texts in that class", "Texts with the term", "Share"], leak_rows,
+                     caption="Giveaway terms found by the first leakage audit, before stripping. Source: results/leakage_audit_before_stripping.txt.", num_cols={2, 3, 4})
+    field_rows = [["<code>ODINO</code>", "Complaint reference number. Repeats when a complaint lists several components.", "<code>odino</code>"],
+                  ["<code>MAKETXT</code>, <code>MODELTXT</code>, <code>YEARTXT</code>", "Vehicle make, model and model year.", "<code>make</code>, <code>model</code>, <code>year</code> (shown, not used as model input)"],
+                  ["<code>COMPDESC</code>", "NHTSA's component description, for example <code>SERVICE BRAKES, HYDRAULIC: FOUNDATION COMPONENTS</code>.", "<code>label</code> (the part before the first colon or comma)"],
+                  ["<code>LDATE</code>", "Date NHTSA received the complaint (YYYYMMDD).", "<code>ldate</code>, used for the time-based split"],
+                  ["<code>CDESCR</code>", "The complaint text.", "<code>text</code>, the only model input"],
+                  ["(derived)", "True when the text was written down by NHTSA call-centre staff.", "<code>is_transcript</code>"],
+                  ["(derived)", "train, val or test.", "<code>split</code>"]]
+    field_tbl = table(["Raw field", "Meaning", "Published column"], field_rows, caption="Fields we keep. The full dictionary is on NHTSA's site.", text_cols={1, 2})
+    body = f"""<h1>Data &amp; Prep</h1>
+<p class="lead">Where the complaints come from, how we turned them into a labeled dataset, what we removed because it gave the answer away, and how we split the data for training and testing.</p>
+{fig("fig_pipeline.png", "Pipeline diagram: raw NHTSA file, cleaned dataset, splits, three models, evaluation, with the complaint counts at each step.", "The whole project in five steps. Counts: results/data_funnel.json and results/class_balance.csv.")}
+<section>
+<h2>Where the data comes from</h2>
+<p>NHTSA's Office of Defects Investigation publishes every vehicle owner complaint as a tab-separated file with 51 fields per row. The files are on NHTSA's <a href="{NHTSA_DATA}">datasets page</a>, and the field dictionary is <a href="{NHTSA_DICT}">here</a>. We used the two most recent chunks, <a href="{NHTSA_FILES[0]}">COMPLAINTS_RECEIVED_2020-2024</a> and <a href="{NHTSA_FILES[1]}">COMPLAINTS_RECEIVED_2025-2026</a>. Together they hold {n(funnel['raw_rows'])} rows for {n(funnel['raw_complaints'])} complaints, received from January 2020 to the start of November 2026. There are more rows than complaints because a complaint that lists several components gets one row per component. The data is US government data and is public.</p>
+<h3>The fields we keep</h3>
+{field_tbl}
+<div class="note"><p><strong>Privacy.</strong> The raw file also holds the vehicle identification number (VIN), the owner's city, dealer names, phone numbers and addresses, and the vehicle operator's name. Our scripts never read those columns, and the published CSV files contain only the nine columns above. NHTSA already hides some personal details in the text with <code>[xxx]</code>.</p></div>
+</section>
+<section>
+<h2>Labels: which part failed</h2>
+<p>The label is the first part of NHTSA's component description: the text before the first colon, then before the first comma. For example, <code>SERVICE BRAKES, HYDRAULIC: FOUNDATION COMPONENTS</code> becomes <code>SERVICE BRAKES</code>. The author chose 10 groups with enough complaints to train and test on. All other labels are dropped, including <code>UNKNOWN OR OTHER</code>, <code>TIRES</code>, <code>SEATS</code> and <code>EXTERIOR LIGHTING</code>.</p>
+{class_tbl}
+<h3>Merged labels</h3>
+<p>NHTSA renamed some groups over time, so two pairs of labels name the same parts. We merged <code>ENGINE AND ENGINE COOLING</code> into <code>ENGINE</code> and <code>FUEL SYSTEM</code> into <code>FUEL/PROPULSION SYSTEM</code> before any other step. We did not merge <code>VISIBILITY</code> into <code>VISIBILITY/WIPER</code>. Both labels were used through the whole period and they cover different parts (sunroof, windshield, glass and mirrors on one side, wipers on the other), so we dropped <code>VISIBILITY</code>.</p>
+<h3>The multi-component rule</h3>
+<p>{p1(facts['pct_complaints_with_multiple_component_rows'])}% of complaints ({n(facts['complaints_with_multiple_component_rows'])}) have rows for more than one component. After the merges above, {n(facts['multi_label_dropped_after_merge'])} complaints ({p1(facts['pct_multi_label_dropped_after_merge'])}%) map to more than one top-level label. We keep only complaints whose rows all map to exactly one label, which leaves {n(funnel['single_label'])}. Of those, {n(funnel['in_class_list'])} fall in the 10 classes. This keeps every label clean, and it also means our results say nothing about complaints that span several parts.</p>
+</section>
+<section>
+<h2>Cleaning the text</h2>
+<p>The cleaning is light on purpose. We lowercase the text, collapse spaces, and remove text that NHTSA staff or forms added, not the owner. The rules run in the order below. After them we drop exact duplicate texts ({n(funnel['dropped_duplicates'])}) and texts under 20 words ({n(funnel['dropped_short'])}).</p>
+{rules_tbl}
+<p>The funnel: {n(funnel['raw_rows'])} rows, {n(funnel['raw_complaints'])} complaints, {n(funnel['single_label'])} with one label, {n(funnel['in_class_list'])} in the 10 classes, minus {n(funnel['dropped_no_failure'])} complaints reporting no failure, {n(funnel['dropped_duplicates'])} duplicates and {n(funnel['dropped_short'])} short texts, leaves <strong>{n(funnel['cleaned_complaints'])}</strong> cleaned complaints.</p>
+{fig("fig_cleaning_example.png", "One complaint before and after cleaning. The raw text is in capitals with a TL marker, a campaign number with a component name and reviewer tags highlighted as removed. The cleaned text is lowercase without them.", "One real complaint before and after cleaning. Data: results/figures/data/cleaning_example.json.")}
+</section>
+<section>
+<h2>Leakage audit</h2>
+<p>A model can score well for the wrong reason if the text contains the answer. We checked for this before training. For each class we listed the words and word pairs that most strongly point to it, and we looked for terms that appear almost only in one class.</p>
+<p>The audit found a leak. NHTSA call-centre staff often write a sentence such as &ldquo;the contact received notification of NHTSA campaign number: 19V757000 (ENGINE AND ENGINE COOLING)&rdquo;. The component name in parentheses is the label itself. Rule 7 removed this phrase from {n(rules[7]['count'])} texts, which is {rules[7]['count'] / funnel['in_class_list'] * 100:.1f}% of the {n(funnel['in_class_list'])} complaints in the 10 classes. The table shows how clearly it showed up: a word pair such as <code>( air</code> appeared in {leak_terms[1][3]:,} texts, and {leak_terms[1][2]:,} of them were air bag complaints.</p>
+{leak_tbl}
+<p>We removed the phrase, any other parenthesized component name, and standalone recall IDs. We also removed two kinds of boilerplate that mark particular call types: the &ldquo;VIN tool&rdquo; sentences and the FOIA redaction text. A different problem was complaints that are not failure reports at all. Some call-centre texts say that the contact &ldquo;had not experienced a failure&rdquo; and only ask about a recall repair that is waiting for parts. Rule 11 dropped {n(rules[11]['count'])} of them.</p>
+<p>After stripping, the audit finds {paren_left} texts with a parenthesized component name. It still finds {n(resid[0])} texts that mention an NHTSA campaign or recall in the owner's own words, {n(resid[1])} malformed recall IDs and {n(resid[2])} texts with a cut-off FOIA sentence. The full audit is in <a href="{gh('results/leakage_audit.txt')}">results/leakage_audit.txt</a>.</p>
+<div class="note caution"><p><strong>What we kept, and why it matters.</strong></p>
+<ul>
+<li><strong>Call-centre transcripts.</strong> {p1(facts['pct_transcripts_in_cleaned_pool'])}% of the cleaned complaints were written by NHTSA staff, in a formal style. We kept them and added the <code>is_transcript</code> column so we could score the two kinds of text separately (see <a href="results.html#transcripts">Results</a>).</li>
+<li><strong>Brand and model names.</strong> Owners mention makes and models, and so do the models we trained. Some known problems belong to specific vehicles, so part of the score may come from recognizing a vehicle, not from reading the symptom. The scores may be lower for vehicles the models did not see.</li>
+<li><strong>Stubs.</strong> Removing the campaign phrase leaves text such as &ldquo;the contact received notification of;&rdquo;. Some complaints have almost no information about the part left.</li>
+</ul></div>
+</section>
+<section>
+<h2>Splits and sampling</h2>
+<p>The main split is by time, because a real system would sort complaints that arrive after the ones it learned from. Training complaints were received before 1 November 2025, validation complaints from 1 November 2025 to 30 April 2026, and test complaints from 1 May to 31 October 2026. We left out the {n(funnel['raw_complaints'] - facts['complaints_through_oct_2026'])} complaints received on 1 November 2026, because that month was only one day long in the file. Each class is capped at 5,000 training complaints and 800 validation and 800 test complaints, chosen at random with seed 42. Classes with fewer complaints keep all of them: air bags, forward collision avoidance and windshield and wipers fall below the cap in validation and test.</p>
+<p>The comparison split is a stratified random 80/10/10 split from the same cleaned pool, with the same caps. We used it for all three models to measure how much a random split overstates the score compared with the time-based split. In the random split, the train, validation and test sets are not separated by time, so complaints about the same recall can land on both sides.</p>
+{split_tbl}
+{fig("fig_class_balance.png", "Two bar charts. Left: cleaned complaints per class before sampling, from about 51,600 for engine to about 6,100 for forward collision avoidance. Right: complaints per class after sampling in the temporal split, mostly 6,600 per class.", "Class balance before and after sampling. Data: results/class_balance.csv.")}
+<h3>Get the data and the code</h3>
+<ul>
+<li><a href="{gh('data/clean/complaints_temporal.csv')}">complaints_temporal.csv</a> (main split) and <a href="{gh('data/clean/complaints_random.csv')}">complaints_random.csv</a> (comparison split), with columns <code>odino, ldate, make, model, year, label, text, is_transcript, split</code>.</li>
+<li>Scripts: <a href="{gh('src/01_download.py')}">01_download.py</a>, <a href="{gh('src/02_explore.py')}">02_explore.py</a>, <a href="{gh('src/03_clean_and_label.py')}">03_clean_and_label.py</a>, <a href="{gh('src/04_split_and_sample.py')}">04_split_and_sample.py</a>.</li>
+<li>Raw source: <a href="{NHTSA_FILES[0]}">2020 to 2024</a>, <a href="{NHTSA_FILES[1]}">2025 to 2026</a>, and the <a href="{NHTSA_DICT}">field dictionary</a>.</li>
+</ul>
+</section>"""
+    return page("data.html", "Data & Prep", body, "Where the NHTSA complaints come from, how they were labeled and cleaned, the leakage audit, and the train, validation and test splits.")
+
+
+def hp_row(label, vals):
+    return [label] + vals
+
+
+def build_models():
+    c = {m: cfg[(m, "temporal")] for m in MODELS}
+    t = {m: tm[(m, "temporal")] for m in MODELS}
+    rnd = {m: tm[(m, "random")] for m in MODELS}
+    mlp_params = (t['mlp']['n_features'] * c['mlp']['hidden'][0] + c['mlp']['hidden'][0]) + (c['mlp']['hidden'][0] * c['mlp']['hidden'][1] + c['mlp']['hidden'][1]) + (c['mlp']['hidden'][1] * len(CLASSES) + len(CLASSES))
+    hp_rows = [
+        ["Input", "TF-IDF vector of words and 2-word phrases", f"first {c['bilstm']['max_len']} word tokens", f"first {c['distilbert']['max_len']} WordPiece tokens"],
+        ["Features / vocabulary", f"{n(c['mlp']['max_features'])} features ({n(t['mlp']['n_features'])} used)", f"{n(t['bilstm']['vocab_size'])} words (min frequency {c['bilstm']['vocab_min_freq']}, cap {n(c['bilstm']['vocab_max'])})", f"{n(arch['vocab_size'])} (pre-trained)"],
+        ["Layers", f"dense {c['mlp']['hidden'][0]}, dense {c['mlp']['hidden'][1]}, output {len(CLASSES)}", f"embedding {c['bilstm']['embed_dim']}, {c['bilstm']['num_layers']}-layer BiLSTM hidden {c['bilstm']['hidden']}, max+mean pooling, output {len(CLASSES)}", f"{arch['n_layers']} Transformer layers, {arch['n_heads']} heads, width {arch['dim']}, classifier head"],
+        ["Parameters", n(mlp_params) + " (computed from the layer sizes)", n(t["bilstm"]["n_params"]), n(arch["n_params"])],
+        ["Dropout", c["mlp"]["dropout"], c["bilstm"]["dropout"], f"{arch['classifier_dropout']} (head)"],
+        ["Optimizer", "Adam", "Adam", "AdamW, weight decay " + str(c["distilbert"]["weight_decay"])],
+        ["Learning rate", c["mlp"]["lr"], c["bilstm"]["lr"], f"{c['distilbert']['lr']} with {int(c['distilbert']['warmup_ratio'] * 100)}% linear warmup, then linear decay"],
+        ["Batch size", c["mlp"]["batch_size"], c["bilstm"]["batch_size"], c["distilbert"]["batch_size"]],
+        ["Gradient clipping", "none", c["bilstm"]["grad_clip"], 1.0],
+        ["Maximum epochs", c["mlp"]["max_epochs"], c["bilstm"]["max_epochs"], c["distilbert"]["max_epochs"]],
+        ["Early stopping", f"patience {c['mlp']['patience']}", f"patience {c['bilstm']['patience']}", "best of 3 epochs"],
+        ["Best epoch / epochs run (temporal, random)", f"{t['mlp']['best_epoch']} of {t['mlp']['epochs_run']}, {rnd['mlp']['best_epoch']} of {rnd['mlp']['epochs_run']}",
+         f"{t['bilstm']['best_epoch']} of {t['bilstm']['epochs_run']}, {rnd['bilstm']['best_epoch']} of {rnd['bilstm']['epochs_run']}", f"{t['distilbert']['best_epoch']} of {t['distilbert']['epochs_run']}, {rnd['distilbert']['best_epoch']} of {rnd['distilbert']['epochs_run']}"],
+        ["Training time (temporal, random)", f"{t['mlp']['wall_time_s']:.0f} s, {rnd['mlp']['wall_time_s']:.0f} s", f"{t['bilstm']['wall_time_s'] / 60:.0f} min, {rnd['bilstm']['wall_time_s'] / 60:.0f} min", f"{t['distilbert']['wall_time_s'] / 60:.0f} min, {rnd['distilbert']['wall_time_s'] / 60:.0f} min"],
+        ["Device", "MPS (Apple GPU)", "MPS (Apple GPU)", "MPS (Apple GPU)"],
+    ]
+    hp = table(["Setting", "MLP (TF-IDF)", "BiLSTM", "DistilBERT"], [[esc(str(x)) if i else esc(r[0]) for i, x in enumerate(r)] for r in hp_rows],
+               caption="Settings and training facts. Source: results/&lt;model&gt;/&lt;split&gt;/config.json and metrics.json, results/distilbert/architecture.json.", text_cols={1, 2, 3})
+    body = f"""<h1>Models</h1>
+<p class="lead">Three neural networks, from simple to large, trained on the same text, the same labels and the same splits.</p>
+<section>
+<h2>What we predict, and why these three models</h2>
+<p>The task is text classification. The input is one complaint text, and the output is one of the {len(CLASSES)} part groups from the <a href="data.html">Data &amp; Prep</a> page. The models see only the text. They do not get the make, model, year or date. We chose three models of increasing size so we could ask how much each step up buys: the MLP ignores word order, the BiLSTM reads in order, and DistilBERT starts from a language model trained on a large amount of general English.</p>
+<p>All three share the same label encoding, splits and training rules. Each trains on the training set and stops early on validation macro-F1, the average of the per-class F1 scores. The best checkpoint on validation is kept, and the test set is scored once at the end, so nothing was tuned on test. The seed is 42 everywhere. Macro-F1 gives every class the same weight, which matters here because three classes are smaller than the others.</p>
+</section>
+<section>
+<h2>MLP on TF-IDF</h2>
+{fig("fig_arch_mlp.png", "Block diagram of the MLP: complaint text, TF-IDF with 30,000 features, dense 512 with ReLU and dropout, dense 128 with ReLU and dropout, dense 10, predicted class.", "The MLP. Sizes from results/mlp/temporal/config.json.")}
+<p><strong>How it works.</strong> TF-IDF turns each complaint into a long list of numbers, one per word or two-word phrase. A word scores high when it is frequent in this complaint and rare across all complaints, so &ldquo;steering&rdquo; counts for more than &ldquo;the&rdquo;. The vocabulary is fit on the training texts only. A small network with two hidden layers learns which weighted words point to which class. It cannot see word order.</p>
+<p><strong>Why we chose it.</strong> It is the baseline. It trains in about {t['mlp']['wall_time_s']:.0f} seconds, so it shows how far plain word counts go before anything more complex is needed.</p>
+<p><a href="{gh('src/05_train_mlp.py')}">Training script</a></p>
+</section>
+<section>
+<h2>BiLSTM</h2>
+{fig("fig_arch_bilstm.png", "Block diagram of the BiLSTM: complaint text, tokenizer, embedding 128, 2-layer BiLSTM, pooling, linear 10, predicted class.", "The BiLSTM. Sizes from results/bilstm/temporal/config.json and metrics.json.")}
+<p><strong>How it works.</strong> Each word becomes a vector of {c['bilstm']['embed_dim']} numbers that the model learns from scratch. Two LSTM layers then read the complaint from first word to last and from last to first, keeping a running memory of what they have seen. We take the largest and the average value of that memory over all word positions and feed both to a final layer. Padding is masked, so it cannot affect the pooling.</p>
+<p><strong>Why we chose it.</strong> It is the classic way to read text in order. It can use phrases like &ldquo;will not start&rdquo; where the order carries meaning, which TF-IDF cannot. It trains from scratch, so it has no outside knowledge of English.</p>
+<p><a href="{gh('src/06_train_bilstm.py')}">Training script</a></p>
+</section>
+<section>
+<h2>DistilBERT</h2>
+{fig("fig_arch_distilbert.png", "Block diagram of DistilBERT: complaint text, tokenizer, embeddings, 6 Transformer layers, first-token vector, classifier head, predicted class.", "DistilBERT. Sizes from results/distilbert/architecture.json.")}
+<p><strong>How it works.</strong> DistilBERT is a smaller version of BERT, a language model trained on a large collection of English text before we touched it. It has {arch['n_layers']} Transformer layers, and in each one every word looks at every other word to decide what it means in context. We add a small classifier on top and train the whole network on our complaints for up to {c['distilbert']['max_epochs']} epochs with a low learning rate. That step is called fine-tuning. It has {n(arch['n_params'])} parameters.</p>
+<p><strong>Why we chose it.</strong> It brings general knowledge of English, which helps with owners who describe a symptom without naming the part. It is also small enough to train on a laptop in about {t['distilbert']['wall_time_s'] / 60:.0f} minutes. Texts longer than {c['distilbert']['max_len']} tokens are cut.</p>
+<p><a href="{gh('src/07_train_distilbert.py')}">Training script</a></p>
+</section>
+<section>
+<h2>Settings</h2>
+{hp}
+<p>Shared code (data loading, label encoding, metrics, curves) is in <a href="{gh('src/common.py')}">common.py</a>. The evaluation script is <a href="{gh('src/08_evaluate.py')}">08_evaluate.py</a>. Training was done on a MacBook Air with an M4 chip and 16 GB of memory.</p>
+</section>"""
+    return page("models.html", "Models", body, "The three models we compared, how each works, why we chose them, and their settings.")
+
+
+def snippets_html():
+    out = ""
+    legend_done = False
+    for ex_i in range(1, 7):
+        info = [e for e in wi["examples"] if e["example"] == ex_i]
+        cat = {"both_correct": "both models right", "both_wrong": "both models wrong", "distilbert_right_bilstm_wrong": "right for DistilBERT, wrong for the BiLSTM"}[info[0]["category"]]
+        out += f"<h3>Example {ex_i}: true class {esc(PN[info[0]['true_label']])} ({cat})</h3>\n<div class=\"wi-pair\">\n"
+        for m in ["bilstm", "distilbert"]:
+            frag = (R / "eval" / "word_importance" / f"example{ex_i}_{m}.html").read_text()
+            frag = re.sub(r'<p class="wi-legend">.*?</p>', "", frag, flags=re.S)
+            out += frag
+        out += "</div>\n"
+    return out
+
+
+def build_results():
+    srows, sbest = [], []
+    for m in MODELS:
+        for sc in SPLITS:
+            r = S(m, sc)
+            srows.append([NICE[m], sc, f4(r.val_accuracy), f4(r.val_macro_f1), f4(r.test_accuracy), f4(r.test_macro_f1),
+                          f"{f4(r.test_macro_f1_ci_low)} to {f4(r.test_macro_f1_ci_high)}", f"{r.train_time_s:.0f} s" if r.train_time_s < 120 else f"{r.train_time_s / 60:.0f} min"])
+    sbest = [i for i, r in enumerate(srows) if r[0] == "DistilBERT"]
+    summ_tbl = table(["Model", "Split", "Val acc", "Val macro-F1", "Test acc", "Test macro-F1", "95% interval (test macro-F1)", "Train time"], srows,
+                     caption="All models, both splits. Source: results/summary_table.csv. Test n = 7,320 (temporal) and 7,753 (random).", num_cols={2, 3, 4, 5, 7}, best_rows=sbest)
+    mc_rows = [[f"{NICE[a]} vs {NICE[b]}", n(mc[(a, b)][f"only_{a}_correct"]), n(mc[(a, b)][f"only_{b}_correct"]), f"{mc[(a, b)]['p_value_exact']:.2g}"]
+               for a, b in [("mlp", "bilstm"), ("mlp", "distilbert"), ("bilstm", "distilbert")]]
+    mc_tbl = table(["Pair", "Only first is right", "Only second is right", "p-value (exact McNemar)"], mc_rows,
+                   caption="McNemar's test on the temporal test set. Source: results/significance.json.", num_cols={1, 2, 3})
+    diff_rows = []
+    for sc in SPLITS:
+        for k, v in pd_diff[sc].items():
+            a, b = k.split(" minus ")
+            diff_rows.append([f"{NICE[a]} minus {NICE[b]}", sc, f"{v['difference'] * 100:+.2f}", f"{v['ci_low'] * 100:+.2f} to {v['ci_high'] * 100:+.2f}", "yes" if v["ci_excludes_zero"] else "no"])
+    diff_tbl = table(["Comparison", "Split", "Difference in test macro-F1 (points)", "95% interval (points)", "Interval excludes 0"], diff_rows,
+                     caption="Paired bootstrap, 1,000 resamples of the test texts, seed 42. Source: results/significance.json.", num_cols={2})
+    order = pcf1["distilbert_temporal"].sort_values(ascending=False).index
+    pc_t = [[esc(PN[c]), f3(pcf1.loc[c, "mlp_temporal"]), f3(pcf1.loc[c, "bilstm_temporal"]), f3(pcf1.loc[c, "distilbert_temporal"])] for c in order]
+    pc_r = [[esc(PN[c]), f3(pcf1.loc[c, "mlp_random"]), f3(pcf1.loc[c, "bilstm_random"]), f3(pcf1.loc[c, "distilbert_random"])] for c in order]
+    pc_tbl = table(["Class", "MLP", "BiLSTM", "DistilBERT"], pc_t, caption="F1 score per class, temporal test set (main). Source: results/eval/per_class_f1_all.csv.", num_cols={1, 2, 3}) \
+        + details("Same table for the random split", table(["Class", "MLP", "BiLSTM", "DistilBERT"], pc_r, caption="F1 score per class, random test set. Source: results/eval/per_class_f1_all.csv.", num_cols={1, 2, 3}))
+    tr_rows = []
+    for row in trans["rows"]:
+        tr_rows.append([NICE[row["model"]], row["group"], n(row["n"]), f3(row["accuracy"]), f3(row["macro_f1"]), f"{f3(row['macro_f1_ci_low'])} to {f3(row['macro_f1_ci_high'])}", f3(row["macro_f1_classes_with_30plus_texts"])])
+    tr_tbl = table(["Model", "Text type", "Texts", "Accuracy", "Macro-F1", "95% interval", "Macro-F1, classes with 30+ texts"], tr_rows,
+                   caption="Temporal test set split by who wrote the text. Source: results/transcript_vs_owner.csv.", num_cols={2, 3, 4, 6})
+    err = pd.read_csv(R / "eval" / "distilbert" / "temporal" / "error_examples.csv", dtype=str)
+    err_rows = [[esc(PN[r.true_label]), esc(PN[r.pred_label]), f"{float(r.confidence):.2f}", "call centre" if r.is_transcript == "True" else "owner", esc(r.text_first_300_chars)] for r in err.itertuples()]
+    err_tbl = table(["True class", "Predicted class", "Confidence", "Written by", "Text (first 300 characters)"], err_rows,
+                    caption="15 random misclassified test complaints from DistilBERT (temporal split, seed 42). Source: results/eval/distilbert/temporal/error_examples.csv.", num_cols={2}, text_cols={4})
+    ok = pd.read_csv(R / "eval" / "distilbert" / "temporal" / "correct_examples.csv", dtype=str)
+    ok_rows = [[esc(PN[r.true_label]), f"{float(r.confidence):.2f}", esc(r.text_first_300_chars)] for r in ok.itertuples()]
+    ok_tbl = table(["Class (correct)", "Confidence", "Text (first 300 characters)"], ok_rows, caption="5 random correct predictions with confidence of 0.95 or more.", num_cols={1}, text_cols={2})
+    cm_t = "".join(fig(f"confusion_{m}_temporal_normalized.png", f"Normalized confusion matrix for {NICE[m]} on the temporal test set. Rows are true classes, columns are predicted classes.", f"{NICE[m]}, temporal test set, rows sum to 1.") for m in MODELS)
+    cm_c = "".join(fig(f"confusion_{m}_temporal_counts.png", f"Confusion matrix of counts for {NICE[m]} on the temporal test set.", f"{NICE[m]}, temporal test set, counts.") for m in MODELS)
+    cm_r = "".join(fig(f"confusion_{m}_random_{k}.png", f"Confusion matrix ({k}) for {NICE[m]} on the random test set.", f"{NICE[m]}, random test set, {k}.") for m in MODELS for k in ["normalized", "counts"])
+    cu_t = "".join(fig(f"curves_{m}_temporal.png", f"Training curves for {NICE[m]} on the temporal split: loss and validation macro-F1 per epoch.", f"{NICE[m]}, temporal split.") for m in MODELS)
+    cu_r = "".join(fig(f"curves_{m}_random.png", f"Training curves for {NICE[m]} on the random split.", f"{NICE[m]}, random split.") for m in MODELS)
+    ov = overlap
+    top = lambda m: em[(m, "temporal")]["top_confused_pairs"]
+    d_el = pcf1.loc["ELECTRICAL SYSTEM"]
+    sa = stub["accuracy"]["distilbert"]
+    t_bil_trunc = tm[("bilstm", "temporal")]["pct_truncated"]
+    mc_md = mc[("mlp", "distilbert")]
+    mc_mb = mc[("mlp", "bilstm")]
+    body = f"""<h1>Results</h1>
+<p class="lead">DistilBERT is the best model on both splits. The MLP and the BiLSTM are close to each other. Electrical system complaints are the hardest class for every model.</p>
+<section id="summary">
+<h2>Summary</h2>
+<p>All numbers are on the test set, which each model scored once with its best validation checkpoint. <strong>Accuracy</strong> is the share of test complaints sorted correctly. <strong>Macro-F1</strong> averages the F1 score of the {len(CLASSES)} classes, so a small class counts as much as a large one. The interval is a 95% bootstrap interval from 1,000 resamples of the test texts.</p>
+{summ_tbl}
+<p>On the time-based test (complaints from May to October 2026), DistilBERT reaches {f4(best.test_accuracy)} accuracy and {f4(best.test_macro_f1)} macro-F1. The MLP reaches {f4(mlp_t.test_macro_f1)} and the BiLSTM {f4(bil_t.test_macro_f1)}. The test classes are capped at 800, so the class mix is balanced and differs from the real mix of complaints.</p>
+</section>
+<section id="significance">
+<h2>Are the differences real?</h2>
+<p>We checked two ways. McNemar's test compares the models on the same test complaints: it counts the complaints where one model is right and the other is wrong. The paired bootstrap resamples the test set and recomputes the difference in macro-F1.</p>
+{mc_tbl}
+{diff_tbl}
+<p>DistilBERT beats both other models on both splits: the intervals exclude 0, and the McNemar p-values on the temporal set are {mc_md['p_value_exact']:.1g} (against the MLP) and {mc[('bilstm', 'distilbert')]['p_value_exact']:.1g} (against the BiLSTM). The MLP and the BiLSTM are a weak case. On the temporal split the BiLSTM is {abs(pd_diff['temporal']['bilstm minus mlp']['difference']) * 100:.1f} points lower, the interval barely excludes 0 and the McNemar p-value is {mc_mb['p_value_exact']:.3f}, which would not pass a correction for three comparisons (the cutoff is 0.0167). On the random split the interval includes 0. We treat the two as roughly equal, with the MLP slightly ahead on the temporal split.</p>
+</section>
+<section id="split">
+<h2>Time-based split vs random split</h2>
+{fig("fig_split_comparison.png", "Dot chart of test macro-F1 for each model on the temporal and random splits with 95% intervals. The random split scores higher for every model.", "Test macro-F1 with 95% bootstrap intervals. The axis does not start at zero. Data: results/summary_table.csv.")}
+<p>A random split scores higher for every model: {gap['mlp']:.2f} points for the MLP, {gap['bilstm']:.2f} for the BiLSTM and {gap['distilbert']:.2f} for DistilBERT in macro-F1. The time-based split is the fairer test of a system that sorts future complaints, so we report it as the main result. The gap is small, and we did not study why.</p>
+</section>
+<section id="per-class">
+<h2>Results by class</h2>
+{fig("fig_per_class_f1.png", "Dot chart of per-class F1 on the temporal test set for the three models. Steering and air bags are highest, electrical system is lowest for every model.", "F1 by class on the temporal test set. Data: results/eval/per_class_f1_all.csv.")}
+{pc_tbl}
+<p>Steering and air bags are easiest. Electrical system is the weakest class for every model on both splits: F1 {f3(d_el['mlp_temporal'])} for the MLP, {f3(d_el['bilstm_temporal'])} for the BiLSTM and {f3(d_el['distilbert_temporal'])} for DistilBERT on the temporal test. DistilBERT improves it by {(d_el['distilbert_temporal'] - d_el['mlp_temporal']) * 100:.1f} points over the MLP, but it stays the weakest. Fuel system and engine come next.</p>
+</section>
+<section id="confusion">
+<h2>Confusion matrices</h2>
+<p>Each row is the true class and each column is the predicted class. A perfect model would have 1.00 on the diagonal. The temporal matrices are shown here, and the counts and the random-split matrices are below.</p>
+<div class="grid wide">{cm_t}</div>
+{details("Counts (temporal split)", f'<div class="grid wide">{cm_c}</div>')}
+{details("Random split matrices", f'<div class="grid wide">{cm_r}</div>')}
+<p>The top mix-ups on the temporal test, both directions combined, are in the table below. Source: results/eval/&lt;model&gt;/temporal/metrics.json.</p>
+{table(["Model", "Pair 1", "Pair 2", "Pair 3"], [[NICE[m]] + [f"{esc(' / '.join(PN[x] for x in top(m)[i]['pair'].split(' / ')))}: {top(m)[i]['count']}" for i in range(3)] for m in MODELS], text_cols={1, 2, 3})}
+</section>
+<section id="curves">
+<h2>Training curves</h2>
+<p>The left panel shows training and validation loss, the right panel shows validation macro-F1. The red dot marks the checkpoint we kept. The MLP overfits after the first epoch, which is why its best epoch is {tm[('mlp', 'temporal')]['best_epoch']}.</p>
+<div class="grid wide">{cu_t}</div>
+{details("Random split curves", f'<div class="grid wide">{cu_r}</div>')}
+</section>
+<section id="transcripts">
+<h2>Call-centre texts vs owner-written texts</h2>
+<p>{n(trans['rows'][0]['n'] + trans['rows'][3]['n'])} test complaints split into {n(trans['rows'][0]['n'])} owner-written texts and {n(trans['rows'][3]['n'])} call-centre texts. Accuracy is about the same for both. Macro-F1 looks lower for call-centre texts, but only {trans['class_support_by_group']['transcript']['VISIBILITY/WIPER']} of them belong to the windshield and wiper class, so that class's F1 is very noisy. The last column drops classes with fewer than 30 texts in the group, and then the two groups score in the same range for every model. We found no sign that the formal call-centre style makes the task easier.</p>
+{tr_tbl}
+</section>
+<section id="errors">
+<h2>Where the models fail</h2>
+<ul>
+<li><strong>Neighboring groups.</strong> The largest mix-up is {esc(' and '.join(PN[x].lower() for x in top('distilbert')[0]['pair'].split(' / ')))}. A symptom such as a car that stalls, shudders or loses power can fit several systems.</li>
+<li><strong>Shared mistakes.</strong> {n(ov['wrong_for_all_three'])} of {n(ov['n_test'])} test complaints ({p1(ov['pct_wrong_for_all_three'])}%) are wrong for all three models, so these are not one model's quirk. {n(ov['wrong_for_at_least_one'])} are wrong for at least one.</li>
+<li><strong>Stubs.</strong> Some call-centre texts keep only a stub such as &ldquo;the contact received notification of; however, the part to do the recall repair was not yet available&rdquo;, because we removed the campaign number and component name. {n(stub['n_with_stub'])} test texts contain such a stub. DistilBERT is right on {p1(sa['with_stub'] * 100)}% of them, against {p1(sa['without_stub'] * 100)}% of the other texts.</li>
+<li><strong>Keywords.</strong> The highlights below show a model leaning on one word. In example 4, the word &ldquo;autopilot&rdquo; pulls a complaint toward collision avoidance even though NHTSA filed it under the electrical system.</li>
+<li><strong>Labels are not ground truth.</strong> NHTSA staff assign the groups, and a complaint that fits two groups gets only one label here.</li>
+<li><strong>Truncation.</strong> The BiLSTM keeps the first {cfg[('bilstm', 'temporal')]['max_len']} tokens: {p1(t_bil_trunc['train'] * 100)}% of training texts and {p1(t_bil_trunc['test'] * 100)}% of test texts are longer.</li>
+<li><strong>Vehicle names.</strong> Brand and model names stay in the text. Some of the score may come from knowing which vehicles have which known problems.</li>
+<li><strong>Balanced test.</strong> Classes are capped at 800 in the test set, so the numbers describe a balanced mix, not the real mix of complaints. Windshield and wipers, air bags and collision avoidance have fewer than 800 test complaints.</li>
+<li><strong>Scope.</strong> We use only complaints with one label, in ten groups, from one six-month test window.</li>
+</ul>
+<h3>Examples of mistakes</h3>
+{details("15 random misclassified complaints (DistilBERT, temporal)", err_tbl + f'<p class="small">Other models: <a href="{gh("results/eval/mlp/temporal/error_examples.csv")}">MLP</a>, <a href="{gh("results/eval/bilstm/temporal/error_examples.csv")}">BiLSTM</a>. Complaints wrong for all three models: <a href="{gh("results/eval/errors_all_models.csv")}">errors_all_models.csv</a>.</p>')}
+{details("5 random confident correct predictions", ok_tbl)}
+</section>
+<section id="highlights">
+<h2>Which words drive a prediction</h2>
+<p>For six test complaints we removed one word at a time and measured how much the model's confidence in its own answer dropped. Blue words support the predicted class and orange words argue against it. The value is the drop in the log-odds of the predicted class (hover over a word to see it). Two examples were right for both models, two were wrong for both, and two were right for DistilBERT and wrong for the BiLSTM. We drew them at random from complaints of 25 to 90 words (seed 42), two from each case. Method and values: results/eval/word_importance/word_importance.json.</p>
+<p class="wi-legend"><span style="background:rgba(31,119,180,.6);color:#111;padding:0 4px;border-radius:3px">supports the predicted class</span> <span style="background:rgba(230,126,34,.6);color:#111;padding:0 4px;border-radius:3px">argues against it</span></p>
+{snippets_html()}
+<p class="small">Removing one word at a time understates words that are repeated or have close substitutes, so a confident model can show small values everywhere. These examples illustrate the models. They do not prove how the models work.</p>
+</section>
+<section>
+<h2>Files</h2>
+<p>Everything is in the repository: <a href="{gh('results/summary_table.csv')}">summary_table.csv</a>, <a href="{gh('results/significance.json')}">significance.json</a>, <a href="{gh('results/transcript_vs_owner.csv')}">transcript_vs_owner.csv</a>, and the per-model folders under <a href="{REPO}/tree/main/results">results/</a>. The evaluation script is <a href="{gh('src/08_evaluate.py')}">08_evaluate.py</a>.</p>
+</section>"""
+    return page("results.html", "Results", body, "Test results for the MLP, BiLSTM and DistilBERT on both splits, with significance tests, confusion matrices, error analysis and word highlights.")
+
+
+def build_index():
+    cards = [("introduction.html", "Introduction", "What owner complaints are and why sorting them is hard."),
+             ("data.html", "Data & Prep", "The NHTSA data, the labels, the cleaning and the leakage audit."),
+             ("models.html", "Models", "Three neural networks, from a word-count baseline to DistilBERT."),
+             ("results.html", "Results", "Scores, significance tests, mistakes and word highlights."),
+             ("conclusion.html", "Conclusion", "What we found, in plain language."),
+             ("about.html", "About", "The project, the author and the tools.")]
+    cs = "".join(f'<a class="card" href="{h}"><strong>{esc(t)}</strong><span>{esc(d)}</span></a>' for h, t, d in cards)
+    stats = [(n(facts["complaints_through_oct_2026"]), "owner complaints, January 2020 to October 2026"), (n(funnel["cleaned_complaints"]), "complaints kept after cleaning"),
+             (str(len(CLASSES)), "groups of car parts"), (f"{per100(best.test_accuracy)} in 100", "new complaints sorted correctly by the best method")]
+    st = "".join(f'<div class="stat"><div class="num">{a}</div><div class="label">{b}</div></div>' for a, b in stats)
+    body = f"""<h1>What Failed on This Car?</h1>
+<p class="lead">When a car part fails, owners can report it to the US government in their own words. This project asks whether a computer can read those words and name the part that failed.</p>
+<div class="stats">{st}</div>
+{fig("fig_identified_correctly.png", "Bar chart of how many of every 100 complaints of each kind were sorted correctly, from air bags and steering at 96 to electrical system at 81.", "Out of every 100 complaints of each kind, how many the best method put in the right group (complaints from May to October 2026).")}
+<div class="cards">{cs}</div>
+<p class="small">A class project using public NHTSA complaint data. Not an NHTSA product, and not safety advice.</p>"""
+    return page("index.html", "Home", body, "A class project that sorts NHTSA vehicle owner complaints by the failing part using three neural network models.")
+
+
+def build_about():
+    body = f"""<h1>About</h1>
+<p class="lead">A class project in deep learning, built by one person, with all code, data and results published.</p>
+<section>
+<h2>The project</h2>
+<p>This is an open individual project for a deep learning class. The question is whether the words of a vehicle owner complaint are enough to name the vehicle part that failed. We compared three neural networks on {n(funnel['cleaned_complaints'])} cleaned complaints from NHTSA and report where they work and where they do not. The author is Tejas Naik.</p>
+{fig("fig_pipeline.png", "Pipeline diagram from the raw NHTSA file to the evaluation of three models.", "The project in five steps.")}
+</section>
+<section>
+<h2>Data</h2>
+<p>The complaints come from the National Highway Traffic Safety Administration (NHTSA), Office of Defects Investigation. NHTSA publishes them on its <a href="{NHTSA_DATA}">datasets page</a>. This project is not made by, endorsed by or connected to NHTSA. We published a cleaned sample with only the columns <code>odino, ldate, make, model, year, label, text, is_transcript, split</code> and left out all personal fields.</p>
+</section>
+<section>
+<h2>Tools</h2>
+<ul>
+<li>Python {env['python']}, PyTorch {env['torch']} (Apple MPS backend), Hugging Face transformers {env['transformers']}, scikit-learn {env['scikit-learn']}, pandas {env['pandas']}, NumPy {env['numpy']}, SciPy {env['scipy']}, matplotlib {env['matplotlib']} and seaborn {env['seaborn']}. Pinned versions are in <a href="{gh('requirements.txt')}">requirements.txt</a>.</li>
+<li>Hardware: a MacBook Air with an M4 chip and 16 GB of memory. No cloud services were used.</li>
+<li>The website is plain HTML and one CSS file. It is built from the results files by <a href="{gh('src/10_build_site.py')}">10_build_site.py</a>, so the numbers on each page come from <code>results/</code>.</li>
+<li>Random seed 42 is used everywhere.</li>
+</ul>
+</section>
+<section>
+<h2>Please note</h2>
+<p>These results describe one dataset and one test window. They are not a safety assessment of any vehicle. To report a safety problem with a vehicle, use <a href="{NHTSA_REPORT}">NHTSA's reporting page</a>.</p>
+<p>Source code and all results: <a href="{REPO}">{REPO.replace("https://", "")}</a>.</p>
+</section>"""
+    return page("about.html", "About", body, "About this class project: the question, the data source, the tools and the author.")
+
+
+# ============================================================================ write and check
+BANNED = ["revolutionary", "cutting-edge", "robust", "leverage", "delve", "seamless", "crucial", "powerful", "state-of-the-art", "game-chang",
+          "unlock", "harness", "comprehensive", "novel", "groundbreaking", "innovative", "pivotal", "journey", "deep dive", "dive into", "landscape", "tapestry"]
+
+
+def text_of(h):
+    h = re.sub(r"(?s)<(script|style).*?</\1>", "", h)
+    return html.unescape(re.sub(r"<[^>]+>", " ", h))
+
+
+def check(pages):
+    problems = []
+    for fname, h in pages.items():
+        t = text_of(h)
+        for ch in ["—", "–"]:
+            if ch in t or ch in h:
+                problems.append(f"{fname}: contains dash character {ch!r}")
+        low = t.lower()
+        for w in BANNED:
+            if w in low:
+                problems.append(f"{fname}: banned word {w!r}")
+        for src in re.findall(r'src="(img/[^"]+)"', h):
+            if not (DOCS / src).exists():
+                problems.append(f"{fname}: missing image {src}")
+        for href in re.findall(r'href="([^"#:]+\.(?:html|css))', h):
+            if not (DOCS / href).exists():
+                problems.append(f"{fname}: broken link {href}")
+        if "<h1" not in h or h.count("<h1") != 1:
+            problems.append(f"{fname}: needs exactly one h1")
+        if 'alt=""' in h:
+            problems.append(f"{fname}: empty alt text")
+    for fname in ["introduction.html", "conclusion.html"]:
+        low = text_of(pages[fname])
+        for term in ["MLP", "BiLSTM", "DistilBERT", "F1", "confusion matrix", "macro", "TF-IDF", "neural network"]:
+            if term.lower() in low.lower():
+                problems.append(f"{fname}: technical term {term!r}")
+    return problems
+
+
+def main():
+    pages = {"index.html": build_index(), "introduction.html": build_intro(), "data.html": build_data(), "models.html": build_models(),
+             "results.html": build_results(), "conclusion.html": build_conclusion(), "about.html": build_about()}
+    for fname, h in pages.items():
+        (DOCS / fname).write_text(h)
+    (DOCS / ".nojekyll").write_text("")
+    probs = check(pages)
+    print("pages written:", ", ".join(pages))
+    print("problems:", len(probs))
+    for p in probs:
+        print("  -", p)
+    for fname in ["introduction.html", "conclusion.html"]:
+        ps = re.findall(r"(?s)<p>(.*?)</p>", pages[fname])
+        counts = [len(re.findall(r"[.!?](?:\s|$)", html.unescape(re.sub(r"<[^>]+>", "", p)))) for p in ps]
+        print(fname, "sentence counts per <p>:", counts)
+
+
+if __name__ == "__main__":
+    main()

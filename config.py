@@ -30,3 +30,11 @@ TEST_END = "2026-10-31"
 
 TRAIN_CAP = 5000
 EVAL_CAP = 800
+
+# Plain-English names for the 10 classes (used in figures and on the website)
+PLAIN_NAMES = {
+    "ENGINE": "Engine and cooling", "POWER TRAIN": "Transmission and drive parts", "ELECTRICAL SYSTEM": "Electrical system",
+    "STEERING": "Steering", "SERVICE BRAKES": "Brakes", "AIR BAGS": "Air bags", "STRUCTURE": "Body and frame",
+    "FUEL/PROPULSION SYSTEM": "Fuel system", "VISIBILITY/WIPER": "Windshield, glass and wipers",
+    "FORWARD COLLISION AVOIDANCE": "Automatic braking and collision warning",
+}

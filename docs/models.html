@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Models | What Failed on This Car?</title>
+<meta name="description" content="The three models we compared, how each works, why we chose them, and their settings.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to the content</a>
+<header class="site-header"><div class="inner">
+<a class="site-title" href="index.html">What Failed on <span>This Car?</span></a>
+<nav class="main" aria-label="Main"><ul><li><a href="introduction.html">Introduction</a></li><li><a href="data.html">Data &amp; Prep</a></li><li><a href="models.html" aria-current="page">Models</a></li><li><a href="results.html">Results</a></li><li><a href="conclusion.html">Conclusion</a></li><li><a href="about.html">About</a></li></ul></nav>
+</div></header>
+<main id="content">
+<h1>Models</h1>
+<p class="lead">Three neural networks, from simple to large, trained on the same text, the same labels and the same splits.</p>
+<section>
+<h2>What we predict, and why these three models</h2>
+<p>The task is text classification. The input is one complaint text, and the output is one of the 10 part groups from the <a href="data.html">Data &amp; Prep</a> page. The models see only the text. They do not get the make, model, year or date. We chose three models of increasing size so we could ask how much each step up buys: the MLP ignores word order, the BiLSTM reads in order, and DistilBERT starts from a language model trained on a large amount of general English.</p>
+<p>All three share the same label encoding, splits and training rules. Each trains on the training set and stops early on validation macro-F1, the average of the per-class F1 scores. The best checkpoint on validation is kept, and the test set is scored once at the end, so nothing was tuned on test. The seed is 42 everywhere. Macro-F1 gives every class the same weight, which matters here because three classes are smaller than the others.</p>
+</section>
+<section>
+<h2>MLP on TF-IDF</h2>
+<figure><a href="img/fig_arch_mlp.png" title="Open the full-size image"><img src="img/fig_arch_mlp.png" alt="Block diagram of the MLP: complaint text, TF-IDF with 30,000 features, dense 512 with ReLU and dropout, dense 128 with ReLU and dropout, dense 10, predicted class." width="3000" height="700" loading="lazy"></a><figcaption>The MLP. Sizes from results/mlp/temporal/config.json.</figcaption></figure>
+
+<p><strong>How it works.</strong> TF-IDF turns each complaint into a long list of numbers, one per word or two-word phrase. A word scores high when it is frequent in this complaint and rare across all complaints, so &ldquo;steering&rdquo; counts for more than &ldquo;the&rdquo;. The vocabulary is fit on the training texts only. A small network with two hidden layers learns which weighted words point to which class. It cannot see word order.</p>
+<p><strong>Why we chose it.</strong> It is the baseline. It trains in about 24 seconds, so it shows how far plain word counts go before anything more complex is needed.</p>
+<p><a href="https://github.com/tejassnaikk/vehicle-complaint-classifier/blob/main/src/05_train_mlp.py">Training script</a></p>
+</section>
+<section>
+<h2>BiLSTM</h2>
+<figure><a href="img/fig_arch_bilstm.png" title="Open the full-size image"><img src="img/fig_arch_bilstm.png" alt="Block diagram of the BiLSTM: complaint text, tokenizer, embedding 128, 2-layer BiLSTM, pooling, linear 10, predicted class." width="3300" height="700" loading="lazy"></a><figcaption>The BiLSTM. Sizes from results/bilstm/temporal/config.json and metrics.json.</figcaption></figure>
+
+<p><strong>How it works.</strong> Each word becomes a vector of 128 numbers that the model learns from scratch. Two LSTM layers then read the complaint from first word to last and from last to first, keeping a running memory of what they have seen. We take the largest and the average value of that memory over all word positions and feed both to a final layer. Padding is masked, so it cannot affect the pooling.</p>
+<p><strong>Why we chose it.</strong> It is the classic way to read text in order. It can use phrases like &ldquo;will not start&rdquo; where the order carries meaning, which TF-IDF cannot. It trains from scratch, so it has no outside knowledge of English.</p>
+<p><a href="https://github.com/tejassnaikk/vehicle-complaint-classifier/blob/main/src/06_train_bilstm.py">Training script</a></p>
+</section>
+<section>
+<h2>DistilBERT</h2>
+<figure><a href="img/fig_arch_distilbert.png" title="Open the full-size image"><img src="img/fig_arch_distilbert.png" alt="Block diagram of DistilBERT: complaint text, tokenizer, embeddings, 6 Transformer layers, first-token vector, classifier head, predicted class." width="3300" height="700" loading="lazy"></a><figcaption>DistilBERT. Sizes from results/distilbert/architecture.json.</figcaption></figure>
+
+<p><strong>How it works.</strong> DistilBERT is a smaller version of BERT, a language model trained on a large collection of English text before we touched it. It has 6 Transformer layers, and in each one every word looks at every other word to decide what it means in context. We add a small classifier on top and train the whole network on our complaints for up to 3 epochs with a low learning rate. That step is called fine-tuning. It has 66,961,162 parameters.</p>
+<p><strong>Why we chose it.</strong> It brings general knowledge of English, which helps with owners who describe a symptom without naming the part. It is also small enough to train on a laptop in about 32 minutes. Texts longer than 256 tokens are cut.</p>
+<p><a href="https://github.com/tejassnaikk/vehicle-complaint-classifier/blob/main/src/07_train_distilbert.py">Training script</a></p>
+</section>
+<section>
+<h2>Settings</h2>
+<div class="table-wrap"><table><caption>Settings and training facts. Source: results/&lt;model&gt;/&lt;split&gt;/config.json and metrics.json, results/distilbert/architecture.json.</caption><thead><tr><th scope="col">Setting</th><th scope="col">MLP (TF-IDF)</th><th scope="col">BiLSTM</th><th scope="col">DistilBERT</th></tr></thead><tbody><tr><td>Input</td><td class=text>TF-IDF vector of words and 2-word phrases</td><td class=text>first 256 word tokens</td><td class=text>first 256 WordPiece tokens</td></tr><tr><td>Features / vocabulary</td><td class=text>30,000 features (30,000 used)</td><td class=text>20,860 words (min frequency 2, cap 30,000)</td><td class=text>30,522 (pre-trained)</td></tr><tr><td>Layers</td><td class=text>dense 512, dense 128, output 10</td><td class=text>embedding 128, 2-layer BiLSTM hidden 128, max+mean pooling, output 10</td><td class=text>6 Transformer layers, 12 heads, width 768, classifier head</td></tr><tr><td>Parameters</td><td class=text>15,427,466 (computed from the layer sizes)</td><td class=text>3,334,666</td><td class=text>66,961,162</td></tr><tr><td>Dropout</td><td class=text>0.3</td><td class=text>0.3</td><td class=text>0.2 (head)</td></tr><tr><td>Optimizer</td><td class=text>Adam</td><td class=text>Adam</td><td class=text>AdamW, weight decay 0.01</td></tr><tr><td>Learning rate</td><td class=text>0.001</td><td class=text>0.001</td><td class=text>2e-05 with 10% linear warmup, then linear decay</td></tr><tr><td>Batch size</td><td class=text>128</td><td class=text>64</td><td class=text>16</td></tr><tr><td>Gradient clipping</td><td class=text>none</td><td class=text>1.0</td><td class=text>1.0</td></tr><tr><td>Maximum epochs</td><td class=text>30</td><td class=text>15</td><td class=text>3</td></tr><tr><td>Early stopping</td><td class=text>patience 3</td><td class=text>patience 3</td><td class=text>best of 3 epochs</td></tr><tr><td>Best epoch / epochs run (temporal, random)</td><td class=text>1 of 4, 1 of 4</td><td class=text>5 of 8, 4 of 7</td><td class=text>3 of 3, 3 of 3</td></tr><tr><td>Training time (temporal, random)</td><td class=text>24 s, 21 s</td><td class=text>34 min, 30 min</td><td class=text>32 min, 43 min</td></tr><tr><td>Device</td><td class=text>MPS (Apple GPU)</td><td class=text>MPS (Apple GPU)</td><td class=text>MPS (Apple GPU)</td></tr></tbody></table></div>
+
+<p>Shared code (data loading, label encoding, metrics, curves) is in <a href="https://github.com/tejassnaikk/vehicle-complaint-classifier/blob/main/src/common.py">common.py</a>. The evaluation script is <a href="https://github.com/tejassnaikk/vehicle-complaint-classifier/blob/main/src/08_evaluate.py">08_evaluate.py</a>. Training was done on a MacBook Air with an M4 chip and 16 GB of memory.</p>
+</section>
+</main>
+<footer><div class="inner">
+<div>Complaint data: National Highway Traffic Safety Administration (NHTSA), Office of Defects Investigation, vehicle owner complaints. US government data, public domain.</div>
+<div>A class project. Code, cleaned data and results: <a href="https://github.com/tejassnaikk/vehicle-complaint-classifier">github.com/tejassnaikk/vehicle-complaint-classifier</a>.</div>
+</div></footer>
+</body>
+</html>

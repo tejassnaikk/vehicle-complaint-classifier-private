@@ -27,8 +27,21 @@
 
 **Notes for Phase 2**
 - Rows repeat ODINO (one per component), so complaint count will be lower than 629,231.
-- Newer rows show mojibake (e.g. "dealerâs") when read as latin-1; the file is probably UTF-8 in places. Check encoding handling in Phase 2.
+- (Resolved in Phase 2: both files are valid UTF-8; the mojibake seen in Phase 1 came from my latin-1 preview, 0% of rows affected.)
 
 **Decisions (Tejas):** download the two chunks above.
 
-**Next:** Phase 2 (explore). Waiting for "proceed".
+
+## Phase 2: Explore (done, awaiting class list)
+
+**Done:** `src/02_explore.py` (reads only the 7 needed columns, so privacy fields are never loaded). Figures and CSVs in `results/eda/`.
+
+**Key numbers**
+- Rows loaded = lines in file for both files (418,884 + 210,347 = 629,231). Both UTF-8. No bad lines.
+- 432,893 unique ODINOs. LDATE 2020-01-01 to 2026-11-01 (Nov 2026 has only 63 complaints, partial month).
+- 31.9% of ODINOs have more than one COMPDESC row (max 9). 29.9% (129,329) map to more than one distinct top_level; 303,564 map to exactly one.
+- CDESCR is identical across all rows of an ODINO.
+- Text (303,564 single-component complaints): median 83 words / 484 chars, p95 250 words, max 430 words. 0% empty; 1.0% under 5 words; 9.35% under 20 words.
+- Top-level values: see `results/eda/top_level_counts.csv`. NHTSA renamed some categories over time, so near-duplicates exist (ENGINE vs ENGINE AND ENGINE COOLING, FUEL SYSTEM vs FUEL/PROPULSION SYSTEM, VISIBILITY vs VISIBILITY/WIPER).
+
+**Decisions needed (Tejas):** final class list, and whether to merge the renamed near-duplicates.

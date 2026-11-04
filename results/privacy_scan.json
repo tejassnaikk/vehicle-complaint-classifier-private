@@ -1,0 +1,57 @@
+{
+  "patterns": {
+    "phone_number": "(?<!\\d)(?:\\+?1[ -.]?)?\\(?\\d{3}\\)?[ -.]\\d{3}[ -.]\\d{4}(?!\\d)",
+    "email_address": "[\\w.+-]+@[\\w-]+\\.[\\w.]+",
+    "vin_like_17_chars": "\\b(?=[a-z0-9]*\\d)(?=[a-z0-9]*[a-z])[a-hj-npr-z0-9]{17}\\b",
+    "url": "https?://|www\\.",
+    "state_and_zip": "\\b[a-z]{2}\\s\\d{5}\\b"
+  },
+  "files": {
+    "complaints_temporal.csv": {
+      "rows": 64445,
+      "phone_number": {
+        "texts": 810,
+        "pct_of_texts": 1.26
+      },
+      "email_address": {
+        "texts": 18,
+        "pct_of_texts": 0.03
+      },
+      "vin_like_17_chars": {
+        "texts": 28,
+        "pct_of_texts": 0.04
+      },
+      "url": {
+        "texts": 321,
+        "pct_of_texts": 0.5
+      },
+      "state_and_zip": {
+        "texts": 1792,
+        "pct_of_texts": 2.78
+      }
+    },
+    "complaints_random.csv": {
+      "rows": 65416,
+      "phone_number": {
+        "texts": 905,
+        "pct_of_texts": 1.38
+      },
+      "email_address": {
+        "texts": 17,
+        "pct_of_texts": 0.03
+      },
+      "vin_like_17_chars": {
+        "texts": 28,
+        "pct_of_texts": 0.04
+      },
+      "url": {
+        "texts": 356,
+        "pct_of_texts": 0.54
+      },
+      "state_and_zip": {
+        "texts": 2003,
+        "pct_of_texts": 3.06
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+"""Scan the published CSVs for contact details inside the complaint text. Writes results/privacy_scan.json.
+
+Patterns: US-style phone numbers, e-mail addresses, VIN-like 17-character strings, URLs, and "state ZIP" address endings.
+Run before any public release: the counts should be 0 for phone, email and VIN once the text has been masked.
+"""
+import json
+import sys
+from pathlib import Path
+
+import pandas as pd
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from config import CLEAN_DIR, RESULTS_DIR
+
+PATTERNS = {
+    "phone_number": r"(?<!\d)(?:\+?1[ -.]?)?\(?\d{3}\)?[ -.]\d{3}[ -.]\d{4}(?!\d)",
+    "email_address": r"[\w.+-]+@[\w-]+\.[\w.]+",
+    "vin_like_17_chars": r"\b(?=[a-z0-9]*\d)(?=[a-z0-9]*[a-z])[a-hj-npr-z0-9]{17}\b",
+    "url": r"https?://|www\.",
+    "state_and_zip": r"\b[a-z]{2}\s\d{5}\b",
+}
+
+
+def main():
+    out = {"patterns": PATTERNS, "files": {}}
+    for f in ["complaints_temporal.csv", "complaints_random.csv"]:
+        d = pd.read_csv(CLEAN_DIR / f, dtype=str, keep_default_na=False)
+        res = {"rows": len(d)}
+        for k, p in PATTERNS.items():
+            m = d.text.str.contains(p, regex=True, case=False)
+            res[k] = {"texts": int(m.sum()), "pct_of_texts": round(float(m.mean() * 100), 2)}
+        out["files"][f] = res
+        print(f, {k: v["texts"] for k, v in res.items() if k != "rows"})
+    (RESULTS_DIR / "privacy_scan.json").write_text(json.dumps(out, indent=2))
+
+
+if __name__ == "__main__":
+    main()

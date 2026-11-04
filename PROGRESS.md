@@ -398,3 +398,39 @@ Phase 7's spec in `CLAUDE.md` now also lists the extra plain-language figures be
 4. The word-importance snippets are included in the Results page as HTML; the cleaning examples show only published columns plus the raw component label.
 
 **Next:** Phase 9 (README, check every link and number, ask before making the repo public and enabling Pages from `/docs`). Waiting for "proceed".
+
+## Phase 9: Reproducibility and release (checks done; release blocked on decisions)
+
+**Done**
+- `README.md`: results at a glance, repository layout, exact reproduction steps with expected outputs and runtimes (uv venv, scripts 01 to 10 in order, `caffeinate` for long runs), notes on determinism, data, privacy and limits. The README says plainly that the full sequence was run step by step during development and not re-run end to end from a fresh clone.
+- **Fresh-clone checks** (clone of origin at `5c8f5aa`, run with the existing venv): re-training the MLP on the temporal split gave exactly the committed validation and test metrics (test accuracy 0.8762, macro-F1 0.8771; only wall time differs). `10_build_site.py` in the clone changed nothing in `docs/`. BiLSTM, DistilBERT, 01 to 04, 08 and 09 were not re-run (hours of training or need the raw data).
+- **Links and images:** 91 internal links and image references resolve, 32 images open, no missing same-page anchors, 22 GitHub links point to paths that exist in the repo (they will load once the repo is public). External: 3 NHTSA static links return 200 (field dictionary and the two zip files). The two `nhtsa.gov` pages (datasets page and report-a-safety-problem) return 403 to automated clients (curl, headless Chrome, a fetch agent), so they could not be opened by a script; both URLs appear in search results with the titles "NHTSA Datasets and APIs" and "Report a Vehicle Safety Problem, Equipment Issue". Please click both once in a browser.
+- **Numbers:** `src/check_site.py` traces numbers on the site to `results/`: 705 of 708 appear literally; the 3 others are derived (102 complaints on 1 November 2026, 204 complaints per day in 2025, 15,427,466 MLP parameters computed from its layer sizes). The package versions on the About page come from `results/environment.json`. Tag balance is clean on all 7 pages.
+- New: `src/privacy_scan.py` writes `results/privacy_scan.json` (see below).
+
+**Blocker: contact details inside the complaint text.** The raw VIN, city, dealer and operator columns are never read, but the free-text `text` column contains some contact details that NHTSA staff or owners typed into the complaint. Counts of texts (privacy_scan.json; temporal file 64,445 rows, random file 65,416 rows):
+
+| Pattern | Temporal | Random |
+|---|---|---|
+| US phone number | 810 (1.3%) | 905 (1.4%) |
+| E-mail address | 18 | 17 |
+| VIN-like 17-character string | 28 | 28 |
+| URL | 321 (0.5%) | 356 (0.5%) |
+| State and ZIP code (address ending) | 1,792 (2.8%) | 2,003 (3.1%) |
+
+Most phone numbers and addresses are dealerships typed in by call-centre staff. Some are private: for example one complaint contains a person's name, Gmail address and phone number. This is NHTSA's own public data, and NHTSA already hides some details as `[xxx]`, but it conflicts with the project's privacy rule ("keeps ONLY..., drop dealer name/phone/address, VIN"). The site pages and `results/` contain none of these (checked), only the two CSVs in `data/clean/`.
+
+Extra problem: the two CSVs were committed in `7a7c22f`, so making this repository public would also publish them through the git history, even if the files are fixed later. A fix needs either a new public repository with a fresh history, or a history rewrite and force-push of this one.
+
+**Options (Tejas to decide):**
+- A (recommended): add a masking rule to `03_clean_and_label.py` that replaces phone numbers, e-mail addresses and VIN-like strings (and optionally full street addresses with a ZIP code) with placeholders such as `[phone]`, `[email]`, `[vin]`, `[address]`; re-run 03, 04, 05, 06, 07, 08, 09, 10 (about 2.5 hours of mostly unattended compute: BiLSTM about 65 min and DistilBERT about 75 min for both splits); all site numbers update from `results/`; run `privacy_scan.py` to confirm zero. Expected effect on scores: small, since masked texts are 1 to 3% of the data, but every number may move in the last digits, and the PROGRESS numbers above would be superseded. Then publish from a fresh history.
+- B: mask only in the published CSVs and keep the trained results as they are. Fast, but the published data would not be exactly what the models saw, and the README would have to say so.
+- C: publish as is. Not recommended.
+
+**Other open items**
+1. Release: I have not made the repo public or enabled Pages. Waiting for your decision on the privacy issue and your explicit go-ahead. After that: make public (or push to a new public repo), enable Pages from `/docs`, then re-check the 22 GitHub links on the live site.
+2. License: no license file for the code. Pick one (for example MIT) or leave it unlicensed.
+3. AI-assistance note on the About page (course rule?) and an optional bio.
+4. Video presentation: due 2 Dec 2026; site due 4 Dec 2026, 11:59 pm MT.
+
+**Next:** waiting for decisions above.

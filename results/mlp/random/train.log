@@ -1,0 +1,16 @@
+[random] device=mps  train/val/test = 49908/7755/7753
+TF-IDF features: 30,000
+epoch  1  train_loss 0.7205  val_loss 0.3819  val_acc 0.8864  val_macroF1 0.8874
+epoch  2  train_loss 0.1988  val_loss 0.4063  val_acc 0.8762  val_macroF1 0.8771
+epoch  3  train_loss 0.0733  val_loss 0.4887  val_acc 0.8723  val_macroF1 0.8735
+epoch  4  train_loss 0.0250  val_loss 0.5779  val_acc 0.8718  val_macroF1 0.8731
+early stop: no val macro-F1 gain for 3 epochs
+
+BEST epoch 1 of 4 run | wall 21s
+VAL  acc 0.8864  macroF1 0.8874
+TEST acc 0.8851  macroF1 0.8860
+Weakest 3 classes on test (F1):
+            class  precision  recall       f1  support
+ELECTRICAL SYSTEM   0.765799  0.7725 0.769135    800.0
+           ENGINE   0.837209  0.8550 0.846011    800.0
+      POWER TRAIN   0.902873  0.8250 0.862182    800.0

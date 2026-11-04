@@ -173,3 +173,28 @@ Classes below the cap (all rows kept): temporal AIR BAGS val 636 / test 721, VIS
 Notes for later phases: the temporal and random sets are not the same size or class mix for small classes, so report macro-F1 as well as accuracy. Both CSVs are committed to git (about 86 MB together); regenerating and re-committing them will grow the repo history, so avoid re-committing unless the data changes.
 
 **Next:** Phase 5 (models). Waiting for "proceed".
+
+## Phase 5.1: MLP (done, awaiting 'proceed' for the BiLSTM)
+
+**Built:** `src/common.py` (data loading, label encoding from `config.CLASSES`, device choice with MPS-to-CPU fallback, metrics, per-class report, curve plot, `save_run`) and `src/05_train_mlp.py --split temporal|random`.
+
+**Setup (also in `results/mlp/<split>/config.json`):** TF-IDF unigrams+bigrams, 30,000 features, fit on train only; MLP 30000 -> 512 -> 128 -> 10, ReLU, dropout 0.3, Adam lr 1e-3, batch 128, max 30 epochs, early stopping on validation macro-F1 (patience 3), seed 42, device MPS. Test evaluated once per run, with the best checkpoint. Nothing was tuned on test.
+
+**Results (accuracy / macro-F1):**
+
+| Split scheme | Val acc | Val macro-F1 | Test acc | Test macro-F1 | Best epoch / run | Wall time |
+|---|---|---|---|---|---|---|
+| Temporal | 0.8698 | 0.8727 | 0.8762 | 0.8771 | 1 / 4 | 24 s |
+| Random | 0.8864 | 0.8874 | 0.8851 | 0.8860 | 1 / 4 | 21 s |
+
+Random-split test macro-F1 is only 0.9 points above temporal (0.8860 vs 0.8771) for the MLP.
+
+**3 weakest classes on test (F1):**
+- Temporal: ELECTRICAL SYSTEM 0.771 (precision 0.729, recall 0.818), FUEL/PROPULSION SYSTEM 0.832 (precision 0.897, recall 0.776), VISIBILITY/WIPER 0.863.
+- Random: ELECTRICAL SYSTEM 0.769, ENGINE 0.846, POWER TRAIN 0.862.
+
+**Observations:** The best epoch is 1 in both runs. Train loss keeps falling (0.72 -> 0.03) while validation loss rises from epoch 2 on, so the MLP overfits fast with 30k sparse features. Early stopping handled it. Any change to regularisation (weight decay, smaller feature set) would be a decision for Tejas, to be judged on validation only.
+
+**Files:** per run in `results/mlp/<split>/`: `config.json`, `metrics.json`, `history.csv`, `per_class_test.csv`, `test_predictions.csv` (with confidence and is_transcript, for Phase 6), `curves.png`, `train.log`. Checkpoints and the fitted TF-IDF in `models/` (gitignored, about 120 MB): `mlp_<split>.pt`, `mlp_<split>_tfidf.pkl`.
+
+**Next:** Phase 5.2 BiLSTM (`06_train_bilstm.py`). Waiting for "proceed".

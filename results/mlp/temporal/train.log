@@ -1,0 +1,16 @@
+[temporal] device=mps  train/val/test = 50000/7125/7320
+TF-IDF features: 30,000
+epoch  1  train_loss 0.7243  val_loss 0.4192  val_acc 0.8698  val_macroF1 0.8727
+epoch  2  train_loss 0.2015  val_loss 0.4521  val_acc 0.8623  val_macroF1 0.8648
+epoch  3  train_loss 0.0745  val_loss 0.5431  val_acc 0.8547  val_macroF1 0.8581
+epoch  4  train_loss 0.0270  val_loss 0.6569  val_acc 0.8505  val_macroF1 0.8536
+early stop: no val macro-F1 gain for 3 epochs
+
+BEST epoch 1 of 4 run | wall 24s
+VAL  acc 0.8698  macroF1 0.8727
+TEST acc 0.8762  macroF1 0.8771
+Weakest 3 classes on test (F1):
+                 class  precision   recall       f1  support
+     ELECTRICAL SYSTEM   0.729097 0.817500 0.770772    800.0
+FUEL/PROPULSION SYSTEM   0.897399 0.776250 0.832440    800.0
+      VISIBILITY/WIPER   0.861905 0.863962 0.862932    419.0

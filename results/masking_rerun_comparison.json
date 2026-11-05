@@ -1,45 +1,45 @@
 {
-  "source": "PROGRESS.md (scores recorded before the re-run) and results/summary_table.csv",
+  "source": "results/pre_masking_scores.json and results/summary_table.csv",
   "rows": [
     {
       "model": "MLP (TF-IDF)",
       "split": "temporal",
-      "test_macro_f1_before_masking_rerun": 0.8771,
+      "test_macro_f1_before": 0.8771,
       "test_macro_f1_after": 0.8739,
       "abs_difference": 0.0032
     },
     {
       "model": "MLP (TF-IDF)",
       "split": "random",
-      "test_macro_f1_before_masking_rerun": 0.886,
+      "test_macro_f1_before": 0.886,
       "test_macro_f1_after": 0.8849,
       "abs_difference": 0.0011
     },
     {
       "model": "BiLSTM",
       "split": "temporal",
-      "test_macro_f1_before_masking_rerun": 0.869,
+      "test_macro_f1_before": 0.869,
       "test_macro_f1_after": 0.8689,
       "abs_difference": 0.0001
     },
     {
       "model": "BiLSTM",
       "split": "random",
-      "test_macro_f1_before_masking_rerun": 0.884,
+      "test_macro_f1_before": 0.884,
       "test_macro_f1_after": 0.8817,
       "abs_difference": 0.0023
     },
     {
       "model": "DistilBERT",
       "split": "temporal",
-      "test_macro_f1_before_masking_rerun": 0.8921,
+      "test_macro_f1_before": 0.8921,
       "test_macro_f1_after": 0.8945,
       "abs_difference": 0.0024
     },
     {
       "model": "DistilBERT",
       "split": "random",
-      "test_macro_f1_before_masking_rerun": 0.9066,
+      "test_macro_f1_before": 0.9066,
       "test_macro_f1_after": 0.9053,
       "abs_difference": 0.0013
     }

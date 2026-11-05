@@ -7,7 +7,6 @@ exports.run = async (p, w) => {
   p.log("Ford:", await p.eval("document.getElementById('tr-summary').textContent"));
   await p.eval("(()=>{const s=document.getElementById('tr-year');s.value=String([...s.options].findIndex(o=>o.text==='2020')-1);s.dispatchEvent(new Event('change'))})()");
   p.log("Ford 2020:", await p.eval("document.getElementById('tr-summary').textContent"));
-  p.log("top makes (Engine, 2020):", await p.eval("[...document.querySelectorAll('#tr-makes .bar-row')].map(e=>e.querySelector('.name').textContent+' '+e.querySelector('.pct').textContent).join(', ')"));
   await p.eval("(()=>{const s=document.getElementById('tr-make');s.value='-1';s.dispatchEvent(new Event('change'));const y=document.getElementById('tr-year');y.value='-1';y.dispatchEvent(new Event('change'))})()");
   p.log("reset:", await p.eval("document.getElementById('tr-summary').textContent"));
   await p.eval(`(()=>{const r=document.getElementById('tr-line').getBoundingClientRect();document.getElementById('tr-line').dispatchEvent(new PointerEvent('pointermove',{clientX:r.left+r.width*0.6,clientY:r.top+50,bubbles:true}))})()`);

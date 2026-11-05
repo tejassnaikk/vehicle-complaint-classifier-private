@@ -1,14 +1,18 @@
 exports.run = async (p, w) => {
+  const seen = [];
   await p.waitFor("document.querySelectorAll('.choice').length === 10");
   for (let r = 0; r < 10; r++) {
     await p.waitFor("document.querySelectorAll('.choice').length === 10 && !document.querySelector('.choice').disabled");
     if (r === 0) await p.shot("explore_game_round");
+    seen.push(await p.eval("document.querySelector('.complaint').textContent"));
     await p.click(".choice:nth-child(" + (1 + (r % 10)) + ")");
     await p.waitFor("document.getElementById('g-next')");
     if (r === 1) await p.shot("explore_game_reveal");
     p.log("round", r + 1, "live:", await p.eval("document.getElementById('g-live').textContent"));
     await p.click("#g-next");
   }
+  if (new Set(seen).size !== 10) throw new Error('a complaint repeated within one game');
+  p.log('10 distinct complaints in the game');
   await p.waitFor("document.getElementById('g-again')");
   p.log("final:", await p.eval("document.querySelector('.final h2').textContent + ' / ' + document.querySelector('.final p').textContent"));
   await p.shot("explore_game_final");

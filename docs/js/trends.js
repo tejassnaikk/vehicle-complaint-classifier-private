@@ -28,18 +28,6 @@
     return out;
   }
 
-  function topMakes(sys) {
-    var tot = new Array(M.makes.length).fill(0), T = M.months.length, S = M.classes.length, t, k;
-    for (t = 0; t < T; t++) {
-      var g = t * S + sys;
-      for (k = rec.offsets[g]; k < rec.offsets[g + 1]; k++) {
-        if (year >= 0 && rec.year[k] !== year) continue;
-        tot[rec.make[k]] += rec.count[k];
-      }
-    }
-    return tot.map(function (v, i) { return [i, v]; }).filter(function (x) { return x[0] < M.makes.length - 1; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 10);
-  }
-
   function el(tag, attrs, parent) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
 
   function niceMax(v) { if (v <= 0) return 10; var p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
@@ -96,13 +84,6 @@
     });
   }
 
-  function drawMakes() {
-    var s = +$("tr-sys").value, top = topMakes(s), mx = top.length ? top[0][1] : 1;
-    $("tr-makes").innerHTML = top.map(function (r) {
-      return '<div class="bar-row"><span class="name">' + esc(M.makes[r[0]]) + '</span><span class="track"><span class="fill" style="display:block;width:' + (mx ? r[1] / mx * 100 : 0).toFixed(1) + '%"></span></span><span class="pct">' + nf(r[1]) + "</span></div>";
-    }).join("") || '<p class="small">No complaints for this filter.</p>';
-  }
-
   function hover(ev) {
     var svg = $("tr-line"), r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) / r.width * W;
     var t = Math.max(0, Math.min(M.months.length - 1, Math.round((px - PL) / (W - PL - PR) * (M.months.length - 1))));
@@ -124,12 +105,10 @@
     on = M.classes.map(function (c, i) { return i < 4; });
     fill($("tr-make"), [[-1, "All makes"]].concat(M.makes.map(function (m, i) { return [i, m === "OTHER MAKES" ? "All other makes" : m]; })));
     fill($("tr-year"), [[-1, "All model years"]].concat(M.years.map(function (yv, i) { return [i, yv === 0 ? "Before 2010 or not given" : String(yv)]; })));
-    fill($("tr-sys"), M.classes.map(function (c, i) { return [i, M.plain_names[i]]; }));
     $("tr-make").addEventListener("change", function () { make = +this.value; drawLine(); });
-    $("tr-year").addEventListener("change", function () { year = +this.value; drawLine(); drawMakes(); });
-    $("tr-sys").addEventListener("change", drawMakes);
+    $("tr-year").addEventListener("change", function () { year = +this.value; drawLine(); });
     var svg = $("tr-line"); svg.addEventListener("pointermove", hover); svg.addEventListener("pointerleave", leave);
     var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(function () { if (!app.hidden) drawLine(); }, 150); });
-    chips(); app.hidden = false; $("tr-fallback").hidden = true; drawLine(); drawMakes();
+    chips(); app.hidden = false; $("tr-fallback").hidden = true; drawLine();
   }).catch(function () { $("tr-fallback").insertAdjacentHTML("afterbegin", '<p class="verdict miss">The data files could not be loaded.</p>'); });
 })();

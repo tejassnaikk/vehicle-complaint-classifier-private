@@ -1,0 +1,35 @@
+{
+  "source": "results/summary_table.csv as committed in dc1cb2b (Phase 6), before the contact-detail masking re-run of the whole pipeline. Written once from git history; the file cannot be regenerated because those models were retrained.",
+  "rows": [
+    {
+      "model": "MLP (TF-IDF)",
+      "split": "temporal",
+      "test_macro_f1": 0.8771
+    },
+    {
+      "model": "MLP (TF-IDF)",
+      "split": "random",
+      "test_macro_f1": 0.886
+    },
+    {
+      "model": "BiLSTM",
+      "split": "temporal",
+      "test_macro_f1": 0.869
+    },
+    {
+      "model": "BiLSTM",
+      "split": "random",
+      "test_macro_f1": 0.884
+    },
+    {
+      "model": "DistilBERT",
+      "split": "temporal",
+      "test_macro_f1": 0.8921
+    },
+    {
+      "model": "DistilBERT",
+      "split": "random",
+      "test_macro_f1": 0.9066
+    }
+  ]
+}

@@ -11,10 +11,18 @@
   function esc(s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
   function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 
+  var ROUNDS = 10;
   function deal() {
+    // each round: pick a system at random, then an unused complaint of that system (systems may repeat; complaints never do within a game)
     var byClass = data.classes.map(function () { return []; });
     data.items.forEach(function (it) { byClass[it.label].push(it); });
-    rounds = shuffle(byClass.map(function (list) { return list[Math.floor(Math.random() * list.length)]; }));
+    byClass.forEach(shuffle);
+    rounds = [];
+    while (rounds.length < ROUNDS) {
+      var open = byClass.map(function (l, c) { return l.length ? c : -1; }).filter(function (c) { return c >= 0; });
+      var c = open[Math.floor(Math.random() * open.length)];
+      rounds.push(byClass[c].pop());
+    }
     idx = 0; score = { you: 0, mlp: 0, bilstm: 0, distilbert: 0 };
     show();
   }

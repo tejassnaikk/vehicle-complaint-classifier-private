@@ -32,7 +32,7 @@ PAGES = [("introduction.html", "Introduction"), ("data.html", "Data & Prep"), ("
 EXPLORE = [("try.html", "Try it", "Type or load a complaint and watch our simplest model sort it, running in your browser."),
            ("game.html", "Beat the machine", "Sort 10 real complaints yourself, then see how our three models did on the same ones."),
            ("mixups.html", "Mix-up explorer", "Click any cell of the confusion grid to read real complaints the best model put in the wrong system."),
-           ("trends.html", "Complaint trends", "See how many complaints each system gets per month, by make and model year."),
+           ("trends.html", "Complaint trends", "See how many complaints each system gets per month, filtered by make and model year."),
            ("notebook.html", "Lab notebook", "A timeline of the decisions and findings that shaped this project, each with the number that mattered."),
            ]
 EXPLORE_FILES = [f for f, _, _ in EXPLORE]
@@ -979,14 +979,14 @@ def build_game():
     smp = jl(DOCS / "data" / "sample_complaints.json")
     n_smp = len(smp["items"])
     acc = {m: S(m, "temporal").test_accuracy for m in MODELS}
-    head = phead("Explore", "Beat the machine", "Ten real complaints, one from each system. Pick the system you think failed, then see what our three models chose.")
+    head = phead("Explore", "Beat the machine", "Ten real complaints. Pick the system you think failed, then see what our three models chose.")
     body = f"""<section>
 <noscript><div class="callout error"><div class="callout-title">JavaScript is off</div><div class="body"><p>The game needs JavaScript to deal complaints and keep score. Without it you can read how the models did on the <a href="results.html">Results</a> page, or see single complaints on the <a href="introduction.html">Introduction</a> page.</p></div></div></noscript>
 <div class="tool" id="game-app" hidden>
 <div class="game-top"><div class="round" id="g-round" aria-live="polite"></div><div class="live-score" id="g-live" aria-label="Running score"></div></div>
 <div id="g-stage"></div>
 </div>
-<div class="small">Each game draws 10 of {n(n_smp)} test complaints, one per system, from the masked text in the published data. The complaints are 25 to 120 words long. The models never saw them in training.</div>
+<div class="small">Each game draws 10 of {n(n_smp)} test complaints from the masked text in the published data, with no complaint repeated in a game. Each round first picks a system at random, so a system can come up more than once and some may not come up at all. The complaints are 25 to 120 words long. The models never saw them in training.</div>
 </section>
 <section>
 <h2>What the score means</h2>
@@ -1034,9 +1034,9 @@ def build_trends():
               + "".join(f'<th scope="col">{y}</th>' for y in years) + "</tr></thead><tbody>"
               + "".join(f'<tr><th scope="row">{esc(pn[i])}</th>' + "".join(f"<td>{n(tr['yearly_by_system'][y][i])}</td>" for y in years) + "</tr>" for i in range(len(pn)))
               + "</tbody></table>")
-    head = phead("Explore", "Complaint trends", "How many complaints each system gets per month, and which makes and model years they come from.")
+    head = phead("Explore", "Complaint trends", "How many complaints each system gets per month, filtered by make and model year.")
     body = f"""<section>
-<p class="section-lead">These charts count the {n(tr['total_complaints'])} complaints in our cleaned dataset, received from January 2020 to October 2026. They are counts only. The balanced training and test samples used for the models are not used here, so the shares reflect the real mix of complaints in the cleaned dataset.</p>
+<p class="section-lead">This chart counts the {n(tr['total_complaints'])} complaints in our cleaned dataset, received from January 2020 to October 2026. They are counts only. The balanced training and test samples used for the models are not used here, so the shares reflect the real mix of complaints in the cleaned dataset.</p>
 <div class="tool" id="tr-app" hidden>
 <div class="filters">
 <div class="cm-group"><label class="field-label" for="tr-make">Make</label><select id="tr-make"></select></div>
@@ -1046,17 +1046,14 @@ def build_trends():
 <div class="chips" id="tr-chips" role="group" aria-label="Show or hide systems"></div>
 <div class="chart-wrap"><svg id="tr-line" role="img" aria-labelledby="tr-line-title" preserveAspectRatio="xMidYMid meet"><title id="tr-line-title">Line chart of complaints per month for the selected systems</title></svg><div class="tip" id="tr-tip" hidden></div></div>
 <div class="small" id="tr-summary"></div>
-<h2 class="chart-title">Top 10 makes for one system</h2>
-<div class="filters"><div class="cm-group"><label class="field-label" for="tr-sys">System</label><select id="tr-sys"></select></div></div>
-<div class="bars" id="tr-makes"></div>
-<div class="small">This chart uses the model-year filter above and ignores the make filter. It ranks the {len(tr['makes']) - 1} makes with the most complaints overall, so a make outside that list never appears here.</div>
+<p class="small">Complaint counts reflect how many vehicles are on the road, not how reliable a make is.</p>
 <details><summary>Show the monthly numbers as a table</summary><div class="table-wrap" id="tr-table"></div></details>
 </div>
 <div id="tr-fallback"><div class="callout"><div class="callout-title">JavaScript is off</div><div class="body"><p>The interactive charts need JavaScript. The table below has complaints per year and system.</p></div></div>
 <div class="table-wrap">{static}</div></div>
 </section>
 <section>
-<h2>How to read these charts</h2>
+<h2>How to read this chart</h2>
 <ul>
 <li><strong>Counts depend on who files.</strong> A make with more cars on the road gets more complaints, so a long bar is not the same as a worse car. We do not know how many vehicles each make sold.</li>
 <li><strong>Recent months can look low.</strong> Complaints keep arriving after a failure, and the owner may report months later. We make no claim about trends in the last few months.</li>
@@ -1065,14 +1062,14 @@ def build_trends():
 </ul>
 {callout("No complaint text here", "<p>These pages show counts only. The data file behind them has one number per month, system, make and model year, and no text, report numbers or dates finer than a month.</p>", "plain")}
 </section>"""
-    return page("trends.html", "Complaint trends", body, "Interactive charts of NHTSA vehicle complaints per month by system, with filters for make and model year.", head, scripts=["trends.js"])
+    return page("trends.html", "Complaint trends", body, "An interactive chart of NHTSA vehicle complaints per month by system, with filters for make and model year.", head, scripts=["trends.js"])
 
 
 def build_notebook():
     tc = pd.read_csv(R / "eda" / "top_level_counts.csv").set_index("top_level")["count"]
     mk = jl(R / "masking_counts.json")
     late = jl(R / "late_phone_masking.json")
-    pre = jl(R / "premasking_scores.json")
+    pre = jl(R / "masking_rerun_comparison.json")
     nf_share = funnel["dropped_no_failure"] / funnel["in_class_list"] * 100
     pair = leak_terms[1]
     mlp_t, bil_t, dil_t = S("mlp", "temporal"), S("bilstm", "temporal"), S("distilbert", "temporal")

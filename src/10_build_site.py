@@ -31,6 +31,7 @@ PAGES = [("introduction.html", "Introduction"), ("data.html", "Data & Prep"), ("
 # Interactive pages, linked from the Explore group in the nav and from the home page. Add a page here when its builder exists.
 EXPLORE = [("try.html", "Try it", "Type or load a complaint and watch our simplest model sort it, running in your browser."),
            ("game.html", "Beat the machine", "Sort 10 real complaints yourself, then see how our three models did on the same ones."),
+           ("mixups.html", "Mix-up explorer", "Click any cell of the confusion grid to read real complaints the best model put in the wrong system."),
            ]
 EXPLORE_FILES = [f for f, _, _ in EXPLORE]
 SPLITS = ["temporal", "random"]
@@ -993,6 +994,36 @@ def build_game():
     return page("game.html", "Beat the machine", body, "A game: sort ten real vehicle complaints into systems and compare your score with three neural network models.", head, scripts=["game.js"])
 
 
+def build_mixups():
+    mx = jl(DOCS / "data" / "mixups.json")
+    k, mat, pn = len(mx["classes"]), mx["matrix"], mx["plain_names"]
+    off = sorted(((mat[i][j], i, j) for i in range(k) for j in range(k) if i != j), reverse=True)[:3]
+    top = "".join(f"<li><strong>{n(c)}</strong> complaints about {esc(pn[i].lower())} were put under {esc(pn[j].lower())}.</li>" for c, i, j in off)
+    static = ("<table class=\"mx-static\"><caption>Counts by true system (rows) and predicted system (columns), DistilBERT, time-based test set.</caption><thead><tr><th scope=\"col\">True system</th>"
+              + "".join(f'<th scope="col">{i + 1}</th>' for i in range(k)) + "</tr></thead><tbody>"
+              + "".join(f'<tr><th scope="row">{i + 1} {esc(pn[i])}</th>' + "".join(f"<td>{mat[i][j]}</td>" for j in range(k)) + "</tr>" for i in range(k))
+              + "</tbody></table><ol class=\"small mx-key\">" + "".join(f"<li>{esc(x)}</li>" for x in pn) + "</ol>")
+    head = phead("Explore", "Mix-up explorer", "Where the best model goes wrong. Each row is the system NHTSA filed a complaint under. Each column is the system the model chose.")
+    body = f"""<section>
+<p class="section-lead">This grid is the DistilBERT result on the time-based test set of {n(mx['n'])} complaints. Click a cell to read up to five real complaints that fall in it.</p>
+<div class="tool" id="mx-app" hidden>
+<div class="btns"><button class="btn" id="mx-hide" type="button" aria-pressed="false">Hide the correct answers</button></div>
+<div class="mx-scroll"><div id="mx-grid"></div></div>
+<div class="legend"><span><span class="swatch" style="background:#f2a900"></span>correct (darker means a bigger share of the row)</span><span><span class="swatch" style="background:#d64545"></span>mix-up (darker means a bigger share of the row)</span></div>
+<div id="mx-detail" aria-live="polite"><p class="small">Pick a cell to see complaints.</p></div>
+</div>
+<div id="mx-fallback"><div class="callout"><div class="callout-title">JavaScript is off</div><div class="body"><p>The interactive grid needs JavaScript. The table below has the same counts, and the example complaints are on the <a href="results.html">Results</a> page.</p></div></div>
+<div class="table-wrap">{static}</div></div>
+</section>
+<section>
+<h2>Three largest mix-ups</h2>
+<ul>{top}</ul>
+<p>Systems that share symptoms are easy to confuse. An engine problem can show up as a fuel problem, and a broken sunroof can count as body or as glass. The <a href="conclusion.html">Conclusion</a> says more about why. The row and column names are the plain-English names of the ten groups described on the <a href="data.html">Data &amp; Prep</a> page.</p>
+{callout("About the examples", "<p>The complaints shown are the masked text from the published test data. Each cell shows a random pick of up to five. The percentage is how sure the model was of its answer, so a mix-up with a high percentage is a confident mistake.</p>", "plain")}
+</section>"""
+    return page("mixups.html", "Mix-up explorer", body, "An interactive confusion grid for our best model: click a cell to read real complaints it sorted into the wrong system.", head, scripts=["mixups.js"])
+
+
 # ============================================================================ write and check
 BANNED = ["revolutionary", "cutting-edge", "robust", "leverage", "delve", "seamless", "crucial", "powerful", "state-of-the-art", "game-chang",
           "unlock", "harness", "comprehensive", "novel", "groundbreaking", "innovative", "pivotal", "journey", "deep dive", "dive into", "landscape", "tapestry"]
@@ -1038,7 +1069,7 @@ def check(pages):
 def main():
     pages = {"index.html": build_index(), "introduction.html": build_intro(), "data.html": build_data(), "models.html": build_models(),
              "results.html": build_results(), "conclusion.html": build_conclusion(), "about.html": build_about()}
-    builders = {"try.html": build_try, "game.html": build_game}
+    builders = {"try.html": build_try, "game.html": build_game, "mixups.html": build_mixups}
     for f in EXPLORE_FILES:
         pages[f] = builders[f]()
     for fname, h in pages.items():

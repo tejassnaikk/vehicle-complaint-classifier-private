@@ -121,6 +121,35 @@ def export_sample():
     return out
 
 
+# ---------------------------------------------------------------------------------------------- 3. mix-up explorer
+def export_mixups():
+    """DistilBERT temporal test confusion matrix and up to 5 real complaints per (true, predicted) cell, with the model's confidence."""
+    t = temporal_test()
+    p = pd.read_csv(R / "distilbert" / "temporal" / "test_predictions.csv", dtype={"odino": str})
+    d = p.merge(t[["odino", "text"]], on="odino", how="left")
+    assert len(d) == len(t) and d.text.notna().all()
+    k = len(CLASSES)
+    mat = np.zeros((k, k), dtype=int)
+    for yt, yp in zip(d.true_label, d.pred_label):
+        mat[CLASSES.index(yt), CLASSES.index(yp)] += 1
+    m = json.loads((R / "eval" / "distilbert" / "temporal" / "metrics.json").read_text())
+    assert abs(np.trace(mat) / mat.sum() - m["accuracy"]) < 1e-9, "confusion matrix does not match results/eval/distilbert/temporal/metrics.json"
+    ex = {}
+    for (yt, yp), g in d.groupby(["true_label", "pred_label"]):
+        g = g.sample(min(5, len(g)), random_state=SEED)
+        items = []
+        for r in g.itertuples():
+            txt, cut = r.text, False
+            if len(txt) > 600:
+                txt, cut = txt[:600].rsplit(" ", 1)[0], True
+            items.append({"id": r.odino, "conf": round(float(r.confidence), 4), "text": txt, "cut": cut})
+        ex[f"{CLASSES.index(yt)},{CLASSES.index(yp)}"] = items
+    out = {"model": "DistilBERT", "split": "temporal test set", "n": int(mat.sum()), "classes": CLASSES, "plain_names": [PLAIN_NAMES[c] for c in CLASSES],
+           "matrix": mat.tolist(), "examples": ex, "source": "results/distilbert/temporal/test_predictions.csv and data/clean/complaints_temporal.csv"}
+    (OUT / "mixups.json").write_text(json.dumps(out, separators=(",", ":")))
+    return out
+
+
 def write_file_sizes():
     """results/explore_files.json: size of every file the Explore pages download (the site cites these numbers)."""
     files = {f.name: f.stat().st_size for f in sorted(OUT.glob("*")) if f.is_file()}
@@ -136,6 +165,9 @@ def main(which):
         print("browser model check:", rep)
         s = export_sample()
         print("sample complaints:", len(s["items"]))
+    if which in ("all", "mixups"):
+        mx = export_mixups()
+        print("mixups: n =", mx["n"], "cells with examples:", len(mx["examples"]))
     write_file_sizes()
 
 

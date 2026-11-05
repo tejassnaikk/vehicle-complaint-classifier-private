@@ -1,10 +1,12 @@
 {
   "files_bytes": {
+    "mixups.json": 173345,
     "mlp_vocab.json": 647135,
     "mlp_weights.bin": 15551976,
     "sample_complaints.json": 122304
   },
   "files_mb": {
+    "mixups.json": 0.2,
     "mlp_vocab.json": 0.6,
     "mlp_weights.bin": 15.6,
     "sample_complaints.json": 0.1

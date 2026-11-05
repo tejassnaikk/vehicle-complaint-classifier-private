@@ -137,6 +137,8 @@ def brace_scan():
     return out
 
 
+
+def main():
     print("Contrast (WCAG AA):")
     cb = contrast_check()
     print("contrast failures:", cb or "none")

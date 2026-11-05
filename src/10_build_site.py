@@ -30,6 +30,7 @@ PAGES = [("introduction.html", "Introduction"), ("data.html", "Data & Prep"), ("
          ("results.html", "Results"), ("conclusion.html", "Conclusion"), ("about.html", "About"), ("try.html", "Explore")]
 # Interactive pages, linked from the Explore group in the nav and from the home page. Add a page here when its builder exists.
 EXPLORE = [("try.html", "Try it", "Type or load a complaint and watch our simplest model sort it, running in your browser."),
+           ("game.html", "Beat the machine", "Sort 10 real complaints yourself, then see how our three models did on the same ones."),
            ]
 EXPLORE_FILES = [f for f, _, _ in EXPLORE]
 SPLITS = ["temporal", "random"]
@@ -971,6 +972,27 @@ def build_try():
     return page("try.html", "Try it", body, "Run our trained MLP in your browser: type a vehicle complaint and see which of ten systems it is sorted into.", head, scripts=["mlp.js", "try.js"])
 
 
+def build_game():
+    smp = jl(DOCS / "data" / "sample_complaints.json")
+    n_smp = len(smp["items"])
+    acc = {m: S(m, "temporal").test_accuracy for m in MODELS}
+    head = phead("Explore", "Beat the machine", "Ten real complaints, one from each system. Pick the system you think failed, then see what our three models chose.")
+    body = f"""<section>
+<noscript><div class="callout error"><div class="callout-title">JavaScript is off</div><div class="body"><p>The game needs JavaScript to deal complaints and keep score. Without it you can read how the models did on the <a href="results.html">Results</a> page, or see single complaints on the <a href="introduction.html">Introduction</a> page.</p></div></div></noscript>
+<div class="tool" id="game-app" hidden>
+<div class="game-top"><div class="round" id="g-round" aria-live="polite"></div><div class="live-score" id="g-live" aria-label="Running score"></div></div>
+<div id="g-stage"></div>
+</div>
+<div class="small">Each game draws 10 of {n(n_smp)} test complaints, one per system, from the masked text in the published data. The complaints are 25 to 120 words long. The models never saw them in training.</div>
+</section>
+<section>
+<h2>What the score means</h2>
+<p>Ten complaints are a small sample, so one game says little about how good anyone is. On the full time-based test set of {n(S("mlp", "temporal").n_test)} complaints, the MLP sorts {per100(acc['mlp'])} in 100 correctly, the BiLSTM {per100(acc['bilstm'])} and DistilBERT {per100(acc['distilbert'])}. The <a href="results.html">Results</a> page has the full scores and intervals.</p>
+<p>Some complaints can fairly go in two systems. NHTSA staff filed each one in a single system, and that filing is what counts as the right answer here. If you disagree with it, you are not alone: {n(overlap['wrong_for_all_three'])} of {n(overlap['n_test'])} test complaints were sorted differently from NHTSA's filing by all three models.</p>
+</section>"""
+    return page("game.html", "Beat the machine", body, "A game: sort ten real vehicle complaints into systems and compare your score with three neural network models.", head, scripts=["game.js"])
+
+
 # ============================================================================ write and check
 BANNED = ["revolutionary", "cutting-edge", "robust", "leverage", "delve", "seamless", "crucial", "powerful", "state-of-the-art", "game-chang",
           "unlock", "harness", "comprehensive", "novel", "groundbreaking", "innovative", "pivotal", "journey", "deep dive", "dive into", "landscape", "tapestry"]
@@ -1016,7 +1038,7 @@ def check(pages):
 def main():
     pages = {"index.html": build_index(), "introduction.html": build_intro(), "data.html": build_data(), "models.html": build_models(),
              "results.html": build_results(), "conclusion.html": build_conclusion(), "about.html": build_about()}
-    builders = {"try.html": build_try}
+    builders = {"try.html": build_try, "game.html": build_game}
     for f in EXPLORE_FILES:
         pages[f] = builders[f]()
     for fname, h in pages.items():

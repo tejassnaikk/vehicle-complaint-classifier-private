@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1c1f24">
+<title>Beat the machine | What Failed on This Car?</title>
+<meta name="description" content="A game: sort ten real vehicle complaints into systems and compare your score with three neural network models.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<link rel="stylesheet" href="css/style.css">
+<script src="js/site.js" defer></script>
+<script src="js/game.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to the content</a>
+<header class="site-header"><div class="bar">
+<a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span>What Failed on This Car?</a>
+<nav class="main" aria-label="Main"><ul><li><a href="introduction.html">Introduction</a></li><li><a href="data.html">Data &amp; Prep</a></li><li><a href="models.html">Models</a></li><li><a href="results.html">Results</a></li><li><a href="conclusion.html">Conclusion</a></li><li><a href="about.html">About</a></li><li><a href="try.html" aria-current="page" class=explore-link>Explore</a></li></ul></nav>
+</div></header>
+<nav class="explore-bar" aria-label="Explore"><div class="inner"><span class="lab">Explore</span><ul><li><a href="try.html">Try it</a></li><li><a href="game.html" aria-current="page">Beat the machine</a></li></ul></div></nav>
+<div class="page-head"><div class="inner"><div class="kicker">Explore</div><h1>Beat the machine</h1><div class="subtitle">Ten real complaints, one from each system. Pick the system you think failed, then see what our three models chose.</div></div></div>
+<main id="content">
+<section>
+<noscript><div class="callout error"><div class="callout-title">JavaScript is off</div><div class="body"><p>The game needs JavaScript to deal complaints and keep score. Without it you can read how the models did on the <a href="results.html">Results</a> page, or see single complaints on the <a href="introduction.html">Introduction</a> page.</p></div></div></noscript>
+<div class="tool" id="game-app" hidden>
+<div class="game-top"><div class="round" id="g-round" aria-live="polite"></div><div class="live-score" id="g-live" aria-label="Running score"></div></div>
+<div id="g-stage"></div>
+</div>
+<div class="small">Each game draws 10 of 200 test complaints, one per system, from the masked text in the published data. The complaints are 25 to 120 words long. The models never saw them in training.</div>
+</section>
+<section>
+<h2>What the score means</h2>
+<p>Ten complaints are a small sample, so one game says little about how good anyone is. On the full time-based test set of 7,320 complaints, the MLP sorts 87 in 100 correctly, the BiLSTM 87 and DistilBERT 89. The <a href="results.html">Results</a> page has the full scores and intervals.</p>
+<p>Some complaints can fairly go in two systems. NHTSA staff filed each one in a single system, and that filing is what counts as the right answer here. If you disagree with it, you are not alone: 513 of 7,320 test complaints were sorted differently from NHTSA's filing by all three models.</p>
+</section>
+<nav class="pager" aria-label="Previous and next page"><a class="prev" href="try.html"><span class="dir">&larr; Previous</span><span class="ttl">Try it</span></a><a class="next" href="results.html"><span class="dir">Back to the story</span><span class="ttl">Results</span></a></nav>
+</main>
+<footer><div class="inner">
+<div>Complaint data: National Highway Traffic Safety Administration (NHTSA), Office of Defects Investigation, vehicle owner complaints. US government data, public domain.</div>
+<div>A class project. Code, cleaned data and results: <a href="https://github.com/tejassnaikk/vehicle-complaint-classifier">github.com/tejassnaikk/vehicle-complaint-classifier</a>.</div>
+</div></footer>
+</body>
+</html>

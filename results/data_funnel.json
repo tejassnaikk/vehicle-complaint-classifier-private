@@ -5,7 +5,7 @@
   "in_class_list": 229063,
   "dropped_no_failure": 10295,
   "dropped_duplicates": 1690,
-  "dropped_short": 18573,
-  "cleaned_complaints": 198505,
+  "dropped_short": 18575,
+  "cleaned_complaints": 198503,
   "complaints_per_year_file": "results/eda/complaints_per_year.csv"
 }

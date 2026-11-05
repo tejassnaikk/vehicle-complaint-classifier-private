@@ -1,0 +1,18 @@
+{
+  "texts_before_masking": 218768,
+  "texts_containing_each_kind": {
+    "url": 1013,
+    "email": 52,
+    "address": 5960,
+    "phone": 2737,
+    "vin": 85
+  },
+  "texts_changed": 7495,
+  "placeholders_inserted": {
+    "phone": 2930,
+    "email": 59,
+    "address": 6766,
+    "vin": 83,
+    "url": 1303
+  }
+}

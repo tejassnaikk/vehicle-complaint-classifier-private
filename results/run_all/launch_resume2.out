@@ -1,0 +1,16 @@
+2026-11-04 23:00:58 RESUME from 09_make_figures
+2026-11-04 23:00:58 SKIP   03_clean_and_label (before --from)
+2026-11-04 23:00:58 SKIP   04_split_and_sample (before --from)
+2026-11-04 23:00:58 SKIP   privacy_scan_data (before --from)
+2026-11-04 23:00:58 SKIP   05_train_mlp_temporal (before --from)
+2026-11-04 23:00:58 SKIP   05_train_mlp_random (before --from)
+2026-11-04 23:00:58 SKIP   06_train_bilstm_temporal (before --from)
+2026-11-04 23:00:58 SKIP   06_train_bilstm_random (before --from)
+2026-11-04 23:00:58 SKIP   07_train_distilbert_temporal (before --from)
+2026-11-04 23:00:58 SKIP   07_train_distilbert_random (before --from)
+2026-11-04 23:00:58 SKIP   08_evaluate (before --from)
+2026-11-04 23:00:58 SKIP   update_readme_table (before --from)
+2026-11-04 23:00:58 START  09_make_figures
+2026-11-04 23:01:10 DONE   09_make_figures (12 s)
+2026-11-04 23:01:10 START  10_build_site
+2026-11-04 23:01:11 FAILED 10_build_site (exit 1). See results/run_all/10_build_site.log

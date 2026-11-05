@@ -1,19 +1,19 @@
 {
   "val": {
-    "accuracy": 0.9022566086395873,
-    "macro_f1": 0.9028827846316021,
-    "weighted_f1": 0.902108942752069,
+    "accuracy": 0.9026434558349452,
+    "macro_f1": 0.9034760932512202,
+    "weighted_f1": 0.9025625599634528,
     "n": 7755
   },
   "test": {
-    "accuracy": 0.9059718818521862,
-    "macro_f1": 0.9065866017007653,
-    "weighted_f1": 0.9057097177859342,
+    "accuracy": 0.9045530762285567,
+    "macro_f1": 0.9052593593490762,
+    "weighted_f1": 0.9041821004054371,
     "n": 7753
   },
   "best_epoch": 3,
   "epochs_run": 3,
-  "wall_time_s": 2579.4,
+  "wall_time_s": 2244.5,
   "device": "mps",
   "checkpoint": "distilbert_random.pt",
   "n_params": 66961162

@@ -12,12 +12,12 @@ Test set scored once per model with its best validation checkpoint. Main result 
 <!-- RESULTS_START -->
 | Model | Split | Test accuracy | Test macro-F1 (95% bootstrap interval) | Training time |
 |---|---|---|---|---|
-| MLP (TF-IDF) | temporal | 0.8762 | 0.8771 (0.8687 to 0.8843) | 24 s |
-| BiLSTM | temporal | 0.8687 | 0.8690 (0.8604 to 0.8764) | 34 min |
-| DistilBERT | temporal | 0.8913 | 0.8921 (0.8849 to 0.8988) | 32 min |
-| MLP (TF-IDF) | random | 0.8851 | 0.8860 (0.8786 to 0.8929) | 21 s |
-| BiLSTM | random | 0.8835 | 0.8840 (0.8772 to 0.8908) | 30 min |
-| DistilBERT | random | 0.9060 | 0.9066 (0.9000 to 0.9128) | 43 min |
+| MLP (TF-IDF) | temporal | 0.8738 | 0.8739 (0.8658 to 0.8812) | 22 s |
+| BiLSTM | temporal | 0.8684 | 0.8689 (0.8609 to 0.8768) | 33 min |
+| DistilBERT | temporal | 0.8943 | 0.8945 (0.8873 to 0.9012) | 49 min |
+| MLP (TF-IDF) | random | 0.8840 | 0.8849 (0.8780 to 0.8923) | 16 s |
+| BiLSTM | random | 0.8812 | 0.8817 (0.8743 to 0.8889) | 22 min |
+| DistilBERT | random | 0.9046 | 0.9053 (0.8990 to 0.9112) | 37 min |
 
 10 classes, 198,505 cleaned complaints, 64,445 in the published temporal sample. Electrical system is the weakest class for every model on the temporal test set.
 <!-- RESULTS_END -->

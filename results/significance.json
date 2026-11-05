@@ -4,79 +4,79 @@
   "macro_f1_95ci": {
     "mlp": {
       "temporal": {
-        "macro_f1": 0.877059403497538,
-        "ci_low": 0.8686920183492622,
-        "ci_high": 0.884294602176982
+        "macro_f1": 0.8738582376205942,
+        "ci_low": 0.865768175632065,
+        "ci_high": 0.8812087115069425
       },
       "random": {
-        "macro_f1": 0.8860121414209512,
-        "ci_low": 0.8786140869632598,
-        "ci_high": 0.8929337845571493
+        "macro_f1": 0.884859065054586,
+        "ci_low": 0.877999024001567,
+        "ci_high": 0.8923304199656935
       }
     },
     "bilstm": {
       "temporal": {
-        "macro_f1": 0.8689887829401552,
-        "ci_low": 0.8604484076737808,
-        "ci_high": 0.8764114402139599
+        "macro_f1": 0.8689264355253684,
+        "ci_low": 0.8609050480019382,
+        "ci_high": 0.8767932101856937
       },
       "random": {
-        "macro_f1": 0.884019228758295,
-        "ci_low": 0.8772418380610499,
-        "ci_high": 0.8908411977754362
+        "macro_f1": 0.8817320895641331,
+        "ci_low": 0.8743039839140508,
+        "ci_high": 0.8888875197524562
       }
     },
     "distilbert": {
       "temporal": {
-        "macro_f1": 0.8920704269048757,
-        "ci_low": 0.8849478366825104,
-        "ci_high": 0.8988456197502249
+        "macro_f1": 0.8945496383068212,
+        "ci_low": 0.8872982924584294,
+        "ci_high": 0.901201643141554
       },
       "random": {
-        "macro_f1": 0.9065866017007653,
-        "ci_low": 0.9000345565339353,
-        "ci_high": 0.9128391206173931
+        "macro_f1": 0.9052593593490762,
+        "ci_low": 0.8989648101947567,
+        "ci_high": 0.9112395206950449
       }
     }
   },
   "paired_difference_macro_f1_95ci": {
     "temporal": {
       "bilstm minus mlp": {
-        "difference": -0.008070620557382724,
-        "ci_low": -0.014613210887115828,
-        "ci_high": -0.0016363423673295325,
-        "ci_excludes_zero": true
+        "difference": -0.004931802095225812,
+        "ci_low": -0.011439689899268269,
+        "ci_high": 0.001984965617420936,
+        "ci_excludes_zero": false
       },
       "distilbert minus mlp": {
-        "difference": 0.015011023407337731,
-        "ci_low": 0.009291413304269991,
-        "ci_high": 0.0214586316910922,
+        "difference": 0.02069140068622699,
+        "ci_low": 0.014682869385131464,
+        "ci_high": 0.027034386275821658,
         "ci_excludes_zero": true
       },
       "distilbert minus bilstm": {
-        "difference": 0.023081643964720455,
-        "ci_low": 0.017256642061778425,
-        "ci_high": 0.029631128210956162,
+        "difference": 0.025623202781452803,
+        "ci_low": 0.019439124078551327,
+        "ci_high": 0.0317489773696951,
         "ci_excludes_zero": true
       }
     },
     "random": {
       "bilstm minus mlp": {
-        "difference": -0.001992912662656221,
-        "ci_low": -0.007615557158409413,
-        "ci_high": 0.0036543094797605994,
+        "difference": -0.0031269754904529323,
+        "ci_low": -0.008967597773557939,
+        "ci_high": 0.002787159072318545,
         "ci_excludes_zero": false
       },
       "distilbert minus mlp": {
-        "difference": 0.020574460279814133,
-        "ci_low": 0.014849114211425207,
-        "ci_high": 0.0263074243367565,
+        "difference": 0.020400294294490195,
+        "ci_low": 0.014148201002578905,
+        "ci_high": 0.025920332763858602,
         "ci_excludes_zero": true
       },
       "distilbert minus bilstm": {
-        "difference": 0.022567372942470354,
-        "ci_low": 0.01688183898931862,
-        "ci_high": 0.028120150432354413,
+        "difference": 0.023527269784943128,
+        "ci_low": 0.01741327555360396,
+        "ci_high": 0.029251775682424264,
         "ci_excludes_zero": true
       }
     }
@@ -85,42 +85,42 @@
     {
       "model_a": "mlp",
       "model_b": "bilstm",
-      "both_correct": 6089,
-      "both_wrong": 636,
-      "only_mlp_correct": 325,
-      "only_bilstm_correct": 270,
-      "accuracy_a": 0.8762295081967213,
-      "accuracy_b": 0.8687158469945355,
-      "chi2_continuity_corrected": 4.900840336134454,
-      "p_value_exact": 0.02676028459114952,
-      "significant_at_0.05": true,
+      "both_correct": 6099,
+      "both_wrong": 666,
+      "only_mlp_correct": 297,
+      "only_bilstm_correct": 258,
+      "accuracy_a": 0.8737704918032787,
+      "accuracy_b": 0.8684426229508196,
+      "chi2_continuity_corrected": 2.601801801801802,
+      "p_value_exact": 0.1066580054617779,
+      "significant_at_0.05": false,
       "significant_bonferroni_0.0167": false
     },
     {
       "model_a": "mlp",
       "model_b": "distilbert",
-      "both_correct": 6205,
-      "both_wrong": 587,
-      "only_mlp_correct": 209,
-      "only_distilbert_correct": 319,
-      "accuracy_a": 0.8762295081967213,
-      "accuracy_b": 0.8912568306010928,
-      "chi2_continuity_corrected": 22.501893939393938,
-      "p_value_exact": 1.9362419281977032e-06,
+      "both_correct": 6207,
+      "both_wrong": 585,
+      "only_mlp_correct": 189,
+      "only_distilbert_correct": 339,
+      "accuracy_a": 0.8737704918032787,
+      "accuracy_b": 0.8942622950819672,
+      "chi2_continuity_corrected": 42.047348484848484,
+      "p_value_exact": 6.680536020897927e-11,
       "significant_at_0.05": true,
       "significant_bonferroni_0.0167": true
     },
     {
       "model_a": "bilstm",
       "model_b": "distilbert",
-      "both_correct": 6170,
-      "both_wrong": 607,
-      "only_bilstm_correct": 189,
-      "only_distilbert_correct": 354,
-      "accuracy_a": 0.8687158469945355,
-      "accuracy_b": 0.8912568306010928,
-      "chi2_continuity_corrected": 49.532228360957646,
-      "p_value_exact": 1.3205218227178955e-12,
+      "both_correct": 6199,
+      "both_wrong": 616,
+      "only_bilstm_correct": 158,
+      "only_distilbert_correct": 347,
+      "accuracy_a": 0.8684426229508196,
+      "accuracy_b": 0.8942622950819672,
+      "chi2_continuity_corrected": 69.9881188118812,
+      "p_value_exact": 2.5342184045572158e-17,
       "significant_at_0.05": true,
       "significant_bonferroni_0.0167": true
     }

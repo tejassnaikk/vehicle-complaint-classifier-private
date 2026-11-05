@@ -1,0 +1,3 @@
+funnel: {'raw_rows': 629231, 'raw_complaints': 432893, 'single_label': 304879, 'in_class_list': 229063, 'dropped_no_failure': 10295, 'dropped_duplicates': 1690, 'dropped_short': 18575, 'cleaned_complaints': 198503, 'complaints_per_year_file': 'results/eda/complaints_per_year.csv'}
+copied 33 images to /Users/tena7850/Developer/vehicle-complaint-classifier/docs/img
+figures: fig_arch_mlp.png, fig_arch_mlp.svg, fig_arch_bilstm.png, fig_arch_bilstm.svg, fig_arch_distilbert.png, fig_arch_distilbert.svg, fig_pipeline.png, fig_pipeline.svg, fig_cleaning_example.png, fig_class_balance.png, fig_per_class_f1.png, fig_split_comparison.png, fig_complaints_per_year.png, fig_identified_correctly.png, fig_mixups.png

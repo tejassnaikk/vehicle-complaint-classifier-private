@@ -1,11 +1,11 @@
 {
   "n_test": 7320,
   "wrong_by_model": {
-    "mlp": 906,
-    "bilstm": 961,
-    "distilbert": 796
+    "mlp": 924,
+    "bilstm": 963,
+    "distilbert": 774
   },
-  "wrong_for_all_three": 497,
-  "wrong_for_at_least_one": 1330,
-  "pct_wrong_for_all_three": 6.7896174863387975
+  "wrong_for_all_three": 513,
+  "wrong_for_at_least_one": 1307,
+  "pct_wrong_for_all_three": 7.008196721311475
 }

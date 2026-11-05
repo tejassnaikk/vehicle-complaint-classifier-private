@@ -352,9 +352,12 @@ def build_intro():
 
 def build_conclusion():
     ek = overlap
-    odi4 = wi["examples"][6]["odino"] if wi["examples"][6]["example"] == 4 else [e for e in wi["examples"] if e["example"] == 4][0]["odino"]
+    # the "hard for any reader" example: the both-wrong word-importance example whose true class is the electrical system
+    ex_el = [e for e in wi["examples"] if e["category"] == "both_wrong" and e["true_label"] == "ELECTRICAL SYSTEM"]
+    assert ex_el and ex_el[0]["pred_label"] == "FORWARD COLLISION AVOIDANCE", "conclusion example needs an electrical complaint sorted as collision avoidance"
+    odi4 = ex_el[0]["odino"]
     n_fca = sum(int(P[m].loc[P[m].odino == odi4, "pred_label"].iloc[0] == "FORWARD COLLISION AVOIDANCE") for m in MODELS)
-    NUMW = {1: "one", 2: "two", 3: "all three"}
+    NUMW = {0: "none of the three", 1: "one of the three", 2: "two of the three", 3: "all three"}
     mixd = {(r.true_class, r.put_under): (int(r["count"]), int(r.of_total)) for _, r in mix.iterrows()}
     fuel_eng, trans_eng = mixd[("FUEL/PROPULSION SYSTEM", "ENGINE")], mixd[("POWER TRAIN", "ENGINE")]
     el_eng, el_pt = mixd[("ELECTRICAL SYSTEM", "ENGINE")], mixd[("ELECTRICAL SYSTEM", "POWER TRAIN")]
@@ -371,7 +374,7 @@ def build_conclusion():
         "The gap between the other two is small, and we cannot say one is better than the other.",
         "Some groups were easy and some were hard.",
         f"Air bags and steering complaints were the easiest, with {easiest.iloc[0]} of every 100 sorted correctly.",
-        f"{hardest.index[0]} complaints were the hardest, at {hardest.iloc[0]} of every 100, followed by {hardest.index[1].lower()} at {hardest.iloc[1]}.",
+        f"{hardest.index[0]} complaints were the hardest, at {hardest.iloc[0]} of every 100, {'with ' + hardest.index[1].lower() + ' level at ' + str(hardest.iloc[1]) if hardest.iloc[1] == hardest.iloc[0] else 'followed by ' + hardest.index[1].lower() + ' at ' + str(hardest.iloc[1])}.",
     ]
     c2 = [
         "The words that most clearly mark the easy groups are the part names themselves, such as \"air bag\" and \"steering wheel\".",
@@ -388,8 +391,8 @@ def build_conclusion():
     c3 = [
         "Some complaints are hard for any reader.",
         f"Of the {n(ek['n_test'])} test complaints, {n(ek['wrong_for_all_three'])} ({p1(ek['pct_wrong_for_all_three'])} percent) were sorted wrongly by all three methods.",
-        "One complaint describes a car that was using a driver-assistance feature when it crossed into oncoming traffic and caused a crash.",
-        f"NHTSA filed it under the electrical system, and {NUMW[n_fca]} of the three methods sorted it as a collision-avoidance problem.",
+        "One complaint describes a door sensor that fails now and then, and the car then brakes hard by itself at low speed.",
+        f"NHTSA filed it under the electrical system, and {NUMW[n_fca]} sorted it as a collision-avoidance problem.",
         "Both answers are easy to defend, so the mistake says as much about the groups as about the computer.",
         "The groups themselves were chosen by NHTSA, and no independent check tells us they are always right.",
         f"We also left out the {n(facts['multi_label_dropped_after_merge'])} complaints ({n(round(facts['pct_multi_label_dropped_after_merge']))} percent of the file) that NHTSA filed under more than one group, so our results say nothing about those.",
@@ -414,7 +417,7 @@ def build_conclusion():
     td = tech("Technical details: the numbers behind these statements", [
         f"Test set: complaints received 1 May to 31 October 2026, {n(best.n_test)} complaints with at most 800 per group. Each method was scored once with its best checkpoint on a separate validation set.",
         f"Scores on that set (accuracy, macro-F1): DistilBERT {f4(best.test_accuracy)} and {f4(best.test_macro_f1)}; MLP {f4(mlp_t.test_accuracy)} and {f4(mlp_t.test_macro_f1)}; BiLSTM {f4(bil_t.test_accuracy)} and {f4(bil_t.test_macro_f1)}.",
-        f"DistilBERT against the other two: McNemar p-values {mc[('mlp', 'distilbert')]['p_value_exact']:.1g} (MLP) and {mc[('bilstm', 'distilbert')]['p_value_exact']:.1g} (BiLSTM); the 95% bootstrap intervals of the differences exclude zero. MLP against BiLSTM: p = {mmm['p_value_exact']:.3f}, which does not hold up after correcting for three comparisons.",
+        f"DistilBERT against the other two: McNemar p-values {mc[('mlp', 'distilbert')]['p_value_exact']:.1g} (MLP) and {mc[('bilstm', 'distilbert')]['p_value_exact']:.1g} (BiLSTM); the 95% bootstrap intervals of the differences exclude zero. MLP against BiLSTM: p = {mmm['p_value_exact']:.3f}, which is not significant, with or without a correction for three comparisons.",
         f"Wrong for all three methods: {n(ek['wrong_for_all_three'])} of {n(ek['n_test'])} test complaints.",
         f"Random split instead of a time-based split: accuracy {gap_acc['mlp']:.2f}, {gap_acc['bilstm']:.2f} and {gap_acc['distilbert']:.2f} points higher for the MLP, BiLSTM and DistilBERT.",
         'Full tables, intervals, confusion matrices and error examples are on the <a href="results.html">Results</a> page.',
@@ -728,6 +731,17 @@ def build_results():
     cu_r = "".join(fig(f"curves_{m}_random.png", f"Training curves for {NICE[m]} on the random split.", f"{NICE[m]}, random split.") for m in MODELS)
     ov = overlap
     top = lambda m: em[(m, "temporal")]["top_confused_pairs"]
+    pair_txt = lambda x: f"{' versus '.join(PN[c].lower() for c in x['pair'].split(' / '))} ({x['count']} complaints)"
+    # second-lowest class by F1 for each model (temporal) for the sentence after the electrical-system finding
+    second = {m: pcf1[f"{m}_temporal"].sort_values().index[1] for m in MODELS}
+    assert len(set(second.values())) == 1, second
+    next_weak = PN[next(iter(second.values()))].lower()
+    # keyword example: the both-wrong electrical complaint; the quoted words must be top supporting words for both models
+    kw = [e for e in wi["examples"] if e["category"] == "both_wrong" and e["true_label"] == "ELECTRICAL SYSTEM"]
+    assert {e["model"] for e in kw} == {"bilstm", "distilbert"}
+    for e in kw:
+        assert "braking" in [x["word"] for x in e["top_supporting_words"]], e["top_supporting_words"]
+    kw_ex = kw[0]["example"]
     d_el = pcf1.loc["ELECTRICAL SYSTEM"]
     sa = stub["accuracy"]["distilbert"]
     t_bil_trunc = tm[("bilstm", "temporal")]["pct_truncated"]
@@ -752,7 +766,7 @@ def build_results():
 <p>We checked two ways. McNemar's test compares the models on the same test complaints: it counts the complaints where one model is right and the other is wrong. The paired bootstrap resamples the test set and recomputes the difference in macro-F1.</p>
 {mc_tbl}
 {diff_tbl}
-<p>DistilBERT beats both other models on both splits: the intervals exclude 0, and the McNemar p-values on the temporal set are {mc_md['p_value_exact']:.1g} (against the MLP) and {mc[('bilstm', 'distilbert')]['p_value_exact']:.1g} (against the BiLSTM). The MLP and the BiLSTM are a weak case. On the temporal split the BiLSTM is {abs(pd_diff['temporal']['bilstm minus mlp']['difference']) * 100:.1f} points lower, the interval barely excludes 0 and the McNemar p-value is {mc_mb['p_value_exact']:.3f}, which would not pass a correction for three comparisons (the cutoff is 0.0167). On the random split the interval includes 0. We treat the two as roughly equal, with the MLP slightly ahead on the temporal split.</p>
+<p>DistilBERT beats both other models on both splits: the intervals exclude 0, and the McNemar p-values on the temporal set are {mc_md['p_value_exact']:.1g} (against the MLP) and {mc[('bilstm', 'distilbert')]['p_value_exact']:.1g} (against the BiLSTM). The MLP and the BiLSTM are a weak case. On the temporal split the BiLSTM is {abs(pd_diff['temporal']['bilstm minus mlp']['difference']) * 100:.1f} points lower, the interval includes 0 and the McNemar p-value is {mc_mb['p_value_exact']:.3f}, which is above 0.05 and would also fail a correction for three comparisons (the cutoff is 0.0167). On the random split the interval includes 0 as well. We treat the two as roughly equal, with the MLP slightly ahead on the temporal split.</p>
 </section>
 <section id="split">
 <h2>Time-based split vs random split</h2>
@@ -763,7 +777,7 @@ def build_results():
 <h2>Results by class</h2>
 {fig("fig_per_class_f1.png", "Dot chart of per-class F1 on the temporal test set for the three models. Steering and air bags are highest, electrical system is lowest for every model.", "F1 by class on the temporal test set. Data: results/eval/per_class_f1_all.csv.")}
 {pc_tbl}
-<p>Steering and air bags are easiest. Electrical system is the weakest class for every model on both splits: F1 {f3(d_el['mlp_temporal'])} for the MLP, {f3(d_el['bilstm_temporal'])} for the BiLSTM and {f3(d_el['distilbert_temporal'])} for DistilBERT on the temporal test. DistilBERT improves it by {(d_el['distilbert_temporal'] - d_el['mlp_temporal']) * 100:.1f} points over the MLP, but it stays the weakest. Fuel system and engine come next.</p>
+<p>Steering and air bags are easiest. Electrical system is the weakest class for every model on both splits: F1 {f3(d_el['mlp_temporal'])} for the MLP, {f3(d_el['bilstm_temporal'])} for the BiLSTM and {f3(d_el['distilbert_temporal'])} for DistilBERT on the temporal test. DistilBERT improves it by {(d_el['distilbert_temporal'] - d_el['mlp_temporal']) * 100:.1f} points over the MLP, but it stays the weakest. The {next_weak} is next-lowest for every model.</p>
 </section>
 <section id="confusion">
 <h2>Confusion matrices</h2>
@@ -787,10 +801,10 @@ def build_results():
 <h2>Where the models fail</h2>
 {err_callout}
 <ul>
-<li><strong>Neighboring groups.</strong> The largest mix-up is {esc(' and '.join(PN[x].lower() for x in top('distilbert')[0]['pair'].split(' / ')))}. A symptom such as a car that stalls, shudders or loses power can fit several systems.</li>
+<li><strong>Neighboring groups.</strong> For DistilBERT the largest mix-up is {pair_txt(top('distilbert')[0])}, followed by {pair_txt(top('distilbert')[1])} and {pair_txt(top('distilbert')[2])}. A symptom such as a car that stalls, shudders or loses power can fit several systems, and a sunroof that breaks can count as body or as glass.</li>
 <li><strong>Shared mistakes.</strong> {n(ov['wrong_for_at_least_one'])} of {n(ov['n_test'])} test complaints are wrong for at least one of the three models, and the {n(ov['wrong_for_all_three'])} in the box above are wrong for all of them.</li>
 <li><strong>Stubs.</strong> Some call-centre texts keep only a stub such as &ldquo;the contact received notification of; however, the part to do the recall repair was not yet available&rdquo;, because we removed the campaign number and component name. {n(stub['n_with_stub'])} test texts contain such a stub. DistilBERT is right on {p1(sa['with_stub'] * 100)}% of them, against {p1(sa['without_stub'] * 100)}% of the other texts.</li>
-<li><strong>Keywords.</strong> The highlights below show a model leaning on one word. In example 4, the word &ldquo;autopilot&rdquo; pulls a complaint toward collision avoidance even though NHTSA filed it under the electrical system.</li>
+<li><strong>Keywords.</strong> The highlights below show a model leaning on one word. In example {kw_ex}, the word &ldquo;braking&rdquo; is among the top supporting words for both models and pulls a complaint about a door sensor toward collision avoidance, even though NHTSA filed it under the electrical system.</li>
 <li><strong>Labels are not ground truth.</strong> NHTSA staff assign the groups, and a complaint that fits two groups gets only one label here.</li>
 <li><strong>Truncation.</strong> The BiLSTM keeps the first {cfg[('bilstm', 'temporal')]['max_len']} tokens: {p1(t_bil_trunc['train'] * 100)}% of training texts and {p1(t_bil_trunc['test'] * 100)}% of test texts are longer.</li>
 <li><strong>Vehicle names.</strong> Brand and model names stay in the text. Some of the score may come from knowing which vehicles have which known problems.</li>

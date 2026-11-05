@@ -1,79 +1,79 @@
 {
   "model": "bilstm",
   "split_scheme": "random",
-  "accuracy": 0.8835289565329549,
-  "macro_f1": 0.884019228758295,
-  "weighted_f1": 0.8830056890818438,
+  "accuracy": 0.8812072746033793,
+  "macro_f1": 0.8817320895641331,
+  "weighted_f1": 0.880602284785337,
   "n": 7753,
   "per_class": [
     {
       "class": "ENGINE",
-      "precision": 0.8160377358490566,
-      "recall": 0.865,
-      "f1": 0.8398058252427184,
+      "precision": 0.8200734394124847,
+      "recall": 0.8375,
+      "f1": 0.8286951144094001,
       "support": 800.0
     },
     {
       "class": "POWER TRAIN",
-      "precision": 0.8727272727272727,
-      "recall": 0.84,
-      "f1": 0.8560509554140128,
+      "precision": 0.8569620253164557,
+      "recall": 0.84625,
+      "f1": 0.8515723270440252,
       "support": 800.0
     },
     {
       "class": "ELECTRICAL SYSTEM",
-      "precision": 0.7944297082228117,
-      "recall": 0.74875,
-      "f1": 0.7709137709137709,
+      "precision": 0.7803617571059431,
+      "recall": 0.755,
+      "f1": 0.7674714104193139,
       "support": 800.0
     },
     {
       "class": "STEERING",
-      "precision": 0.9578686493184635,
-      "recall": 0.96625,
-      "f1": 0.9620410703173615,
+      "precision": 0.9509803921568627,
+      "recall": 0.97,
+      "f1": 0.9603960396039604,
       "support": 800.0
     },
     {
       "class": "SERVICE BRAKES",
-      "precision": 0.903822441430333,
+      "precision": 0.9116915422885572,
       "recall": 0.91625,
-      "f1": 0.909993792675357,
+      "f1": 0.9139650872817955,
       "support": 800.0
     },
     {
       "class": "AIR BAGS",
-      "precision": 0.932934131736527,
-      "recall": 0.97375,
-      "f1": 0.9529051987767584,
+      "precision": 0.91725768321513,
+      "recall": 0.97,
+      "f1": 0.9428918590522479,
       "support": 800.0
     },
     {
       "class": "STRUCTURE",
-      "precision": 0.87146529562982,
-      "recall": 0.8475,
-      "f1": 0.8593155893536122,
+      "precision": 0.9055330634278003,
+      "recall": 0.83875,
+      "f1": 0.8708630759247242,
       "support": 800.0
     },
     {
       "class": "FUEL/PROPULSION SYSTEM",
-      "precision": 0.8645569620253165,
-      "recall": 0.85375,
-      "f1": 0.8591194968553459,
+      "precision": 0.8630490956072352,
+      "recall": 0.835,
+      "f1": 0.8487928843710292,
       "support": 800.0
     },
     {
       "class": "VISIBILITY/WIPER",
-      "precision": 0.9002624671916011,
+      "precision": 0.9026315789473685,
       "recall": 0.927027027027027,
-      "f1": 0.9134487350199734,
+      "f1": 0.9146666666666666,
       "support": 740.0
     },
     {
       "class": "FORWARD COLLISION AVOIDANCE",
-      "precision": 0.9280936454849499,
-      "recall": 0.9053833605220228,
-      "f1": 0.916597853014038,
+      "precision": 0.9049128367670365,
+      "recall": 0.9314845024469821,
+      "f1": 0.9180064308681672,
       "support": 613.0
     }
   ],
@@ -81,49 +81,49 @@
     {
       "true": "STRUCTURE",
       "pred": "VISIBILITY/WIPER",
-      "count": 52
+      "count": 56
     },
     {
       "true": "POWER TRAIN",
       "pred": "ENGINE",
-      "count": 51
-    },
-    {
-      "true": "ELECTRICAL SYSTEM",
-      "pred": "STRUCTURE",
-      "count": 45
-    },
-    {
-      "true": "ELECTRICAL SYSTEM",
-      "pred": "ENGINE",
-      "count": 42
+      "count": 54
     },
     {
       "true": "FUEL/PROPULSION SYSTEM",
-      "pred": "ENGINE",
+      "pred": "ELECTRICAL SYSTEM",
       "count": 38
+    },
+    {
+      "true": "ELECTRICAL SYSTEM",
+      "pred": "ENGINE",
+      "count": 37
+    },
+    {
+      "true": "ENGINE",
+      "pred": "POWER TRAIN",
+      "count": 36
     }
   ],
   "top_confused_pairs": [
     {
       "pair": "ENGINE / POWER TRAIN",
-      "count": 85
+      "count": 90
     },
     {
       "pair": "STRUCTURE / VISIBILITY/WIPER",
-      "count": 79
-    },
-    {
-      "pair": "ELECTRICAL SYSTEM / STRUCTURE",
-      "count": 77
+      "count": 72
     },
     {
       "pair": "ENGINE / FUEL/PROPULSION SYSTEM",
-      "count": 68
+      "count": 71
+    },
+    {
+      "pair": "ELECTRICAL SYSTEM / FUEL/PROPULSION SYSTEM",
+      "count": 64
     },
     {
       "pair": "ELECTRICAL SYSTEM / ENGINE",
-      "count": 66
+      "count": 63
     }
   ]
 }

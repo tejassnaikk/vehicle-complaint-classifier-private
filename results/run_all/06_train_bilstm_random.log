@@ -1,0 +1,16 @@
+[random] device=mps vocab=20330 | texts truncated at 256 tokens: train 5.0%, val 5.2%, test 4.7% | UNK rate val 0.5%
+epoch  1  train_loss 0.7681  val_loss 0.4902  val_acc 0.8531  val_macroF1 0.8526  (252s)
+epoch  2  train_loss 0.4072  val_loss 0.4003  val_acc 0.8816  val_macroF1 0.8821  (253s)
+epoch  3  train_loss 0.3283  val_loss 0.4004  val_acc 0.8810  val_macroF1 0.8812  (258s)
+epoch  4  train_loss 0.2672  val_loss 0.4360  val_acc 0.8739  val_macroF1 0.8729  (262s)
+epoch  5  train_loss 0.2151  val_loss 0.4214  val_acc 0.8789  val_macroF1 0.8802  (259s)
+early stop: no val macro-F1 gain for 3 epochs
+
+BEST epoch 2 of 5 run | wall 1302s
+VAL  acc 0.8816  macroF1 0.8821
+TEST acc 0.8812  macroF1 0.8817
+Weakest 3 classes on test (F1):
+                 class  precision  recall       f1  support
+     ELECTRICAL SYSTEM   0.780362  0.7550 0.767471    800.0
+                ENGINE   0.820073  0.8375 0.828695    800.0
+FUEL/PROPULSION SYSTEM   0.863049  0.8350 0.848793    800.0

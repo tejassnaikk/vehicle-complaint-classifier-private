@@ -1,9 +1,9 @@
 panel,true_class,put_under,count,of_total
-Engine and fuel system,FUEL/PROPULSION SYSTEM,ENGINE,54,800
-Engine and fuel system,ENGINE,FUEL/PROPULSION SYSTEM,25,800
-Engine and transmission,POWER TRAIN,ENGINE,43,800
-Engine and transmission,ENGINE,POWER TRAIN,23,800
-Electrical complaints put elsewhere,ELECTRICAL SYSTEM,ENGINE,33,800
-Electrical complaints put elsewhere,ELECTRICAL SYSTEM,POWER TRAIN,30,800
-Electrical complaints put elsewhere,ELECTRICAL SYSTEM,FUEL/PROPULSION SYSTEM,21,800
-Electrical complaints put elsewhere,ELECTRICAL SYSTEM,STRUCTURE,17,800
+Engine and fuel system,FUEL/PROPULSION SYSTEM,ENGINE,52,800
+Engine and fuel system,ENGINE,FUEL/PROPULSION SYSTEM,19,800
+Engine and transmission,POWER TRAIN,ENGINE,40,800
+Engine and transmission,ENGINE,POWER TRAIN,28,800
+Electrical complaints put elsewhere,ELECTRICAL SYSTEM,POWER TRAIN,35,800
+Electrical complaints put elsewhere,ELECTRICAL SYSTEM,FUEL/PROPULSION SYSTEM,25,800
+Electrical complaints put elsewhere,ELECTRICAL SYSTEM,ENGINE,22,800
+Electrical complaints put elsewhere,ELECTRICAL SYSTEM,STRUCTURE,16,800

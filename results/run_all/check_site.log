@@ -1,0 +1,44 @@
+Contrast (WCAG AA):
+  text    ink        on paper      15.17 ok
+  text    ink        on card       16.52 ok
+  text    ink-2      on paper       8.21 ok
+  text    muted      on paper       5.32 ok
+  text    muted      on card        5.80 ok
+  text    on-dark    on asphalt    14.76 ok
+  text    on-dark-2  on asphalt     9.84 ok
+  text    on-dark-2  on asphalt-2   7.82 ok
+  text    amber      on asphalt     8.22 ok
+  text    asphalt    on amber       8.22 ok
+  text    asphalt    on amber-soft 13.06 ok
+  text    red-text   on card        6.21 ok
+  text    red-text   on red-soft    4.99 ok
+  text    red-text   on paper       5.70 ok
+  text    amber-deep on paper       6.16 ok
+  text    amber-deep on amber-wash  6.23 ok
+  text    asphalt    on amber-wash 15.32 ok
+  text    on-dark    on asphalt-2  11.73 ok
+  graphic asphalt    on paper      15.17 ok
+  graphic steel      on paper       3.30 ok
+  graphic asphalt    on card       16.52 ok
+contrast failures: none
+asset scan: clean
+unfilled template text: none
+WARNING: placeholders still to fill before release: ['about.html: [Teammate 2]', 'about.html: [Teammate 3]', 'about.html: [Course name]', 'about.html: [Semester]']
+about.html: tag balance OK
+conclusion.html: tag balance OK
+data.html: tag balance OK
+index.html: tag balance OK
+introduction.html: tag balance OK
+models.html: tag balance OK
+results.html: tag balance OK
+about.html: 20 numbers, 0 not found literally in results/: []
+conclusion.html: 62 numbers, 0 not found literally in results/: []
+data.html: 265 numbers, 0 not found literally in results/: []
+index.html: 18 numbers, 0 not found literally in results/: []
+introduction.html: 56 numbers, 1 not found literally in results/: ['204']
+models.html: 90 numbers, 1 not found literally in results/: ['15427466']
+results.html: 394 numbers, 0 not found literally in results/: []
+
+Total numbers 905; distinct not found 2. Check the unmatched ones are computed values (shares, differences, rounding).
+
+4 warning(s) (not failing this run). Use `python src/check_site.py --strict` for the final pre-publish check.

@@ -10,47 +10,47 @@
     "complaints_temporal.csv": {
       "rows": 64445,
       "phone_number": {
-        "texts": 635,
-        "pct_of_texts": 0.99
+        "texts": 4,
+        "pct_of_texts": 0.01
       },
       "email_address": {
-        "texts": 18,
-        "pct_of_texts": 0.03
+        "texts": 0,
+        "pct_of_texts": 0.0
       },
       "vin_like_17_chars": {
-        "texts": 28,
-        "pct_of_texts": 0.04
+        "texts": 0,
+        "pct_of_texts": 0.0
       },
       "url": {
-        "texts": 321,
-        "pct_of_texts": 0.5
+        "texts": 0,
+        "pct_of_texts": 0.0
       },
       "state_and_zip": {
-        "texts": 1461,
-        "pct_of_texts": 2.27
+        "texts": 0,
+        "pct_of_texts": 0.0
       }
     },
     "complaints_random.csv": {
       "rows": 65416,
       "phone_number": {
-        "texts": 713,
-        "pct_of_texts": 1.09
+        "texts": 6,
+        "pct_of_texts": 0.01
       },
       "email_address": {
-        "texts": 17,
-        "pct_of_texts": 0.03
+        "texts": 0,
+        "pct_of_texts": 0.0
       },
       "vin_like_17_chars": {
-        "texts": 28,
-        "pct_of_texts": 0.04
+        "texts": 0,
+        "pct_of_texts": 0.0
       },
       "url": {
-        "texts": 356,
-        "pct_of_texts": 0.54
+        "texts": 0,
+        "pct_of_texts": 0.0
       },
       "state_and_zip": {
-        "texts": 1630,
-        "pct_of_texts": 2.49
+        "texts": 0,
+        "pct_of_texts": 0.0
       }
     }
   }

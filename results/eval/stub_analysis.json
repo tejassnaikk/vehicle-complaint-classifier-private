@@ -4,16 +4,16 @@
   "n_with_stub": 229,
   "accuracy": {
     "mlp": {
-      "with_stub": 0.8209606986899564,
-      "without_stub": 0.8780143844309688
+      "with_stub": 0.8165938864628821,
+      "without_stub": 0.8756169792694966
     },
     "bilstm": {
-      "with_stub": 0.8165938864628821,
-      "without_stub": 0.8703990974474686
+      "with_stub": 0.834061135371179,
+      "without_stub": 0.8695529544493019
     },
     "distilbert": {
-      "with_stub": 0.7729257641921398,
-      "without_stub": 0.8950782682273304
+      "with_stub": 0.777292576419214,
+      "without_stub": 0.8980397687209138
     }
   }
 }

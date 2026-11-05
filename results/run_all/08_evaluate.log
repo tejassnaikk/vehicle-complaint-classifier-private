@@ -1,0 +1,70 @@
+mlp        temporal  acc 0.8738 macroF1 0.8739 (matches training-run metrics)
+bilstm     temporal  acc 0.8684 macroF1 0.8689 (matches training-run metrics)
+distilbert temporal  acc 0.8943 macroF1 0.8945 (matches training-run metrics)
+mlp        random    acc 0.8840 macroF1 0.8849 (matches training-run metrics)
+bilstm     random    acc 0.8812 macroF1 0.8817 (matches training-run metrics)
+distilbert random    acc 0.9046 macroF1 0.9053 (matches training-run metrics)
+temporal test: 513 complaints misclassified by all three models
+
+Bootstrap 95% CIs on test macro-F1:
+  mlp        temporal  0.8739 [0.8658, 0.8812]
+  mlp        random    0.8849 [0.8780, 0.8923]
+  bilstm     temporal  0.8689 [0.8609, 0.8768]
+  bilstm     random    0.8817 [0.8743, 0.8889]
+  distilbert temporal  0.8945 [0.8873, 0.9012]
+  distilbert random    0.9053 [0.8990, 0.9112]
+Paired bootstrap differences in macro-F1:
+  temporal  bilstm minus mlp          -0.0049 [-0.0114, +0.0020] includes 0
+  temporal  distilbert minus mlp      +0.0207 [+0.0147, +0.0270] excludes 0
+  temporal  distilbert minus bilstm   +0.0256 [+0.0194, +0.0317] excludes 0
+  random    bilstm minus mlp          -0.0031 [-0.0090, +0.0028] includes 0
+  random    distilbert minus mlp      +0.0204 [+0.0141, +0.0259] excludes 0
+  random    distilbert minus bilstm   +0.0235 [+0.0174, +0.0293] excludes 0
+McNemar (exact), temporal test:
+  mlp vs bilstm: only mlp right 297, only bilstm right 258, p = 0.107
+  mlp vs distilbert: only mlp right 189, only distilbert right 339, p = 6.68e-11
+  bilstm vs distilbert: only bilstm right 158, only distilbert right 347, p = 2.53e-17
+
+Transcript vs owner-written (temporal test):
+     model         group    n  accuracy  macro_f1  macro_f1_ci_low  macro_f1_ci_high  macro_f1_classes_with_30plus_texts  n_classes_with_30plus_texts  min_class_support   smallest_class
+       mlp owner-written 5724    0.8719    0.8735           0.8650            0.8818                              0.8735                           10                412 VISIBILITY/WIPER
+    bilstm owner-written 5724    0.8641    0.8668           0.8587            0.8755                              0.8668                           10                412 VISIBILITY/WIPER
+distilbert owner-written 5724    0.8952    0.8968           0.8893            0.9046                              0.8968                           10                412 VISIBILITY/WIPER
+       mlp    transcript 1596    0.8803    0.8583           0.8242            0.8840                              0.8759                            9                  7 VISIBILITY/WIPER
+    bilstm    transcript 1596    0.8841    0.8601           0.8259            0.8864                              0.8779                            9                  7 VISIBILITY/WIPER
+distilbert    transcript 1596    0.8910    0.8599           0.8250            0.8851                              0.8906                            9                  7 VISIBILITY/WIPER
+
+Summary table written.
+| Model | Split | Val acc | Val macro-F1 | Test acc | Test macro-F1 (95% CI) | Train time |
+|---|---|---|---|---|---|---|
+| MLP (TF-IDF) | temporal | 0.8685 | 0.8704 | 0.8738 | 0.8739 (0.8658 to 0.8812) | 22 s |
+| MLP (TF-IDF) | random | 0.8836 | 0.8846 | 0.8840 | 0.8849 (0.8780 to 0.8923) | 16 s |
+| BiLSTM | temporal | 0.8688 | 0.8711 | 0.8684 | 0.8689 (0.8609 to 0.8768) | 33 min |
+| BiLSTM | random | 0.8816 | 0.8821 | 0.8812 | 0.8817 (0.8743 to 0.8889) | 22 min |
+| DistilBERT | temporal | 0.8907 | 0.8941 | 0.8943 | 0.8945 (0.8873 to 0.9012) | 49 min |
+| DistilBERT | random | 0.9026 | 0.9035 | 0.9046 | 0.9053 (0.8990 to 0.9112) | 37 min |
+
+W1104 22:49:32.890000 41129 venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/redirects.py:35] NOTE: Redirects are currently not supported in MacOs.
+Loading weights:   0%|          | 0/100 [00:00<?, ?it/s]Loading weights: 100%|██████████| 100/100 [00:00<00:00, 9108.35it/s]
+[transformers] [1mDistilBertForSequenceClassification LOAD REPORT[0m from: distilbert-base-uncased
+Key                     | Status     | 
+------------------------+------------+-
+vocab_layer_norm.bias   | UNEXPECTED | 
+vocab_layer_norm.weight | UNEXPECTED | 
+vocab_transform.weight  | UNEXPECTED | 
+vocab_transform.bias    | UNEXPECTED | 
+vocab_projector.bias    | UNEXPECTED | 
+pre_classifier.weight   | MISSING    | 
+classifier.weight       | MISSING    | 
+classifier.bias         | MISSING    | 
+pre_classifier.bias     | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+  word importance example 1/6 done (both_correct, FORWARD COLLISION AVOIDANCE)
+  word importance example 2/6 done (both_correct, SERVICE BRAKES)
+  word importance example 3/6 done (both_wrong, ELECTRICAL SYSTEM)
+  word importance example 4/6 done (both_wrong, STRUCTURE)
+  word importance example 5/6 done (distilbert_right_bilstm_wrong, FUEL/PROPULSION SYSTEM)
+  word importance example 6/6 done (distilbert_right_bilstm_wrong, VISIBILITY/WIPER)

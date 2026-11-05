@@ -1,0 +1,18 @@
+2026-11-04 21:21:13 RESUME from 07_train_distilbert_temporal
+2026-11-04 21:21:13 SKIP   03_clean_and_label (before --from)
+2026-11-04 21:21:13 SKIP   04_split_and_sample (before --from)
+2026-11-04 21:21:13 SKIP   privacy_scan_data (before --from)
+2026-11-04 21:21:13 SKIP   05_train_mlp_temporal (before --from)
+2026-11-04 21:21:13 SKIP   05_train_mlp_random (before --from)
+2026-11-04 21:21:13 SKIP   06_train_bilstm_temporal (before --from)
+2026-11-04 21:21:13 SKIP   06_train_bilstm_random (before --from)
+2026-11-04 21:21:13 START  07_train_distilbert_temporal
+2026-11-04 22:10:46 DONE   07_train_distilbert_temporal (2973 s)
+2026-11-04 22:10:46 START  07_train_distilbert_random
+2026-11-04 22:48:48 DONE   07_train_distilbert_random (2282 s)
+2026-11-04 22:48:48 START  08_evaluate
+2026-11-04 22:49:36 DONE   08_evaluate (48 s)
+2026-11-04 22:49:36 START  update_readme_table
+2026-11-04 22:49:36 DONE   update_readme_table (0 s)
+2026-11-04 22:49:36 START  09_make_figures
+2026-11-04 22:49:39 FAILED 09_make_figures (exit 1). See results/run_all/09_make_figures.log

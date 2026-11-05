@@ -1,0 +1,67 @@
+W1104 21:22:02.058000 39448 venv/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/redirects.py:35] NOTE: Redirects are currently not supported in MacOs.
+Loading weights:   0%|          | 0/100 [00:00<?, ?it/s]Loading weights: 100%|██████████| 100/100 [00:00<00:00, 10469.01it/s]
+[transformers] [1mDistilBertForSequenceClassification LOAD REPORT[0m from: distilbert-base-uncased
+Key                     | Status     | 
+------------------------+------------+-
+vocab_layer_norm.weight | UNEXPECTED | 
+vocab_projector.bias    | UNEXPECTED | 
+vocab_layer_norm.bias   | UNEXPECTED | 
+vocab_transform.weight  | UNEXPECTED | 
+vocab_transform.bias    | UNEXPECTED | 
+pre_classifier.weight   | MISSING    | 
+classifier.bias         | MISSING    | 
+pre_classifier.bias     | MISSING    | 
+classifier.weight       | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+device=mps steps/epoch 3125 total 9375
+  epoch 1 step 250/3125  running train loss 2.2926  elapsed 0.7 min
+  epoch 1 step 500/3125  running train loss 1.8446  elapsed 1.7 min
+  epoch 1 step 750/3125  running train loss 1.4524  elapsed 2.7 min
+  epoch 1 step 1000/3125  running train loss 1.2232  elapsed 3.7 min
+  epoch 1 step 1250/3125  running train loss 1.0743  elapsed 4.7 min
+  epoch 1 step 1500/3125  running train loss 0.9711  elapsed 5.7 min
+  epoch 1 step 1750/3125  running train loss 0.8918  elapsed 7.2 min
+  epoch 1 step 2000/3125  running train loss 0.8361  elapsed 9.0 min
+  epoch 1 step 2250/3125  running train loss 0.7887  elapsed 11.4 min
+  epoch 1 step 2500/3125  running train loss 0.7488  elapsed 12.0 min
+  epoch 1 step 2750/3125  running train loss 0.7176  elapsed 12.7 min
+  epoch 1 step 3000/3125  running train loss 0.6900  elapsed 13.3 min
+epoch 1  train_loss 0.6783  val_loss 0.4131  val_acc 0.8764  val_macroF1 0.8798  (13.9 min)
+  epoch 2 step 250/3125  running train loss 0.3319  elapsed 1.0 min
+  epoch 2 step 500/3125  running train loss 0.3228  elapsed 2.9 min
+  epoch 2 step 750/3125  running train loss 0.3164  elapsed 4.7 min
+  epoch 2 step 1000/3125  running train loss 0.3161  elapsed 6.0 min
+  epoch 2 step 1250/3125  running train loss 0.3186  elapsed 7.1 min
+  epoch 2 step 1500/3125  running train loss 0.3149  elapsed 8.2 min
+  epoch 2 step 1750/3125  running train loss 0.3125  elapsed 9.3 min
+  epoch 2 step 2000/3125  running train loss 0.3107  elapsed 10.5 min
+  epoch 2 step 2250/3125  running train loss 0.3111  elapsed 11.6 min
+  epoch 2 step 2500/3125  running train loss 0.3095  elapsed 12.9 min
+  epoch 2 step 2750/3125  running train loss 0.3089  elapsed 14.1 min
+  epoch 2 step 3000/3125  running train loss 0.3088  elapsed 15.4 min
+epoch 2  train_loss 0.3093  val_loss 0.3882  val_acc 0.8901  val_macroF1 0.8938  (16.4 min)
+  epoch 3 step 250/3125  running train loss 0.2396  elapsed 1.4 min
+  epoch 3 step 500/3125  running train loss 0.2406  elapsed 2.7 min
+  epoch 3 step 750/3125  running train loss 0.2374  elapsed 4.1 min
+  epoch 3 step 1000/3125  running train loss 0.2333  elapsed 5.5 min
+  epoch 3 step 1250/3125  running train loss 0.2360  elapsed 7.1 min
+  epoch 3 step 1500/3125  running train loss 0.2381  elapsed 8.5 min
+  epoch 3 step 1750/3125  running train loss 0.2370  elapsed 9.9 min
+  epoch 3 step 2000/3125  running train loss 0.2368  elapsed 11.4 min
+  epoch 3 step 2250/3125  running train loss 0.2362  elapsed 12.7 min
+  epoch 3 step 2500/3125  running train loss 0.2336  elapsed 14.0 min
+  epoch 3 step 2750/3125  running train loss 0.2347  elapsed 15.4 min
+  epoch 3 step 3000/3125  running train loss 0.2345  elapsed 16.7 min
+epoch 3  train_loss 0.2333  val_loss 0.4008  val_acc 0.8907  val_macroF1 0.8941  (17.7 min)
+
+BEST epoch 3 of 3 run | wall 49 min
+VAL  acc 0.8907  macroF1 0.8941
+TEST acc 0.8943  macroF1 0.8945
+Weakest 3 classes on test (F1):
+                 class  precision  recall       f1  support
+     ELECTRICAL SYSTEM   0.808933 0.81500 0.811955    800.0
+FUEL/PROPULSION SYSTEM   0.884097 0.82000 0.850843    800.0
+                ENGINE   0.849169 0.89375 0.870889    800.0

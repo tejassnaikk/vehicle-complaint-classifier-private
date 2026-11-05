@@ -1,0 +1,103 @@
+2026-11-04 17:55:28 START  03_clean_and_label
+2026-11-04 17:59:23 DONE   03_clean_and_label (235 s)
+2026-11-04 17:59:23 START  04_split_and_sample
+2026-11-04 17:59:26 DONE   04_split_and_sample (3 s)
+2026-11-04 17:59:26 START  privacy_scan_data
+2026-11-04 17:59:47 DONE   privacy_scan_data (21 s)
+2026-11-04 17:59:47 START  05_train_mlp_temporal
+2026-11-04 18:00:20 DONE   05_train_mlp_temporal (33 s)
+2026-11-04 18:00:20 START  05_train_mlp_random
+2026-11-04 18:00:39 DONE   05_train_mlp_random (19 s)
+2026-11-04 18:00:39 START  06_train_bilstm_temporal
+2026-11-04 18:33:39 DONE   06_train_bilstm_temporal (1980 s)
+2026-11-04 18:33:39 START  06_train_bilstm_random
+2026-11-04 18:55:40 DONE   06_train_bilstm_random (1321 s)
+2026-11-04 18:55:40 START  07_train_distilbert_temporal
+2026-11-04 21:21:13 RESUME from 07_train_distilbert_temporal
+2026-11-04 21:21:13 SKIP   03_clean_and_label (before --from)
+2026-11-04 21:21:13 SKIP   04_split_and_sample (before --from)
+2026-11-04 21:21:13 SKIP   privacy_scan_data (before --from)
+2026-11-04 21:21:13 SKIP   05_train_mlp_temporal (before --from)
+2026-11-04 21:21:13 SKIP   05_train_mlp_random (before --from)
+2026-11-04 21:21:13 SKIP   06_train_bilstm_temporal (before --from)
+2026-11-04 21:21:13 SKIP   06_train_bilstm_random (before --from)
+2026-11-04 21:21:13 START  07_train_distilbert_temporal
+2026-11-04 22:10:46 DONE   07_train_distilbert_temporal (2973 s)
+2026-11-04 22:10:46 START  07_train_distilbert_random
+2026-11-04 22:48:48 DONE   07_train_distilbert_random (2282 s)
+2026-11-04 22:48:48 START  08_evaluate
+2026-11-04 22:49:36 DONE   08_evaluate (48 s)
+2026-11-04 22:49:36 START  update_readme_table
+2026-11-04 22:49:36 DONE   update_readme_table (0 s)
+2026-11-04 22:49:36 START  09_make_figures
+2026-11-04 22:49:39 FAILED 09_make_figures (exit 1). See results/run_all/09_make_figures.log
+2026-11-04 23:00:58 RESUME from 09_make_figures
+2026-11-04 23:00:58 SKIP   03_clean_and_label (before --from)
+2026-11-04 23:00:58 SKIP   04_split_and_sample (before --from)
+2026-11-04 23:00:58 SKIP   privacy_scan_data (before --from)
+2026-11-04 23:00:58 SKIP   05_train_mlp_temporal (before --from)
+2026-11-04 23:00:58 SKIP   05_train_mlp_random (before --from)
+2026-11-04 23:00:58 SKIP   06_train_bilstm_temporal (before --from)
+2026-11-04 23:00:58 SKIP   06_train_bilstm_random (before --from)
+2026-11-04 23:00:58 SKIP   07_train_distilbert_temporal (before --from)
+2026-11-04 23:00:58 SKIP   07_train_distilbert_random (before --from)
+2026-11-04 23:00:58 SKIP   08_evaluate (before --from)
+2026-11-04 23:00:58 SKIP   update_readme_table (before --from)
+2026-11-04 23:00:58 START  09_make_figures
+2026-11-04 23:01:10 DONE   09_make_figures (12 s)
+2026-11-04 23:01:10 START  10_build_site
+2026-11-04 23:01:11 FAILED 10_build_site (exit 1). See results/run_all/10_build_site.log
+2026-11-04 23:02:56 RESUME from 10_build_site
+2026-11-04 23:02:56 SKIP   03_clean_and_label (before --from)
+2026-11-04 23:02:56 SKIP   04_split_and_sample (before --from)
+2026-11-04 23:02:56 SKIP   privacy_scan_data (before --from)
+2026-11-04 23:02:56 SKIP   05_train_mlp_temporal (before --from)
+2026-11-04 23:02:56 SKIP   05_train_mlp_random (before --from)
+2026-11-04 23:02:56 SKIP   06_train_bilstm_temporal (before --from)
+2026-11-04 23:02:56 SKIP   06_train_bilstm_random (before --from)
+2026-11-04 23:02:56 SKIP   07_train_distilbert_temporal (before --from)
+2026-11-04 23:02:56 SKIP   07_train_distilbert_random (before --from)
+2026-11-04 23:02:56 SKIP   08_evaluate (before --from)
+2026-11-04 23:02:56 SKIP   update_readme_table (before --from)
+2026-11-04 23:02:56 SKIP   09_make_figures (before --from)
+2026-11-04 23:02:56 START  10_build_site
+2026-11-04 23:02:57 DONE   10_build_site (1 s)
+2026-11-04 23:02:57 START  check_site
+2026-11-04 23:02:58 DONE   check_site (1 s)
+2026-11-04 23:02:58 ALL STEPS DONE
+2026-11-04 23:04:16 RESUME from 10_build_site
+2026-11-04 23:04:16 SKIP   03_clean_and_label (before --from)
+2026-11-04 23:04:16 SKIP   04_split_and_sample (before --from)
+2026-11-04 23:04:16 SKIP   privacy_scan_data (before --from)
+2026-11-04 23:04:16 SKIP   05_train_mlp_temporal (before --from)
+2026-11-04 23:04:16 SKIP   05_train_mlp_random (before --from)
+2026-11-04 23:04:16 SKIP   06_train_bilstm_temporal (before --from)
+2026-11-04 23:04:16 SKIP   06_train_bilstm_random (before --from)
+2026-11-04 23:04:16 SKIP   07_train_distilbert_temporal (before --from)
+2026-11-04 23:04:16 SKIP   07_train_distilbert_random (before --from)
+2026-11-04 23:04:16 SKIP   08_evaluate (before --from)
+2026-11-04 23:04:16 SKIP   update_readme_table (before --from)
+2026-11-04 23:04:16 SKIP   09_make_figures (before --from)
+2026-11-04 23:04:16 START  10_build_site
+2026-11-04 23:04:17 DONE   10_build_site (1 s)
+2026-11-04 23:04:17 START  check_site
+2026-11-04 23:04:18 DONE   check_site (1 s)
+2026-11-04 23:04:18 ALL STEPS DONE
+2026-11-04 23:04:30 RESUME from 10_build_site
+2026-11-04 23:04:30 SKIP   03_clean_and_label (before --from)
+2026-11-04 23:04:30 SKIP   04_split_and_sample (before --from)
+2026-11-04 23:04:30 SKIP   privacy_scan_data (before --from)
+2026-11-04 23:04:30 SKIP   05_train_mlp_temporal (before --from)
+2026-11-04 23:04:30 SKIP   05_train_mlp_random (before --from)
+2026-11-04 23:04:30 SKIP   06_train_bilstm_temporal (before --from)
+2026-11-04 23:04:30 SKIP   06_train_bilstm_random (before --from)
+2026-11-04 23:04:30 SKIP   07_train_distilbert_temporal (before --from)
+2026-11-04 23:04:30 SKIP   07_train_distilbert_random (before --from)
+2026-11-04 23:04:30 SKIP   08_evaluate (before --from)
+2026-11-04 23:04:30 SKIP   update_readme_table (before --from)
+2026-11-04 23:04:30 SKIP   09_make_figures (before --from)
+2026-11-04 23:04:30 START  10_build_site
+2026-11-04 23:04:31 DONE   10_build_site (1 s)
+2026-11-04 23:04:31 START  check_site
+2026-11-04 23:04:32 DONE   check_site (1 s)
+2026-11-04 23:04:32 ALL STEPS DONE

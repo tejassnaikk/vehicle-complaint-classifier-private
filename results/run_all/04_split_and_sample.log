@@ -1,0 +1,43 @@
+Clean pool: 198,503 rows; after excluding dates after 2026-10-31: 198,462
+
+=== TEMPORAL: available (before caps) -> kept (after caps) ===
+split                                  train            val           test
+label                                                                     
+ENGINE                         42156 -> 5000    4695 -> 800    4764 -> 800
+POWER TRAIN                    25654 -> 5000    3117 -> 800    3490 -> 800
+ELECTRICAL SYSTEM              19073 -> 5000    2669 -> 800    2393 -> 800
+STEERING                       18437 -> 5000    1194 -> 800    1472 -> 800
+SERVICE BRAKES                 15547 -> 5000    1321 -> 800    1374 -> 800
+AIR BAGS                       10030 -> 5000     636 -> 636     721 -> 721
+STRUCTURE                      10350 -> 5000     907 -> 800    1056 -> 800
+FUEL/PROPULSION SYSTEM         11448 -> 5000    1114 -> 800    1303 -> 800
+VISIBILITY/WIPER                6541 -> 5000     446 -> 446     419 -> 419
+FORWARD COLLISION AVOIDANCE     5112 -> 5000     443 -> 443     580 -> 580
+TOTAL                        164348 -> 50000  16542 -> 7125  17572 -> 7320
+Below cap (kept all): AIR BAGS val 636<800; AIR BAGS test 721<800; VISIBILITY/WIPER val 446<800; VISIBILITY/WIPER test 419<800; FORWARD COLLISION AVOIDANCE val 443<800; FORWARD COLLISION AVOIDANCE test 580<800
+complaints_temporal.csv: 64,445 rows, 43.1 MB (OK, limit 50 MB)
+Temporal date ranges:
+            min       max
+split                    
+train  20200101  20251031
+val    20251101  20260430
+test   20260501  20261031
+
+=== RANDOM (stratified 80/10/10): available (before caps) -> kept (after caps) ===
+split                                  train            val           test
+label                                                                     
+ENGINE                         41292 -> 5000    5161 -> 800    5162 -> 800
+POWER TRAIN                    25809 -> 5000    3226 -> 800    3226 -> 800
+ELECTRICAL SYSTEM              19308 -> 5000    2413 -> 800    2414 -> 800
+STEERING                       16882 -> 5000    2110 -> 800    2111 -> 800
+SERVICE BRAKES                 14593 -> 5000    1824 -> 800    1825 -> 800
+AIR BAGS                        9110 -> 5000    1139 -> 800    1138 -> 800
+STRUCTURE                       9850 -> 5000    1232 -> 800    1231 -> 800
+FUEL/PROPULSION SYSTEM         11092 -> 5000    1386 -> 800    1387 -> 800
+VISIBILITY/WIPER                5925 -> 5000     741 -> 741     740 -> 740
+FORWARD COLLISION AVOIDANCE     4908 -> 4908     614 -> 614     613 -> 613
+TOTAL                        158769 -> 49908  19846 -> 7755  19847 -> 7753
+Below cap (kept all): VISIBILITY/WIPER val 741<800; VISIBILITY/WIPER test 740<800; FORWARD COLLISION AVOIDANCE train 4908<5000; FORWARD COLLISION AVOIDANCE val 614<800; FORWARD COLLISION AVOIDANCE test 613<800
+complaints_random.csv: 65,416 rows, 43.2 MB (OK, limit 50 MB)
+re-read complaints_temporal.csv: shape=(64445, 9), columns=['odino', 'ldate', 'make', 'model', 'year', 'label', 'text', 'is_transcript', 'split']
+re-read complaints_random.csv: shape=(65416, 9), columns=['odino', 'ldate', 'make', 'model', 'year', 'label', 'text', 'is_transcript', 'split']

@@ -150,6 +150,53 @@ def export_mixups():
     return out
 
 
+# ---------------------------------------------------------------------------------------------- 4. complaint trends
+def export_trends():
+    """Aggregated counts only (no text): complaints per month x system x make x model year from the cleaned dataset (before the sampling caps).
+
+    docs/data/trends.bin holds one record per non-empty (month, system) group member: make index (uint8), year index (uint8), count (uint16),
+    grouped by (month, system) with an offsets table. docs/data/trends.json describes the layout and holds the labels and yearly totals.
+    """
+    d = pd.read_parquet(ROOT / "data" / "interim" / "complaints_clean.parquet")
+    d = d[d.ldate <= "20261031"].copy()
+    months = sorted(d.ldate.str[:6].unique())
+    top = d.make.value_counts().head(30).index.tolist()
+    makes = top + ["OTHER MAKES"]
+    years = [0] + list(range(2010, 2028))          # 0 = model year before 2010 or not given (9999)
+    yr = pd.to_numeric(d.year, errors="coerce")
+    d["yb"] = yr.where((yr >= 2010) & (yr <= 2027), 0).astype(int)
+    d["mk"] = d.make.where(d.make.isin(top), "OTHER MAKES")
+    d["mi"] = d.ldate.str[:6].map({m: i for i, m in enumerate(months)})
+    d["si"] = d.label.map({c: i for i, c in enumerate(CLASSES)})
+    d["ki"] = d.mk.map({m: i for i, m in enumerate(makes)})
+    d["yi"] = d.yb.map({y: i for i, y in enumerate(years)})
+    g = d.groupby(["mi", "si", "ki", "yi"]).size().reset_index(name="n").sort_values(["mi", "si", "ki", "yi"]).reset_index(drop=True)
+    assert g.n.max() < 65536 and len(makes) < 256
+    grp = g.mi * len(CLASSES) + g.si
+    n_groups = len(months) * len(CLASSES)
+    offsets = np.searchsorted(grp.values, np.arange(n_groups + 1), side="left").astype(np.uint32)
+    blob = bytearray()
+    layout = {}
+    for name, arr in [("offsets", offsets), ("make", g.ki.values.astype(np.uint8)), ("year", g.yi.values.astype(np.uint8))]:
+        layout[name] = len(blob); blob += arr.tobytes(); blob += b"\0" * ((-len(blob)) % 4)
+    layout["count"] = len(blob); blob += g.n.values.astype(np.uint16).tobytes(); blob += b"\0" * ((-len(blob)) % 4)
+    (OUT / "trends.bin").write_bytes(bytes(blob))
+    # check: decode what was written and compare with pandas
+    raw = np.frombuffer(bytes(blob), dtype=np.uint8)
+    cnt = np.frombuffer(bytes(blob), dtype=np.uint16, count=len(g), offset=layout["count"])
+    assert int(cnt.sum()) == len(d)
+    by_sys = np.bincount((grp.values % len(CLASSES)), weights=cnt, minlength=len(CLASSES)).astype(int)
+    assert by_sys.tolist() == d.si.value_counts().sort_index().tolist()
+    yearly = d.assign(y=d.ldate.str[:4]).groupby(["y", "label"]).size().unstack(fill_value=0).reindex(columns=CLASSES)
+    meta = {"source": "data/interim/complaints_clean.parquet (the cleaned dataset, complaints received January 2020 to October 2026, before the sampling caps)",
+            "total_complaints": int(len(d)), "records": int(len(g)), "months": months, "classes": CLASSES, "plain_names": [PLAIN_NAMES[c] for c in CLASSES],
+            "makes": makes, "years": years, "year_note": "0 means model year before 2010 or not given",
+            "layout": layout, "bytes": len(blob),
+            "yearly_by_system": {y: [int(x) for x in row] for y, row in yearly.iterrows()}}
+    (OUT / "trends.json").write_text(json.dumps(meta, separators=(",", ":")))
+    return meta
+
+
 def write_file_sizes():
     """results/explore_files.json: size of every file the Explore pages download (the site cites these numbers)."""
     files = {f.name: f.stat().st_size for f in sorted(OUT.glob("*")) if f.is_file()}
@@ -168,6 +215,9 @@ def main(which):
     if which in ("all", "mixups"):
         mx = export_mixups()
         print("mixups: n =", mx["n"], "cells with examples:", len(mx["examples"]))
+    if which in ("all", "trends"):
+        tr = export_trends()
+        print("trends: complaints", tr["total_complaints"], "records", tr["records"], "bytes", tr["bytes"])
     write_file_sizes()
 
 

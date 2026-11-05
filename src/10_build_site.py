@@ -32,6 +32,7 @@ PAGES = [("introduction.html", "Introduction"), ("data.html", "Data & Prep"), ("
 EXPLORE = [("try.html", "Try it", "Type or load a complaint and watch our simplest model sort it, running in your browser."),
            ("game.html", "Beat the machine", "Sort 10 real complaints yourself, then see how our three models did on the same ones."),
            ("mixups.html", "Mix-up explorer", "Click any cell of the confusion grid to read real complaints the best model put in the wrong system."),
+           ("trends.html", "Complaint trends", "See how many complaints each system gets per month, by make and model year."),
            ]
 EXPLORE_FILES = [f for f, _, _ in EXPLORE]
 SPLITS = ["temporal", "random"]
@@ -1024,6 +1025,48 @@ def build_mixups():
     return page("mixups.html", "Mix-up explorer", body, "An interactive confusion grid for our best model: click a cell to read real complaints it sorted into the wrong system.", head, scripts=["mixups.js"])
 
 
+def build_trends():
+    tr = jl(DOCS / "data" / "trends.json")
+    pn = tr["plain_names"]
+    years = sorted(tr["yearly_by_system"])
+    static = ("<table class=\"mx-static\"><caption>Complaints received per year by system, cleaned dataset (2026 covers January to October).</caption><thead><tr><th scope=\"col\">System</th>"
+              + "".join(f'<th scope="col">{y}</th>' for y in years) + "</tr></thead><tbody>"
+              + "".join(f'<tr><th scope="row">{esc(pn[i])}</th>' + "".join(f"<td>{n(tr['yearly_by_system'][y][i])}</td>" for y in years) + "</tr>" for i in range(len(pn)))
+              + "</tbody></table>")
+    head = phead("Explore", "Complaint trends", "How many complaints each system gets per month, and which makes and model years they come from.")
+    body = f"""<section>
+<p class="section-lead">These charts count the {n(tr['total_complaints'])} complaints in our cleaned dataset, received from January 2020 to October 2026. They are counts only. The balanced training and test samples used for the models are not used here, so the shares reflect the real mix of complaints in the cleaned dataset.</p>
+<div class="tool" id="tr-app" hidden>
+<div class="filters">
+<div class="cm-group"><label class="field-label" for="tr-make">Make</label><select id="tr-make"></select></div>
+<div class="cm-group"><label class="field-label" for="tr-year">Model year</label><select id="tr-year"></select></div>
+</div>
+<h2 class="chart-title">Complaints per month</h2>
+<div class="chips" id="tr-chips" role="group" aria-label="Show or hide systems"></div>
+<div class="chart-wrap"><svg id="tr-line" role="img" aria-labelledby="tr-line-title" preserveAspectRatio="xMidYMid meet"><title id="tr-line-title">Line chart of complaints per month for the selected systems</title></svg><div class="tip" id="tr-tip" hidden></div></div>
+<div class="small" id="tr-summary"></div>
+<h2 class="chart-title">Top 10 makes for one system</h2>
+<div class="filters"><div class="cm-group"><label class="field-label" for="tr-sys">System</label><select id="tr-sys"></select></div></div>
+<div class="bars" id="tr-makes"></div>
+<div class="small">This chart uses the model-year filter above and ignores the make filter. It ranks the {len(tr['makes']) - 1} makes with the most complaints overall, so a make outside that list never appears here.</div>
+<details><summary>Show the monthly numbers as a table</summary><div class="table-wrap" id="tr-table"></div></details>
+</div>
+<div id="tr-fallback"><div class="callout"><div class="callout-title">JavaScript is off</div><div class="body"><p>The interactive charts need JavaScript. The table below has complaints per year and system.</p></div></div>
+<div class="table-wrap">{static}</div></div>
+</section>
+<section>
+<h2>How to read these charts</h2>
+<ul>
+<li><strong>Counts depend on who files.</strong> A make with more cars on the road gets more complaints, so a long bar is not the same as a worse car. We do not know how many vehicles each make sold.</li>
+<li><strong>Recent months can look low.</strong> Complaints keep arriving after a failure, and the owner may report months later. We make no claim about trends in the last few months.</li>
+<li><strong>Systems are the ten groups</strong> described on the <a href="data.html">Data &amp; Prep</a> page. A complaint that NHTSA filed under more than one group is not in these counts.</li>
+<li><strong>Model years before 2010,</strong> and complaints with no model year, are grouped together. The make filter lists the {len(tr['makes']) - 1} makes with the most complaints and one group for all other makes.</li>
+</ul>
+{callout("No complaint text here", "<p>These pages show counts only. The data file behind them has one number per month, system, make and model year, and no text, report numbers or dates finer than a month.</p>", "plain")}
+</section>"""
+    return page("trends.html", "Complaint trends", body, "Interactive charts of NHTSA vehicle complaints per month by system, with filters for make and model year.", head, scripts=["trends.js"])
+
+
 # ============================================================================ write and check
 BANNED = ["revolutionary", "cutting-edge", "robust", "leverage", "delve", "seamless", "crucial", "powerful", "state-of-the-art", "game-chang",
           "unlock", "harness", "comprehensive", "novel", "groundbreaking", "innovative", "pivotal", "journey", "deep dive", "dive into", "landscape", "tapestry"]
@@ -1069,7 +1112,7 @@ def check(pages):
 def main():
     pages = {"index.html": build_index(), "introduction.html": build_intro(), "data.html": build_data(), "models.html": build_models(),
              "results.html": build_results(), "conclusion.html": build_conclusion(), "about.html": build_about()}
-    builders = {"try.html": build_try, "game.html": build_game, "mixups.html": build_mixups}
+    builders = {"try.html": build_try, "game.html": build_game, "mixups.html": build_mixups, "trends.html": build_trends}
     for f in EXPLORE_FILES:
         pages[f] = builders[f]()
     for fname, h in pages.items():

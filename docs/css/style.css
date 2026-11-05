@@ -391,3 +391,23 @@ table.mx td { padding: 0; }
 .mx-card .meta { font-family: var(--font-mono); font-size: .78rem; color: var(--muted); margin-top: .4rem; display: flex; flex-wrap: wrap; gap: .3rem 1rem; }
 .mx-card p { margin: 0; }
 @media (max-width: 46rem) { #mx-app { padding: .8rem .5rem 1rem; } table.mx { border-spacing: 2px; } .mx-cell { width: 1.7rem; height: 1.8rem; font-size: .6rem; border-radius: 4px; } table.mx th { padding-right: .25rem; font-size: .72rem; } table.mx th .nm { display: none; } .mx-key { columns: 1; } }
+
+/* ---------- Complaint trends ---------- */
+.filters { display: flex; flex-wrap: wrap; gap: .6rem 1.6rem; margin-bottom: .6rem; }
+select { font: inherit; font-size: .95rem; padding: .5rem .7rem; border: 2px solid var(--asphalt); border-radius: 9px; background: #fff; color: var(--ink); min-width: 12rem; max-width: 100%; }
+.chart-title { font-size: 1.5rem; margin: 1.2rem 0 .5rem; }
+.chips { display: flex; flex-wrap: wrap; gap: .4rem; margin: .4rem 0 .6rem; }
+.chip { font: inherit; font-size: .84rem; font-weight: 500; display: inline-flex; align-items: center; gap: .45rem; padding: .3rem .7rem; border-radius: 999px; border: 2px solid var(--asphalt); background: var(--card); color: var(--ink); cursor: pointer; }
+.chip .sw { width: 1.4rem; height: 0; border-top: 4px solid var(--c); }
+.chip .sw.dash { border-top-style: dashed; }
+.chip[aria-pressed="false"] { border-color: var(--steel); color: var(--muted); background: #f1efe8; }
+.chip[aria-pressed="false"] .sw { opacity: .35; }
+.chip:hover { background: var(--amber-soft); }
+.chart-wrap { position: relative; }
+#tr-line { width: 100%; height: auto; display: block; touch-action: pan-y; }
+#tr-line text { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); }
+.tip { position: absolute; pointer-events: none; background: var(--asphalt); color: #fff; border-radius: 8px; padding: .5rem .7rem; font-size: .8rem; line-height: 1.45; min-width: 11rem; box-shadow: var(--shadow); z-index: 5; }
+.tip b { font-family: var(--font-mono); font-weight: 500; }
+.tip .row { display: flex; justify-content: space-between; gap: 1rem; }
+.tip .dot { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; margin-right: .4rem; border: 1px solid #fff; }
+#tr-makes .bar-row { grid-template-columns: minmax(7rem, 12rem) 1fr 4rem; }

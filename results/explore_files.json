@@ -3,13 +3,17 @@
     "mixups.json": 173345,
     "mlp_vocab.json": 647135,
     "mlp_weights.bin": 15551976,
-    "sample_complaints.json": 122304
+    "sample_complaints.json": 122304,
+    "trends.bin": 325668,
+    "trends.json": 2306
   },
   "files_mb": {
     "mixups.json": 0.2,
     "mlp_vocab.json": 0.6,
     "mlp_weights.bin": 15.6,
-    "sample_complaints.json": 0.1
+    "sample_complaints.json": 0.1,
+    "trends.bin": 0.3,
+    "trends.json": 0.0
   },
   "mlp_page_download_mb": 16.2
 }

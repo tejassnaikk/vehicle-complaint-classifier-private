@@ -32,6 +32,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import CLASSES, ID2LABEL, LABEL2ID, MODELS_DIR, RESULTS_DIR, SEED, compute_metrics, load_splits, per_class_report
+from config import PLAIN_NAMES
 
 MODELS = ["mlp", "bilstm", "distilbert"]
 NICE = {"mlp": "MLP (TF-IDF)", "bilstm": "BiLSTM", "distilbert": "DistilBERT"}
@@ -99,20 +100,32 @@ def top_pairs(d, k=5):
 
 
 def wrap(s):
-    return "\n".join(textwrap.wrap(s.replace("/", "/ "), 14, break_long_words=False))
+    return "\n".join(textwrap.wrap(s, 12, break_long_words=False))
 
 
 def plot_cm(cm, path, title, normalized):
-    labels = [wrap(c) for c in CLASSES]
-    fig, ax = plt.subplots(figsize=(10, 8.5))
-    data = cm / cm.sum(1, keepdims=True) if normalized else cm
-    sns.heatmap(data, annot=True, fmt=".2f" if normalized else "d", cmap="Blues", ax=ax, cbar=False,
-                xticklabels=labels, yticklabels=labels, vmin=0, vmax=1 if normalized else None,
-                annot_kws={"size": 9})
-    ax.set_xlabel("Predicted class"); ax.set_ylabel("True class")
-    ax.set_title(title + (" (rows sum to 1)" if normalized else " (counts)"))
-    plt.setp(ax.get_xticklabels(), rotation=0, fontsize=8); plt.setp(ax.get_yticklabels(), rotation=0, fontsize=8)
-    fig.tight_layout(); fig.savefig(path, dpi=150); plt.close(fig)
+    """Correct cells (diagonal) in an amber ramp, mix-ups (off-diagonal) in a red ramp: red marks errors only."""
+    from matplotlib.colors import LinearSegmentedColormap
+    import style as S
+    labels = [wrap(PLAIN_NAMES[c]) for c in CLASSES]
+    data = cm / cm.sum(1, keepdims=True) if normalized else cm.astype(float)
+    diag = np.eye(K, dtype=bool)
+    off_max = float(data[~diag].max())
+    amber = LinearSegmentedColormap.from_list("amb", ["#fff4d6", S.AMBER])
+    red = LinearSegmentedColormap.from_list("red", ["#fdf3f3", S.RED])
+    fmt_ = ".2f" if normalized else ".0f"
+    fig, ax = plt.subplots(figsize=(10.5, 9))
+    common = dict(annot=True, fmt=fmt_, cbar=False, linewidths=1.4, linecolor="white", ax=ax, xticklabels=labels, yticklabels=labels,
+                  annot_kws={"size": 11.5})
+    sns.heatmap(data, mask=~diag, cmap=amber, vmin=(0.4 if normalized else 0), vmax=(1.0 if normalized else float(data[diag].max())), **common)
+    sns.heatmap(data, mask=diag, cmap=red, vmin=0, vmax=off_max, **common)
+    ax.set_xlabel("Predicted class", fontsize=13); ax.set_ylabel("True class", fontsize=13)
+    S.title(ax, title + (" (share of each true class)" if normalized else " (number of complaints)"), size=19)
+    plt.setp(ax.get_xticklabels(), rotation=0, fontsize=9.5); plt.setp(ax.get_yticklabels(), rotation=0, fontsize=9.5)
+    for sp in ax.spines.values():
+        sp.set_visible(False)
+    ax.tick_params(length=0)
+    fig.tight_layout(); fig.savefig(path, dpi=170); plt.close(fig)
 
 
 def eval_one(d, m, sc):
@@ -314,10 +327,10 @@ def render_html(words, imp, header, legend=True):
         if r < 0.08:
             spans.append(f"<span title=\"{v:+.3f}\">{w_}</span>")
         else:
-            rgb = "31,119,180" if v > 0 else "230,126,34"
+            rgb = "242,169,0" if v > 0 else "92,102,116"
             spans.append(f"<span title=\"{v:+.3f}\" style=\"background:rgba({rgb},{0.15 + 0.7 * r:.2f});color:#111;border-radius:3px;padding:0 1px\">{w_}</span>")
-    leg = ("<p class=\"wi-legend\"><span style=\"background:rgba(31,119,180,.6);color:#111;padding:0 4px;border-radius:3px\">supports the predicted class</span> "
-           "<span style=\"background:rgba(230,126,34,.6);color:#111;padding:0 4px;border-radius:3px\">argues against it</span> "
+    leg = ("<p class=\"wi-legend\"><span style=\"background:rgba(242,169,0,.6);color:#111;padding:0 4px;border-radius:3px\">supports the predicted class</span> "
+           "<span style=\"background:rgba(92,102,116,.5);color:#111;padding:0 4px;border-radius:3px\">argues against it</span> "
            "(importance = drop in the predicted class's log-odds when the word is removed)</p>") if legend else ""
     return f"<div class=\"wi\"><p class=\"wi-head\">{header}</p><p class=\"wi-text\">{' '.join(spans)}</p>{leg}</div>\n"
 

@@ -77,20 +77,26 @@ def ckpt_path(model, scheme, suffix=".pt"):
 
 
 def plot_curves(history, path, title):
-    """history: list of dicts with epoch, train_loss, val_loss (optional), val_macro_f1."""
+    """history: list of dicts with epoch, train_loss, val_loss (optional), val_macro_f1. Style from src/style.py."""
+    import style as S
+    from matplotlib.ticker import MaxNLocator
     h = pd.DataFrame(history)
-    fig, ax = plt.subplots(1, 2, figsize=(10, 4))
-    ax[0].plot(h.epoch, h.train_loss, marker="o", label="train loss")
+    fig, ax = plt.subplots(1, 2, figsize=(10, 4.3))
+    ax[0].plot(h.epoch, h.train_loss, marker="o", ms=6, lw=2.3, color=S.ASPHALT_2, label="train loss")
     if "val_loss" in h:
-        ax[0].plot(h.epoch, h.val_loss, marker="o", label="val loss")
-    ax[0].set_xlabel("epoch"); ax[0].set_ylabel("loss"); ax[0].legend(); ax[0].set_title("Loss")
-    ax[1].plot(h.epoch, h.val_macro_f1, marker="o", color="#2a7f62")
-    best = h.val_macro_f1.idxmax()
-    ax[1].scatter([h.epoch[best]], [h.val_macro_f1[best]], color="red", zorder=3, label=f"best (epoch {h.epoch[best]})")
-    ax[1].set_xlabel("epoch"); ax[1].set_ylabel("validation macro-F1"); ax[1].legend(); ax[1].set_title("Validation macro-F1")
-    fig.suptitle(title)
-    fig.tight_layout()
-    fig.savefig(path, dpi=150)
+        ax[0].plot(h.epoch, h.val_loss, marker="s", ms=6, lw=2.3, ls="--", color=S.STEEL, label="validation loss")
+    ax[0].set_xlabel("epoch"); ax[0].set_ylabel("loss"); ax[0].legend()
+    S.title(ax[0], "Loss", size=18)
+    best = int(h.val_macro_f1.idxmax())
+    ax[1].plot(h.epoch, h.val_macro_f1, marker="D", ms=7, lw=2.4, color=S.AMBER, mec=S.ASPHALT, mew=1.2)
+    ax[1].scatter([h.epoch[best]], [h.val_macro_f1[best]], s=260, facecolor="none", edgecolor=S.ASPHALT, linewidth=2.2, zorder=4, label=f"best (epoch {int(h.epoch[best])})")
+    ax[1].set_xlabel("epoch"); ax[1].set_ylabel("validation macro-F1"); ax[1].legend(loc="lower right")
+    S.title(ax[1], "Validation macro-F1", size=18)
+    for a in ax:
+        a.xaxis.set_major_locator(MaxNLocator(integer=True)); S.style_axes(a, "y")
+    S.title(fig, title, size=22, y=0.995)
+    fig.tight_layout(rect=(0, 0, 1, 0.9))
+    fig.savefig(path, dpi=170)
     plt.close(fig)
 
 

@@ -4,6 +4,8 @@
     "odino": "11745554",
     "label": "AIR BAGS",
     "plain_label": "Air bags",
+    "make": "NISSAN",
+    "year": "2023",
     "received": "June 2026",
     "excerpt": "Vehicle airbags did not deploy when hitting a solid concrete wall at 50 mph after hydroplaning. Impact was front bumper.",
     "note": "Capital letters restored for reading; wording unchanged from the cleaned dataset."
@@ -13,6 +15,8 @@
     "odino": "11753120",
     "label": "FUEL/PROPULSION SYSTEM",
     "plain_label": "Fuel system",
+    "make": "BMW",
+    "year": "2019",
     "received": "July 2026",
     "excerpt": "The fuel pump failed in a way that it soaked my left leg with fuel while riding the motorcycle. My safety was at risk from major burns if the fuel had ignited on the exhaust. No warning lights came on.",
     "note": "Capital letters restored for reading; wording unchanged from the cleaned dataset."
@@ -22,6 +26,8 @@
     "odino": "11771757",
     "label": "SERVICE BRAKES",
     "plain_label": "Brakes",
+    "make": "GMC",
+    "year": "2017",
     "received": "October 2026",
     "excerpt": "Brakes make a flutter noise and pedal becomes hard while in drive through line or at a red light or any place that requires constant brake application for an extended period of time",
     "note": "Capital letters restored for reading; wording unchanged from the cleaned dataset."

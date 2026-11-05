@@ -35,7 +35,8 @@ src/
   05_train_mlp.py  06_train_bilstm.py  07_train_distilbert.py   models (results/<model>/<split>/)
   08_evaluate.py       metrics, confusion matrices, significance tests, word importance (results/eval/)
   09_make_figures.py   all website figures (results/figures/, docs/img/)
-  10_build_site.py     writes docs/*.html from results/
+  11_export_web.py     exports data for the Explore pages to docs/data/ (browser MLP, samples, confusion grid, trend counts)
+  10_build_site.py     writes docs/*.html from results/ and docs/data/
   check_site.py        checks site numbers trace to results/, tag balance
   common.py            shared data loading, metrics, plotting helpers
   style.py             shared figure style (palette, fonts) used by every matplotlib figure
@@ -80,6 +81,7 @@ caffeinate -i python src/07_train_distilbert.py --full --split random       # ab
 # 4. Evaluation, figures, website
 python src/08_evaluate.py                 # about 30 s (needs the checkpoints in models/)
 python src/09_make_figures.py             # about 30 s (needs data/raw/ and data/interim/)
+python src/11_export_web.py                # about 1 min: docs/data/*, results/browser_model_check.json (Python vs JavaScript check on 1,000 texts)
 python src/10_build_site.py               # under 1 min
 python src/site_screenshots.py            # optional; about 1.5 min; screenshots to results/site_screenshots/
 python src/check_site.py                  # checks numbers, tags, contrast; placeholders are only a warning
@@ -93,7 +95,7 @@ mkdir -p results/run_all && nohup caffeinate -ims ./run_all.sh > results/run_all
 tail -f results/run_all/summary.log      # progress; each step also logs to results/run_all/<step>.log
 ```
 
-`run_all.sh` runs 03 to 10 in order, stops at the first error and sets `TOKENIZERS_PARALLELISM=false`. It also refreshes the results table above (`src/update_readme_table.py`).
+`run_all.sh` runs 03 to 11 in order, stops at the first error and sets `TOKENIZERS_PARALLELISM=false`. It also refreshes the results table above (`src/update_readme_table.py`).
 
 Notes:
 

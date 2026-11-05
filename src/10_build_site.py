@@ -33,6 +33,7 @@ EXPLORE = [("try.html", "Try it", "Type or load a complaint and watch our simple
            ("game.html", "Beat the machine", "Sort 10 real complaints yourself, then see how our three models did on the same ones."),
            ("mixups.html", "Mix-up explorer", "Click any cell of the confusion grid to read real complaints the best model put in the wrong system."),
            ("trends.html", "Complaint trends", "See how many complaints each system gets per month, by make and model year."),
+           ("notebook.html", "Lab notebook", "A timeline of the decisions and findings that shaped this project, each with the number that mattered."),
            ]
 EXPLORE_FILES = [f for f, _, _ in EXPLORE]
 SPLITS = ["temporal", "random"]
@@ -1067,6 +1068,62 @@ def build_trends():
     return page("trends.html", "Complaint trends", body, "Interactive charts of NHTSA vehicle complaints per month by system, with filters for make and model year.", head, scripts=["trends.js"])
 
 
+def build_notebook():
+    tc = pd.read_csv(R / "eda" / "top_level_counts.csv").set_index("top_level")["count"]
+    mk = jl(R / "masking_counts.json")
+    late = jl(R / "late_phone_masking.json")
+    pre = jl(R / "premasking_scores.json")
+    nf_share = funnel["dropped_no_failure"] / funnel["in_class_list"] * 100
+    pair = leak_terms[1]
+    mlp_t, bil_t, dil_t = S("mlp", "temporal"), S("bilstm", "temporal"), S("distilbert", "temporal")
+    dil_r = S("distilbert", "random")
+    mmm = mc[("mlp", "bilstm")]
+    entries = [
+        ("Scope", "We started with everything since 2020",
+         f"NHTSA publishes its owner complaints as plain text files. We took the two files that cover January 2020 to the start of November 2026. They hold {n(funnel['raw_rows'])} rows, and the rows describe {n(funnel['raw_complaints'])} separate complaints because a complaint that names several parts takes one row per part.",
+         n(funnel["raw_complaints"]), "complaints in the raw files"),
+        ("Labels", "We set aside complaints that name more than one part",
+         f"A model that picks one answer cannot be scored fairly on a complaint with two correct answers. We kept only complaints filed under a single system, which left {n(funnel['single_label'])}. That rule removed {n(facts['multi_label_dropped_after_merge'])} complaints, so our results say nothing about them.",
+         n(facts["multi_label_dropped_after_merge"]), f"complaints set aside ({p1(facts['pct_multi_label_dropped_after_merge'])}% of the file)"),
+        ("Labels", "We merged two names for the same system, and kept two that look alike",
+         f"NHTSA renamed some groups during the years we use. &ldquo;Engine and engine cooling&rdquo; ({n(tc['ENGINE AND ENGINE COOLING'])} complaints) became part of our engine group, and the older &ldquo;fuel system&rdquo; ({n(tc['FUEL SYSTEM'])}) became part of the fuel and propulsion group. &ldquo;Visibility&rdquo; ({n(tc['VISIBILITY'])}) stayed separate from &ldquo;visibility and wiper&rdquo; ({n(tc['VISIBILITY/WIPER'])}), because both names were in use at the same time and described different problems. We kept {len(CLASSES)} groups.",
+         str(len(CLASSES)), "groups of vehicle parts to tell apart"),
+        ("Leak", "The answer was hiding in the text",
+         f"Before training anything we listed the words that best separated each group. A word pair such as <code>{esc(pair[0])}</code> showed up in {n(pair[3])} complaints, and {n(pair[2])} of them were {esc(PN[pair[1]].lower())} complaints. NHTSA call-centre staff had typed the part name into the text, in a phrase about a recall campaign. A model could read the label instead of the symptom. We removed the phrase and every component name in brackets.",
+         n(rules[7]["count"]), "texts had the part name removed"),
+        ("Data", "We dropped recall calls with no failure",
+         f"Some complaints are calls about whether a recall part was in stock, and the text says the owner had not experienced a failure. They hold no symptom to read. We dropped {n(funnel['dropped_no_failure'])} of them, which is {p1(nf_share)}% of the complaints in our ten groups. We also dropped {n(funnel['dropped_duplicates'])} exact duplicates and {n(funnel['dropped_short'])} texts under 20 words.",
+         n(funnel["dropped_no_failure"]), "recall-call complaints dropped"),
+        ("Split", "We tested on complaints from after the training period",
+         f"A random split would let the model train on complaints from the same months it is tested on. We made the test set the last six months, May to October 2026, and trained on everything before November 2025. As a check we also ran a random split. It scored {p1(min(gap.values()))} to {p1(max(gap.values()))} points higher, so mixing the months would have flattered every model a little.",
+         f"{p1(min(gap.values()))} to {p1(max(gap.values()))}", "points higher on a random split"),
+        ("Privacy", "We hid phone numbers and addresses typed into the text",
+         f"Owners sometimes type a phone number, an address, an e-mail address or a vehicle identification number into the complaint. We replaced these with markers such as [PHONE]. The rule changed {n(mk['texts_changed'])} texts. A scan of the published files then found {n(late['distinct_complaints_changed'])} texts with phone numbers written in two formats we had missed. We masked them after training. The models saw those digits, and none of those complaints is in a test set.",
+         n(mk["texts_changed"]), "texts had contact details masked"),
+        ("Models", "We trained three models and kept the best epoch",
+         f"The MLP took {tm[('mlp', 'temporal')]['wall_time_s']:.0f} seconds to train, the BiLSTM {tm[('bilstm', 'temporal')]['wall_time_s'] / 60:.0f} minutes and DistilBERT {tm[('distilbert', 'temporal')]['wall_time_s'] / 60:.0f} minutes on a laptop. Each model stopped on the epoch with the best score on a separate validation set, and we scored the test set once. The MLP peaked after epoch {tm[('mlp', 'temporal')]['best_epoch']}, which is a sign it memorizes the training texts quickly.",
+         f"{tm[('distilbert', 'temporal')]['wall_time_s'] / 60:.0f} min", "to train DistilBERT, the largest model"),
+        ("Run", "A run stalled, and we ran everything again",
+         f"The first DistilBERT run on the random split stalled overnight when the laptop went to sleep. We stopped it, restarted the laptop and ran it again with the same settings and seed. Later we re-ran the whole pipeline after adding the contact-detail masking. A second launch was also stopped by hand and resumed from the DistilBERT step. After the re-run, no test score moved by more than {pre['max_abs_difference']:.4f}, and the ranking of the models did not change.",
+         f"{pre['max_abs_difference']:.4f}", "largest change in any test score after the re-run"),
+        ("Tests", "We checked that the best model is better, not lucky",
+         f"With {n(best.n_test)} test complaints, a gap of a point or two could be chance. We compared the models on the same complaints with McNemar's test and resampled the test set 1,000 times. DistilBERT beat both other models, with p-values of {mc[('mlp', 'distilbert')]['p_value_exact']:.0e} and {mc[('bilstm', 'distilbert')]['p_value_exact']:.0e}. The MLP and the BiLSTM could not be told apart, with a p-value of {mmm['p_value_exact']:.3f}.",
+         f"{mmm['p_value_exact']:.3f}", "p-value for MLP against BiLSTM: no real difference"),
+    ]
+    tags = {"Scope": "plain", "Labels": "plain", "Leak": "red", "Data": "plain", "Split": "amber", "Privacy": "amber", "Models": "plain", "Run": "red", "Tests": "amber"}
+    items = "".join(
+        f'<li class="nb-item"><div class="nb-dot" aria-hidden="true"></div><article class="nb-card"><div class="nb-head"><span class="nb-step">Step {i}</span>{pill(tag, tags[tag])}</div>'
+        f'<h3>{title}</h3><p>{body}</p><div class="nb-stat"><span class="num">{num}</span><span class="lab">{lab}</span></div></article></li>'
+        for i, (tag, title, body, num, lab) in enumerate(entries, 1))
+    head = phead("Explore", "Lab notebook", "The decisions and findings that shaped this project, in the order we made them, each with the number that mattered.")
+    body = f"""<section>
+<p class="section-lead">Most of the work was not training models. It was deciding what counts as a complaint, what counts as an answer, and what to remove so that the score means something. This is the short version of our project log, written for a general reader.</p>
+<ol class="nb">{items}</ol>
+{callout("Where the full log is", f'<p>The working log is <a href="{gh("PROGRESS.md")}">PROGRESS.md</a> in the repository. It lists every phase, command and decision. The numbers on this page come from the files in <a href="{gh("results")}">results/</a>.</p>', "plain")}
+</section>"""
+    return page("notebook.html", "Lab notebook", body, "A timeline of the key decisions and findings in our vehicle complaint project, each with the number that mattered.", head)
+
+
 # ============================================================================ write and check
 BANNED = ["revolutionary", "cutting-edge", "robust", "leverage", "delve", "seamless", "crucial", "powerful", "state-of-the-art", "game-chang",
           "unlock", "harness", "comprehensive", "novel", "groundbreaking", "innovative", "pivotal", "journey", "deep dive", "dive into", "landscape", "tapestry"]
@@ -1112,7 +1169,7 @@ def check(pages):
 def main():
     pages = {"index.html": build_index(), "introduction.html": build_intro(), "data.html": build_data(), "models.html": build_models(),
              "results.html": build_results(), "conclusion.html": build_conclusion(), "about.html": build_about()}
-    builders = {"try.html": build_try, "game.html": build_game, "mixups.html": build_mixups, "trends.html": build_trends}
+    builders = {"try.html": build_try, "game.html": build_game, "mixups.html": build_mixups, "trends.html": build_trends, "notebook.html": build_notebook}
     for f in EXPLORE_FILES:
         pages[f] = builders[f]()
     for fname, h in pages.items():

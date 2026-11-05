@@ -411,3 +411,17 @@ select { font: inherit; font-size: .95rem; padding: .5rem .7rem; border: 2px sol
 .tip .row { display: flex; justify-content: space-between; gap: 1rem; }
 .tip .dot { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; margin-right: .4rem; border: 1px solid #fff; }
 #tr-makes .bar-row { grid-template-columns: minmax(7rem, 12rem) 1fr 4rem; }
+
+/* ---------- Lab notebook timeline ---------- */
+.nb { list-style: none; margin: 1.6rem 0; padding: 0 0 0 1.6rem; max-width: 52rem; border-left: 4px solid var(--asphalt); }
+.nb-item { position: relative; margin: 0 0 1.4rem; }
+.nb-dot { position: absolute; left: calc(-1.6rem - 11px); top: 1.2rem; width: 18px; height: 18px; background: var(--amber); border: 3px solid var(--asphalt); border-radius: 50%; }
+.nb-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 1rem 1.2rem 1.1rem; }
+.nb-head { display: flex; align-items: center; gap: .7rem; }
+.nb-step { font-family: var(--font-mono); font-size: .8rem; color: var(--muted); }
+.nb-card h3 { font-size: 1.7rem; margin: .5rem 0 .2rem; }
+.nb-card p { margin: .4rem 0 .8rem; }
+.nb-stat { display: flex; align-items: baseline; flex-wrap: wrap; gap: .3rem .8rem; background: var(--amber-wash); border: 1px solid #ecd9a2; border-radius: 10px; padding: .5rem .8rem; }
+.nb-stat .num { font-family: var(--font-mono); font-size: 1.5rem; font-weight: 500; }
+.nb-stat .lab { font-size: .9rem; color: var(--ink-2); }
+@media (max-width: 46rem) { .nb { padding-left: 1.2rem; } .nb-dot { left: calc(-1.2rem - 11px); } .nb-card h3 { font-size: 1.45rem; } }

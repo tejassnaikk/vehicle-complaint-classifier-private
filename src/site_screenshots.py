@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 OUT = ROOT / "results" / "site_screenshots"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-PAGES = ["index", "introduction", "data", "models", "results", "conclusion", "about"]
+PAGES = ["index", "introduction", "data", "models", "results", "conclusion", "about", "notebook"]  # static pages (file:// iframes cannot run fetch). The interactive Explore pages are tested and screenshotted at real widths with src/browser_check.js
 WIDTHS = [1440, 390]
 TILE = 7000
 

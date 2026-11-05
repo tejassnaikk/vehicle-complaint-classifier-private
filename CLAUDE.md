@@ -42,7 +42,9 @@ vehicle-complaint-classifier/
     07_train_distilbert.py
     08_evaluate.py
     09_make_figures.py
-    10_build_site.py        # writes docs/*.html from results/ (all site text lives here)
+    11_export_web.py        # data for the Explore pages -> docs/data/ (browser MLP int8 weights, samples, confusion grid, trend counts)
+    10_build_site.py        # writes docs/*.html from results/ and docs/data/ (all site text lives here)
+    browser_check.js        # drives headless Chrome (DevTools protocol) to test and screenshot the interactive pages; scenarios in src/browser_tests/
     style.py                # shared matplotlib style (palette, fonts)
     site_screenshots.py     # headless Chrome screenshots of every page -> results/site_screenshots/
     masking.py              # contact-detail masking used by 03 (rule 14); mask_preview.py dry-runs it

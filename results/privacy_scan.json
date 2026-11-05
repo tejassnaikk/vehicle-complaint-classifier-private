@@ -54,7 +54,7 @@
       }
     },
     "docs/*.html (visible text)": {
-      "files": 11,
+      "files": 12,
       "phone_number": {
         "matches": 0
       },
@@ -90,7 +90,7 @@
       }
     },
     "results/**/*.csv|json|html": {
-      "files": 100,
+      "files": 102,
       "phone_number": {
         "matches": 0
       },

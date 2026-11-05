@@ -65,6 +65,7 @@ step 07_train_distilbert_random   $PY -u src/07_train_distilbert.py --full --spl
 step 08_evaluate              $PY -u src/08_evaluate.py
 step update_readme_table      $PY -u src/update_readme_table.py
 step 09_make_figures          $PY -u src/09_make_figures.py
+step 11_export_web            $PY -u src/11_export_web.py
 step 10_build_site            $PY -u src/10_build_site.py
 
 # site check in normal mode: the About-page placeholders are only a WARNING here. The pre-publish check is `python src/check_site.py --strict`.

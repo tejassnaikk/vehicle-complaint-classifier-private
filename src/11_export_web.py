@@ -194,7 +194,27 @@ def export_trends():
             "layout": layout, "bytes": len(blob),
             "yearly_by_system": {y: [int(x) for x in row] for y, row in yearly.iterrows()}}
     (OUT / "trends.json").write_text(json.dumps(meta, separators=(",", ":")))
+    yearly.rename(columns=PLAIN_NAMES).to_csv(R / "eda" / "trends_yearly_by_system.csv")  # the numbers shown by the trends page without JavaScript
     return meta
+
+
+# ---------------------------------------------------------------------------------------------- 5. lab notebook
+def export_notebook():
+    """results/premasking_scores.json: test macro-F1 before the contact-detail masking re-run (parsed from the "previous:" line in PROGRESS.md) and after."""
+    import re
+    txt = (ROOT / "PROGRESS.md").read_text()
+    m = re.search(r"previous: ([\d. /,]+)\)", txt.split("## Full re-run with masking finished")[1])
+    vals = [float(x) for x in re.findall(r"0\.\d{4}", m.group(1))]
+    assert len(vals) == 6, vals
+    names = [("MLP (TF-IDF)", "temporal"), ("MLP (TF-IDF)", "random"), ("BiLSTM", "temporal"), ("BiLSTM", "random"), ("DistilBERT", "temporal"), ("DistilBERT", "random")]
+    cur = pd.read_csv(R / "summary_table.csv")
+    rows = []
+    for (mod, sp), old in zip(names, vals):
+        new = float(cur[(cur.model == mod) & (cur.split == sp)].test_macro_f1.iloc[0])
+        rows.append({"model": mod, "split": sp, "test_macro_f1_before_masking_rerun": old, "test_macro_f1_after": round(new, 4), "abs_difference": round(abs(new - old), 4)})
+    out = {"source": "PROGRESS.md (scores recorded before the re-run) and results/summary_table.csv", "rows": rows, "max_abs_difference": max(r["abs_difference"] for r in rows)}
+    (R / "premasking_scores.json").write_text(json.dumps(out, indent=2))
+    return out
 
 
 def write_file_sizes():
@@ -218,6 +238,9 @@ def main(which):
     if which in ("all", "trends"):
         tr = export_trends()
         print("trends: complaints", tr["total_complaints"], "records", tr["records"], "bytes", tr["bytes"])
+    if which in ("all", "notebook"):
+        nb = export_notebook()
+        print("notebook: max difference after the masking re-run:", nb["max_abs_difference"])
     write_file_sizes()
 
 

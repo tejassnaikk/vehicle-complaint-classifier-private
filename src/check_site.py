@@ -148,15 +148,29 @@ def placeholder_scan():
 
 
 def main():
+    strict = "--strict" in sys.argv[1:]
+    failures, warnings = [], []
     print("Contrast (WCAG AA):")
     cb = contrast_check()
     print("contrast failures:", cb or "none")
-    print("asset scan:", asset_scan() or "clean")
-    print("unfilled template text:", brace_scan() or "none")
-    print("placeholders still to fill before release:", placeholder_scan() or "none")
+    failures += [f"contrast {x}" for x in cb]
+    assets = asset_scan()
+    print("asset scan:", assets or "clean")
+    failures += assets
+    braces = brace_scan()
+    print("unfilled template text:", braces or "none")
+    failures += braces
+    holders = placeholder_scan()
+    if holders:
+        # a warning in the normal run (run_all.sh), a hard failure with --strict (final pre-publish check)
+        (failures if strict else warnings).extend(f"placeholder {h}" for h in holders)
+        print(f"{'FAIL' if strict else 'WARNING'}: placeholders still to fill before release: {holders}")
+    else:
+        print("placeholders still to fill before release: none")
     for page in sorted(DOCS.glob("*.html")):
         bad = tag_balance(page.read_text())
         print(f"{page.name}: tag balance {'OK' if not bad else bad[:5]}")
+        failures += [f"{page.name}: {b}" for b in bad]
     corpus = corpus_numbers()
     total = unmatched = 0
     for page in sorted(DOCS.glob("*.html")):
@@ -166,6 +180,14 @@ def main():
         unmatched += len(miss)
         print(f"{page.name}: {len(nums)} numbers, {len(miss)} not found literally in results/: {miss}")
     print(f"\nTotal numbers {total}; distinct not found {unmatched}. Check the unmatched ones are computed values (shares, differences, rounding).")
+    if strict:
+        print("\nSTRICT (pre-publish) CHECK:", "FAILED" if failures else "PASSED")
+        for f in failures:
+            print("  -", f)
+        return 1 if failures else 0
+    if warnings:
+        print(f"\n{len(warnings)} warning(s) (not failing this run). Use `python src/check_site.py --strict` for the final pre-publish check.")
+    return 0
 
 
 if __name__ == "__main__":

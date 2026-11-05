@@ -50,7 +50,7 @@ step update_readme_table      $PY -u src/update_readme_table.py
 step 09_make_figures          $PY -u src/09_make_figures.py
 step 10_build_site            $PY -u src/10_build_site.py
 
-# checks (they report problems in their logs; read results/run_all/check_site.log)
+# site check in normal mode: the About-page placeholders are only a WARNING here. The pre-publish check is `python src/check_site.py --strict`.
 step check_site               $PY -u src/check_site.py
 
 echo "$(date '+%F %T') ALL STEPS DONE" | tee -a "$SUMMARY"

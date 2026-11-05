@@ -82,7 +82,8 @@ python src/08_evaluate.py                 # about 30 s (needs the checkpoints in
 python src/09_make_figures.py             # about 30 s (needs data/raw/ and data/interim/)
 python src/10_build_site.py               # under 1 min
 python src/site_screenshots.py            # optional; about 1.5 min; screenshots to results/site_screenshots/
-python src/check_site.py                  # checks numbers, tags
+python src/check_site.py                  # checks numbers, tags, contrast; placeholders are only a warning
+python src/check_site.py --strict         # final pre-publish check: any placeholder or problem exits with code 1
 ```
 
 One command for steps 2 to 4 (about 2.5 to 3 hours; run it from the Terminal app so closing the editor cannot stop it):

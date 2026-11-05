@@ -3,30 +3,38 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1c1f24">
 <title>Conclusion | What Failed on This Car?</title>
 <meta name="description" content="What we found about sorting vehicle complaints by failing part, in plain language.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
 <link rel="stylesheet" href="css/style.css">
+<script src="js/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to the content</a>
-<header class="site-header"><div class="inner">
-<a class="site-title" href="index.html">What Failed on <span>This Car?</span></a>
+<header class="site-header"><div class="bar">
+<a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span>What Failed on This Car?</a>
 <nav class="main" aria-label="Main"><ul><li><a href="introduction.html">Introduction</a></li><li><a href="data.html">Data &amp; Prep</a></li><li><a href="models.html">Models</a></li><li><a href="results.html">Results</a></li><li><a href="conclusion.html" aria-current="page">Conclusion</a></li><li><a href="about.html">About</a></li></ul></nav>
 </div></header>
+<nav class="progress" aria-label="Progress through the site"><ol><li><a href="introduction.html"><span class="n">1</span><span class="t">Introduction</span></a></li><li><a href="data.html"><span class="n">2</span><span class="t">Data</span></a></li><li><a href="models.html"><span class="n">3</span><span class="t">Models</span></a></li><li><a href="results.html"><span class="n">4</span><span class="t">Results</span></a></li><li><a href="conclusion.html" aria-current="step"><span class="n">5</span><span class="t">Conclusion</span></a></li></ol></nav>
+<div class="page-head"><div class="inner"><div class="kicker">5 of 5 · Conclusion</div><h1>What we found</h1></div></div>
 <main id="content">
-<h1>What we found</h1>
 <section>
 <h2>How well the computer sorted new complaints</h2>
 <p>We set out to learn whether the words an owner writes can tell us which part of the car failed. To find out, we tested three computer methods on 7,320 complaints received from May to October 2026. None of those complaints had been seen by the methods before, and all of them arrived after the complaints the methods learned from. The best method put 89 of every 100 of these complaints in the right one of ten groups. The other two methods got 88 and 87 right out of every 100. Careful checks show that the best method's lead over the other two is too large to be chance. The gap between the other two is small, and we cannot say one is better than the other. Some groups were easy and some were hard. Air bags and steering complaints were the easiest, with 96 of every 100 sorted correctly. Electrical system complaints were the hardest, at 81 of every 100, followed by fuel system at 82.</p>
 
-<figure><a href="img/fig_identified_correctly.png" title="Open the full-size image"><img src="img/fig_identified_correctly.png" alt="Bar chart of how many of every 100 complaints of each kind were sorted correctly: Steering 96, Air bags 96, Automatic braking and collision warning 91, Brakes 90, Body and frame 90, Transmission and drive parts 89, Windshield, glass and wipers 89, Engine and cooling 88, Fuel system 82, Electrical system 81." width="2100" height="1160" loading="lazy"></a><figcaption>Out of every 100 complaints of each kind, how many the best method put in the right group. Data: results/figures/data/identified_correctly.csv.</figcaption></figure>
+<div class="pull">89 of every 100 new complaints went to the right group.</div>
+
+<figure class="figcard"><a class="zoom" href="img/fig_identified_correctly.png" title="Open the full-size image"><img src="img/fig_identified_correctly.png" alt="Bar chart of how many of every 100 complaints of each kind were sorted correctly: Steering 96, Air bags 96, Automatic braking and collision warning 91, Brakes 90, Body and frame 90, Transmission and drive parts 89, Windshield, glass and wipers 89, Engine and cooling 88, Fuel system 82, Electrical system 81." width="2100" height="1240" loading="lazy"></a><figcaption>Out of every 100 complaints of each kind, how many the best method put in the right group. Data: results/figures/data/identified_correctly.csv.</figcaption></figure>
 
 </section>
 <section>
 <h2>Why some problems are harder</h2>
 <p>The words that most clearly mark the easy groups are the part names themselves, such as "air bag" and "steering wheel". A complaint that says the air bags did not open leaves little doubt about where to file it. The hard groups are the ones where a symptom can have several causes. A car that stalls on the highway can have an engine problem, a fuel problem or an electrical problem, and the owner often cannot tell which. Our results show the same thing. Of 800 fuel system complaints, 54 were put under the engine. Of 800 transmission complaints, 43 were put under the engine as well. Electrical complaints were spread across several other groups, with 33 of 800 going to the engine and 30 going to the transmission. These mistakes happen between groups whose problems can look alike in the owner's words. Reading the words alone works well for some problems and only fairly well for others.</p>
 
-<figure><a href="img/fig_mixups.png" title="Open the full-size image"><img src="img/fig_mixups.png" alt="Bar charts of the most common mix-ups: fuel system complaints put under engine, transmission complaints put under engine, and electrical complaints put under other groups." width="2100" height="1480" loading="lazy"></a><figcaption>The most common mix-ups on the test complaints. Data: results/figures/data/mixups.csv.</figcaption></figure>
+<figure class="figcard"><a class="zoom" href="img/fig_mixups.png" title="Open the full-size image"><img src="img/fig_mixups.png" alt="Bar charts of the most common mix-ups: fuel system complaints put under engine, transmission complaints put under engine, and electrical complaints put under other groups." width="2100" height="1560" loading="lazy"></a><figcaption>The most common mix-ups on the test complaints. Red marks complaints put in the wrong group. Data: results/figures/data/mixups.csv.</figcaption></figure>
 
 </section>
 <section>
@@ -38,8 +46,11 @@
 <h2>What this could be used for</h2>
 <p>What does this mean for sorting real complaints? A computer can read an owner's words and name the failing part about 89 times out of 100 in our test. That is good enough to help a person sort a large pile of complaints into rough piles. It is not good enough to replace the person, especially for groups like the electrical system where about one in five is misfiled. The mistakes it makes are mostly between neighboring groups, such as the engine and the fuel system. A fair next step would be to let the computer sort first and have a person check the groups where mix-ups are common. Another would be to let it handle the complaints that list more than one part, which we skipped. We have shown that the owner's own words carry most of the answer. We have not shown that the methods would work on complaints from a much later year or from another country. People who want to report a problem with their own vehicle can do so on <a href="https://www.nhtsa.gov/report-a-safety-problem">NHTSA's reporting page</a>.</p>
 
-<div class="next">The detailed numbers and methods behind these statements are on the <a href="results.html">Results</a> page.</div>
+<details class=tech><summary>Technical details: the numbers behind these statements</summary>
+<ul><li>Test set: complaints received 1 May to 31 October 2026, 7,320 complaints with at most 800 per group. Each method was scored once with its best checkpoint on a separate validation set.</li><li>Scores on that set (accuracy, macro-F1): DistilBERT 0.8913 and 0.8921; MLP 0.8762 and 0.8771; BiLSTM 0.8687 and 0.8690.</li><li>DistilBERT against the other two: McNemar p-values 2e-06 (MLP) and 1e-12 (BiLSTM); the 95% bootstrap intervals of the differences exclude zero. MLP against BiLSTM: p = 0.027, which does not hold up after correcting for three comparisons.</li><li>Wrong for all three methods: 497 of 7,320 test complaints.</li><li>Random split instead of a time-based split: accuracy 0.88, 1.48 and 1.47 points higher for the MLP, BiLSTM and DistilBERT.</li><li>Full tables, intervals, confusion matrices and error examples are on the <a href="results.html">Results</a> page.</li></ul></details>
+
 </section>
+<nav class="pager" aria-label="Previous and next page"><a class="prev" href="results.html"><span class="dir">&larr; Previous</span><span class="ttl">Results</span></a><a class="next" href="about.html"><span class="dir">Next &rarr;</span><span class="ttl">About</span></a></nav>
 </main>
 <footer><div class="inner">
 <div>Complaint data: National Highway Traffic Safety Administration (NHTSA), Office of Defects Investigation, vehicle owner complaints. US government data, public domain.</div>

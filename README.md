@@ -36,9 +36,12 @@ src/
   10_build_site.py     writes docs/*.html from results/
   check_site.py        checks site numbers trace to results/, tag balance
   common.py            shared data loading, metrics, plotting helpers
+  style.py             shared figure style (palette, fonts) used by every matplotlib figure
+  site_screenshots.py  full-page screenshots of every site page at 1440 and 390 px (needs Google Chrome)
+assets/fonts/          Barlow Condensed and Inter (Open Font License) used in the figures
 data/clean/            published sampled datasets (about 43 MB each)
 results/               every number and figure the website uses
-docs/                  the website (GitHub Pages serves from /docs)
+docs/                  the website: HTML, css/style.css, js/site.js, img/ (GitHub Pages serves from /docs)
 PROGRESS.md            log of each phase: what was done, numbers, decisions
 ```
 
@@ -76,6 +79,7 @@ caffeinate -i python src/07_train_distilbert.py --full --split random       # ab
 python src/08_evaluate.py                 # about 30 s (needs the checkpoints in models/)
 python src/09_make_figures.py             # about 30 s (needs data/raw/ and data/interim/)
 python src/10_build_site.py               # under 1 min
+python src/site_screenshots.py            # optional; about 1.5 min; screenshots to results/site_screenshots/
 python src/check_site.py                  # checks numbers, tags
 ```
 
@@ -83,6 +87,7 @@ Notes:
 
 - Seed 42 is used everywhere. Time-based splits are deterministic. In a fresh clone of this repository, re-training the MLP on the temporal split gave exactly the same validation and test metrics as the committed ones, and rebuilding the site changed nothing in `docs/`. Training the BiLSTM and DistilBERT on the Apple GPU (MPS) may differ in the last digits across PyTorch versions and machines.
 - You can skip training and rebuild the site and figures from the committed `results/` and `data/clean/` alone: `python src/10_build_site.py` regenerates `docs/` without any data download. `08_evaluate.py` needs the checkpoints, and `09_make_figures.py` needs the raw and interim data.
+- The website needs no build tools. Fonts for the page text come from Google Fonts; every page also works without JavaScript.
 - DistilBERT downloads `distilbert-base-uncased` (about 270 MB) on first use. If it is too slow on your machine, a Colab notebook can load the CSVs from this repository.
 - Runtimes above were measured on the machine named above; the BiLSTM and DistilBERT times scale with the hardware.
 

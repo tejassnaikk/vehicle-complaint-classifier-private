@@ -3,23 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1c1f24">
 <title>About | What Failed on This Car?</title>
 <meta name="description" content="About this class project: the question, the data source, the tools and the author.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
 <link rel="stylesheet" href="css/style.css">
+<script src="js/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to the content</a>
-<header class="site-header"><div class="inner">
-<a class="site-title" href="index.html">What Failed on <span>This Car?</span></a>
+<header class="site-header"><div class="bar">
+<a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span>What Failed on This Car?</a>
 <nav class="main" aria-label="Main"><ul><li><a href="introduction.html">Introduction</a></li><li><a href="data.html">Data &amp; Prep</a></li><li><a href="models.html">Models</a></li><li><a href="results.html">Results</a></li><li><a href="conclusion.html">Conclusion</a></li><li><a href="about.html" aria-current="page">About</a></li></ul></nav>
 </div></header>
+<nav class="progress" aria-label="Progress through the site"><ol><li><a href="introduction.html"><span class="n">1</span><span class="t">Introduction</span></a></li><li><a href="data.html"><span class="n">2</span><span class="t">Data</span></a></li><li><a href="models.html"><span class="n">3</span><span class="t">Models</span></a></li><li><a href="results.html"><span class="n">4</span><span class="t">Results</span></a></li><li><a href="conclusion.html"><span class="n">5</span><span class="t">Conclusion</span></a></li></ol></nav>
+<div class="page-head"><div class="inner"><div class="kicker">About</div><h1>About</h1><div class="subtitle">A class project in deep learning, built by one person, with all code, data and results published.</div></div></div>
 <main id="content">
-<h1>About</h1>
-<p class="lead">A class project in deep learning, built by one person, with all code, data and results published.</p>
 <section>
 <h2>The project</h2>
 <p>This is an open individual project for a deep learning class. The question is whether the words of a vehicle owner complaint are enough to name the vehicle part that failed. We compared three neural networks on 198,505 cleaned complaints from NHTSA and report where they work and where they do not. The author is Tejas Naik.</p>
-<figure><a href="img/fig_pipeline.png" title="Open the full-size image"><img src="img/fig_pipeline.png" alt="Pipeline diagram from the raw NHTSA file to the evaluation of three models." width="3000" height="1040" loading="lazy"></a><figcaption>The project in five steps.</figcaption></figure>
+<figure class="figcard"><a class="zoom" href="img/fig_pipeline.png" title="Open the full-size image"><img src="img/fig_pipeline.png" alt="Pipeline diagram from the raw NHTSA file to the evaluation of three models." width="3000" height="1080" loading="lazy"></a><figcaption>The project in five steps.</figcaption></figure>
 
 </section>
 <section>
@@ -31,15 +36,17 @@
 <ul>
 <li>Python 3.12, PyTorch 2.15.0 (Apple MPS backend), Hugging Face transformers 5.22.1, scikit-learn 1.9.1, pandas 3.1.0, NumPy 2.5.4, SciPy 1.18.1, matplotlib 3.11.2 and seaborn 0.13.2. Pinned versions are in <a href="https://github.com/tejassnaikk/vehicle-complaint-classifier/blob/main/requirements.txt">requirements.txt</a>.</li>
 <li>Hardware: a MacBook Air with an M4 chip and 16 GB of memory. No cloud services were used.</li>
-<li>The website is plain HTML and one CSS file. It is built from the results files by <a href="https://github.com/tejassnaikk/vehicle-complaint-classifier/blob/main/src/10_build_site.py">10_build_site.py</a>, so the numbers on each page come from <code>results/</code>.</li>
+<li>The website is plain HTML, one CSS file and one small JavaScript file for the figure viewer and the matrix tabs (every page works without it). Headings use Barlow Condensed, body text Inter and numbers JetBrains Mono, loaded from Google Fonts; the figures use the same open-licensed fonts, kept in <code>assets/fonts/</code>. It is built from the results files by <a href="https://github.com/tejassnaikk/vehicle-complaint-classifier/blob/main/src/10_build_site.py">10_build_site.py</a>, so the numbers on each page come from <code>results/</code>.</li>
 <li>Random seed 42 is used everywhere.</li>
 </ul>
 </section>
 <section>
 <h2>Please note</h2>
-<p>These results describe one dataset and one test window. They are not a safety assessment of any vehicle. To report a safety problem with a vehicle, use <a href="https://www.nhtsa.gov/report-a-safety-problem">NHTSA's reporting page</a>.</p>
+<aside class="callout "><div class="callout-title">Not a safety assessment</div><div class="body"><p>These results describe one dataset and one test window. They are not a safety assessment of any vehicle.</p><p>To report a safety problem with a vehicle, use <a href="https://www.nhtsa.gov/report-a-safety-problem">NHTSA's reporting page</a>.</p></div></aside>
+
 <p>Source code and all results: <a href="https://github.com/tejassnaikk/vehicle-complaint-classifier">github.com/tejassnaikk/vehicle-complaint-classifier</a>.</p>
 </section>
+<nav class="pager" aria-label="Previous and next page"><a class="prev" href="conclusion.html"><span class="dir">&larr; Previous</span><span class="ttl">Conclusion</span></a></nav>
 </main>
 <footer><div class="inner">
 <div>Complaint data: National Highway Traffic Safety Administration (NHTSA), Office of Defects Investigation, vehicle owner complaints. US government data, public domain.</div>

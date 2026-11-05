@@ -76,7 +76,72 @@ def tag_balance(h):
     return problems + [f"<{t}> never closed" for t in stack]
 
 
-def main():
+def hex_lum(h):
+    h = h.lstrip("#")
+    r, g, b = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+    f = lambda v: v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
+
+
+def ratio(a, b):
+    la, lb = hex_lum(a), hex_lum(b)
+    return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
+
+
+def contrast_check():
+    """WCAG AA: 4.5:1 for text pairs, 3:1 for large text and graphics. Tokens are read from docs/css/style.css (:root)."""
+    css = (DOCS / "css" / "style.css").read_text()
+    tok = dict(re.findall(r"--([\w-]+):\s*(#[0-9a-fA-F]{6})", css))
+    text_pairs = [("ink", "paper"), ("ink", "card"), ("ink-2", "paper"), ("muted", "paper"), ("muted", "card"), ("on-dark", "asphalt"),
+                  ("on-dark-2", "asphalt"), ("on-dark-2", "asphalt-2"), ("amber", "asphalt"), ("asphalt", "amber"), ("asphalt", "amber-soft"),
+                  ("red-text", "card"), ("red-text", "red-soft"), ("red-text", "paper"), ("amber-deep", "paper"), ("amber-deep", "amber-wash"),
+                  ("asphalt", "amber-wash"), ("on-dark", "asphalt-2")]
+    graphic_pairs = [("asphalt", "paper"), ("steel", "paper"), ("asphalt", "card")]
+    bad = []
+    for a, b in text_pairs:
+        r = ratio(tok[a], tok[b])
+        print(f"  text    {a:10s} on {b:10s} {r:5.2f} {'ok' if r >= 4.5 else 'FAIL'}")
+        if r < 4.5:
+            bad.append((a, b, r))
+    for a, b in graphic_pairs:
+        r = ratio(tok[a], tok[b])
+        print(f"  graphic {a:10s} on {b:10s} {r:5.2f} {'ok' if r >= 3 else 'FAIL'}")
+        if r < 3:
+            bad.append((a, b, r))
+    return bad
+
+
+def asset_scan():
+    """No dash characters in css/js, no external resources other than Google Fonts."""
+    out = []
+    for f in [DOCS / "css" / "style.css", DOCS / "js" / "site.js"]:
+        t = f.read_text()
+        for ch in ["\u2014", "\u2013"]:
+            if ch in t:
+                out.append(f"{f.name}: dash character")
+    for page in DOCS.glob("*.html"):
+        for u in re.findall(r'(?:src|href)="(https?://[^"]+)"', page.read_text()):
+            if not u.startswith(("https://fonts.googleapis.com", "https://fonts.gstatic.com")) and "nhtsa.gov" not in u and "github.com/tejassnaikk" not in u:
+                out.append(f"{page.name}: external resource {u}")
+    return out
+
+
+def brace_scan():
+    """Catch template text that was never filled in, e.g. a literal {NHTSA_REPORT} or {n(...)} in a page."""
+    out = []
+    for page in DOCS.glob("*.html"):
+        t = re.sub(r"(?s)<style.*?</style>", "", page.read_text())
+        t = html.unescape(re.sub(r"<[^>]+>", " ", t))
+        out += [f"{page.name}: {b}" for b in re.findall(r"\{[A-Za-z_][^{}]{0,40}\}", t)]
+        out += [f"{page.name}: attribute {b}" for b in re.findall(r'(?:href|src)="[^"]*\{[^"]*"', page.read_text())]
+    return out
+
+
+    print("Contrast (WCAG AA):")
+    cb = contrast_check()
+    print("contrast failures:", cb or "none")
+    print("asset scan:", asset_scan() or "clean")
+    print("unfilled template text:", brace_scan() or "none")
     for page in sorted(DOCS.glob("*.html")):
         bad = tag_balance(page.read_text())
         print(f"{page.name}: tag balance {'OK' if not bad else bad[:5]}")

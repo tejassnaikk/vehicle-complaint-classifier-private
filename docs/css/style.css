@@ -109,6 +109,7 @@ figure.figcard img { display: block; width: 100%; border-radius: 8px; }
 figcaption { font-size: .86rem; color: var(--muted); padding: .55rem .35rem .15rem; max-width: 80ch; }
 .figrow { display: grid; gap: 1.1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); align-items: start; }
 .figrow figure { margin: .4rem 0; }
+.figrow.three { grid-template-columns: repeat(auto-fit, minmax(min(100%, 20.5rem), 1fr)); }
 .figrow.narrow { grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); }
 
 .callout { background: var(--amber-wash); border: 1px solid #ecd9a2; border-left: 7px solid var(--amber); border-radius: 0 var(--radius) var(--radius) 0; padding: 1rem 1.3rem; margin: 1.6rem 0; max-width: 62rem; }

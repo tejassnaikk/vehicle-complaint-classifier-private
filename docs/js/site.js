@@ -4,6 +4,13 @@
   "use strict";
   document.documentElement.classList.add("js");
 
+  /* ---- keep the current page visible in the horizontally scrolling nav (phones) ---- */
+  var cur = document.querySelector('nav.main a[aria-current="page"]');
+  if (cur && cur.parentNode && cur.parentNode.parentNode) {
+    var list = cur.parentNode.parentNode;
+    list.scrollLeft = Math.max(0, cur.offsetLeft - (list.clientWidth - cur.offsetWidth) / 2);
+  }
+
   /* ---- click-to-enlarge lightbox ---- */
   var box = null, lastFocus = null;
   function closeBox() {

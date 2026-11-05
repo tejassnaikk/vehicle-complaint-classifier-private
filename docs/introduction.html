@@ -3,18 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1c1f24">
 <title>Introduction | What Failed on This Car?</title>
 <meta name="description" content="What vehicle owner complaints are, how many NHTSA receives, and why sorting them by failing part is hard.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
 <link rel="stylesheet" href="css/style.css">
+<script src="js/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to the content</a>
-<header class="site-header"><div class="inner">
-<a class="site-title" href="index.html">What Failed on <span>This Car?</span></a>
+<header class="site-header"><div class="bar">
+<a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span>What Failed on This Car?</a>
 <nav class="main" aria-label="Main"><ul><li><a href="introduction.html" aria-current="page">Introduction</a></li><li><a href="data.html">Data &amp; Prep</a></li><li><a href="models.html">Models</a></li><li><a href="results.html">Results</a></li><li><a href="conclusion.html">Conclusion</a></li><li><a href="about.html">About</a></li></ul></nav>
 </div></header>
+<nav class="progress" aria-label="Progress through the site"><ol><li><a href="introduction.html" aria-current="step"><span class="n">1</span><span class="t">Introduction</span></a></li><li><a href="data.html"><span class="n">2</span><span class="t">Data</span></a></li><li><a href="models.html"><span class="n">3</span><span class="t">Models</span></a></li><li><a href="results.html"><span class="n">4</span><span class="t">Results</span></a></li><li><a href="conclusion.html"><span class="n">5</span><span class="t">Conclusion</span></a></li></ol></nav>
+<div class="page-head"><div class="inner"><div class="kicker">1 of 5 · Introduction</div><h1>Why vehicle owners write to the government</h1></div></div>
 <main id="content">
-<h1>Why vehicle owners write to the government</h1>
 <section>
 <h2>When something goes wrong with a car</h2>
 <p>Every car owner eventually meets a part that does not work the way it should. Most of the time it is an annoyance, such as a dead battery or a rattle behind the dashboard. Sometimes it is dangerous, such as brakes that feel soft, a steering wheel that locks up, or air bags that stay folded in a crash. In the United States, an owner who sees a problem like this can report it to the National Highway Traffic Safety Administration, known as NHTSA. The report is called a vehicle owner complaint, and owners can file one themselves or by phone. When they call, a staff member writes down what the owner says. NHTSA collects these complaints in a public file that anyone can download. The file we used holds 432,791 complaints received from January 2020 through October 2026. That is an average of 173 new complaints every day for almost seven years.</p>
@@ -24,25 +30,32 @@
 <h2>What a complaint looks like</h2>
 <p>A complaint is a short piece of ordinary writing, and no two read alike. The typical one in our collection is 91 words long, about the length of a short paragraph. Some are a single sentence, like the owner whose air bags did not open when the car hit a concrete wall at 50 miles per hour. Others follow a problem for months, with dates, mileage and repeated trips to a dealer. Owners rarely use the names that engineers use for parts. They write that "the pedal becomes hard" or that "the steering wheel sticks" instead of naming a component. About 27 percent of the complaints we kept were written down by NHTSA staff during a phone call, in a more formal style, and the rest were written by the owners. Some owners write in anger, some in fear, and some with careful detail. All of them are trying to tell the government which part of the car failed.</p>
 
-<div class="quotes"><figure><a href="img/fig_quote_card_1.png" title="Open the full-size image"><img src="img/fig_quote_card_1.png" alt="Quote card: Air bags complaint received June 2026: Vehicle airbags did not deploy when hitting a solid concrete wall at 50 mph after hydroplaning. Impact was front bumper." width="1440" height="620" loading="lazy"></a><figcaption>Air bags complaint, June 2026.</figcaption></figure>
-<figure><a href="img/fig_quote_card_2.png" title="Open the full-size image"><img src="img/fig_quote_card_2.png" alt="Quote card: Fuel system complaint received July 2026: The fuel pump failed in a way that it soaked my left leg with fuel while riding the motorcycle. My safety was at risk from major burns if the fuel had ignited on the exhaust. No warning lights came on." width="1440" height="620" loading="lazy"></a><figcaption>Fuel system complaint, July 2026.</figcaption></figure>
-<figure><a href="img/fig_quote_card_3.png" title="Open the full-size image"><img src="img/fig_quote_card_3.png" alt="Quote card: Brakes complaint received October 2026: Brakes make a flutter noise and pedal becomes hard while in drive through line or at a red light or any place that requires constant brake application for an extended period of time" width="1440" height="620" loading="lazy"></a><figcaption>Brakes complaint, October 2026.</figcaption></figure>
+<div class="tickets"><article class="ticket"><div class="ticket-head"><span class="tag">Air bags</span><span class="veh">2023 NISSAN</span></div><div class="ticket-body"><blockquote>&ldquo;Vehicle airbags did not deploy when hitting a solid concrete wall at 50 mph after hydroplaning. Impact was front bumper.&rdquo;</blockquote></div><div class="ticket-foot"><span>REPORT #11745554</span><span>Received June 2026</span></div></article>
+<article class="ticket"><div class="ticket-head"><span class="tag">Fuel system</span><span class="veh">2019 BMW</span></div><div class="ticket-body"><blockquote>&ldquo;The fuel pump failed in a way that it soaked my left leg with fuel while riding the motorcycle. My safety was at risk from major burns if the fuel had ignited on the exhaust. No warning lights came on.&rdquo;</blockquote></div><div class="ticket-foot"><span>REPORT #11753120</span><span>Received July 2026</span></div></article>
+<article class="ticket"><div class="ticket-head"><span class="tag">Brakes</span><span class="veh">2017 GMC</span></div><div class="ticket-body"><blockquote>&ldquo;Brakes make a flutter noise and pedal becomes hard while in drive through line or at a red light or any place that requires constant brake application for an extended period of time&rdquo;</blockquote></div><div class="ticket-foot"><span>REPORT #11771757</span><span>Received October 2026</span></div></article>
 </div>
-<div class="small">Three real complaints from our collection, with capital letters restored for reading. Source: NHTSA vehicle owner complaints, US government data, public domain.</div>
+<div class="small">Three real complaints with capital letters restored for reading. Each is one owner's report and says nothing about a brand. Source: NHTSA vehicle owner complaints, US government data, public domain.</div>
 </section>
 <section>
 <h2>How many complaints there are</h2>
 <p>The number of complaints has grown in recent years. In 2021 NHTSA received 49,195 complaints, and in 2025 it received 74,369. That is about 51 percent more in four years. The count for 2026 covers only January through October, and it already stands at 66,423. Each complaint is counted once, even when the owner lists several car parts. Behind every number is a person who noticed that something about a vehicle was unsafe or broken. The numbers also show why reading every complaint by hand is hard. At the 2025 pace, NHTSA receives about 204 new complaints every day. A person who read one complaint a minute would need more than 3 hours each day just to get through them.</p>
 
-<figure><a href="img/fig_complaints_per_year.png" title="Open the full-size image"><img src="img/fig_complaints_per_year.png" alt="Bar chart of vehicle complaints received by NHTSA each year: 2020: 58,601, 2021: 49,195, 2022: 53,447, 2023: 62,994, 2024: 67,762, 2025: 74,369, 2026: 66,423." width="1900" height="1080" loading="lazy"></a><figcaption>Complaints received per year. The 2026 bar covers January through October. Data: results/eda/complaints_per_year.csv.</figcaption></figure>
+<div class="pull">About 204 new complaints arrive every day.</div>
+
+<figure class="figcard"><a class="zoom" href="img/fig_complaints_per_year.png" title="Open the full-size image"><img src="img/fig_complaints_per_year.png" alt="Bar chart of vehicle complaints received by NHTSA each year: 2020: 58,601, 2021: 49,195, 2022: 53,447, 2023: 62,994, 2024: 67,762, 2025: 74,369, 2026: 66,423." width="2000" height="1120" loading="lazy"></a><figcaption>Complaints received per year. The 2026 bar covers January through October. Data: results/eda/complaints_per_year.csv.</figcaption></figure>
 
 </section>
 <section>
 <h2>Why sorting complaints matters</h2>
 <p>A complaint helps only if the right people see it. Staff at NHTSA look for patterns, such as many owners of one model reporting the same failing part. When a pattern points to a safety defect, the agency can open an investigation, and a manufacturer can be asked to recall the vehicles for repair. To spot a pattern, someone first has to know which part each complaint is about. In the NHTSA file, every complaint is filed under a group of parts, such as the engine, the steering or the air bags. People assign those groups by reading the complaints. The job is slow, and two careful readers can disagree, because a story about a car that dies on the highway could point to the engine, the fuel system or the electrical system. In fact, about 30 percent of the complaints in the file are filed under more than one group of parts, which shows how often one story touches several systems. This project asks a simple question: how well can the words an owner writes, and nothing else, tell us which part of the car failed? The rest of this website shows the data we used, the work we did to answer the question, and what we found.</p>
 
+<div class="pull">How well can an owner's own words tell us which part failed?</div>
+
+<details class=tech><summary>Technical details: where these numbers come from</summary>
+<ul><li>Source: NHTSA Office of Defects Investigation complaint files for 2020 to 2024 and 2025 to 2026. The files hold 629,231 rows for 432,893 complaints, because a complaint that lists several components gets one row per component.</li><li>Counts per year: each complaint is counted once by the date NHTSA received it. The total of 432,791 runs from 1 January 2020 to 31 October 2026 (2,496 days).</li><li>Length: the cleaned collection of 198,464 complaints has a median of 91 words and a 95th percentile of 260 words.</li><li>Phone-call texts: 26.6% of the cleaned complaints were written by NHTSA staff, recognized by their formal style (they start with &ldquo;the contact&rdquo; or a <code>TL*</code> marker).</li><li>Several groups: 128,014 complaints (29.6% of the file) map to more than one part group once two renamed labels are merged. Details are on the <a href="data.html">Data &amp; Prep</a> page.</li></ul></details>
+
 </section>
-<div class="next">Next: <a href="data.html">how we prepared the data</a>.</div>
+<nav class="pager" aria-label="Previous and next page"><a class="prev" href="index.html"><span class="dir">&larr; Previous</span><span class="ttl">Home</span></a><a class="next" href="data.html"><span class="dir">Next &rarr;</span><span class="ttl">Data &amp; Prep</span></a></nav>
 </main>
 <footer><div class="inner">
 <div>Complaint data: National Highway Traffic Safety Administration (NHTSA), Office of Defects Investigation, vehicle owner complaints. US government data, public domain.</div>

@@ -43,6 +43,8 @@ vehicle-complaint-classifier/
     08_evaluate.py
     09_make_figures.py
     10_build_site.py        # writes docs/*.html from results/ (all site text lives here)
+    style.py                # shared matplotlib style (palette, fonts)
+    site_screenshots.py     # headless Chrome screenshots of every page -> results/site_screenshots/
     check_site.py           # checks site numbers trace to results/, tag balance
     common.py               # shared: dataset loading, metrics, plotting helpers
   notebooks/
@@ -145,7 +147,7 @@ STOP and report the summary table. Be honest about weak classes.
 - Copy all website images into `docs/img/`.
 
 ### Phase 8: Website (`docs/`)
-Static HTML + one CSS file, no frameworks, works on phone width. Same nav bar on every page: Introduction | Data & Prep | Models | Results | Conclusion | About. Light, clean, readable design; visuals on every page.
+Static HTML + one CSS file + one small vanilla JS file (`docs/js/site.js`: lightbox, matrix tabs; every page must work without it), no frameworks, works on phone width. Design (redesign 2026-11): data-journalism feature with an automotive-safety identity. Tokens on `:root` in `docs/css/style.css`: asphalt `#1c1f24`, paper `#f7f5f0`, amber `#f2a900` as the single accent (never as text on light backgrounds), red `#d64545` only for errors and misclassifications. Fonts: Barlow Condensed (headings), Inter (body), JetBrains Mono (numbers). Figures use `src/style.py` with the same palette. Text pairs must pass WCAG AA (`src/check_site.py` checks). Same nav bar on every page: Introduction | Data & Prep | Models | Results | Conclusion | About. Light, clean, readable design; visuals on every page.
 
 - `introduction.html`: the topic only (vehicle safety complaints, who files them, why they matter, the problem of sorting them), no models or methods. Claude Code writes the prose, following the Website writing rules. Visuals: complaints per year chart, quote cards of real complaint excerpts.
 - `data.html`: data source with link to NHTSA, the field dictionary subset used, the cleaning steps with before/after examples, label mapping table, multi-component rule, leakage audit, split design, class balance charts, links to the raw source and the cleaned CSVs on GitHub.

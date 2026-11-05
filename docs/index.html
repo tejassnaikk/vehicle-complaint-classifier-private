@@ -3,24 +3,40 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1c1f24">
 <title>Home | What Failed on This Car?</title>
 <meta name="description" content="A class project that sorts NHTSA vehicle owner complaints by the failing part using three neural network models.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
 <link rel="stylesheet" href="css/style.css">
+<script src="js/site.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to the content</a>
-<header class="site-header"><div class="inner">
-<a class="site-title" href="index.html">What Failed on <span>This Car?</span></a>
+<header class="site-header"><div class="bar">
+<a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span>What Failed on This Car?</a>
 <nav class="main" aria-label="Main"><ul><li><a href="introduction.html">Introduction</a></li><li><a href="data.html">Data &amp; Prep</a></li><li><a href="models.html">Models</a></li><li><a href="results.html">Results</a></li><li><a href="conclusion.html">Conclusion</a></li><li><a href="about.html">About</a></li></ul></nav>
 </div></header>
-<main id="content">
+<nav class="progress" aria-label="Progress through the site"><ol><li><a href="introduction.html"><span class="n">1</span><span class="t">Introduction</span></a></li><li><a href="data.html"><span class="n">2</span><span class="t">Data</span></a></li><li><a href="models.html"><span class="n">3</span><span class="t">Models</span></a></li><li><a href="results.html"><span class="n">4</span><span class="t">Results</span></a></li><li><a href="conclusion.html"><span class="n">5</span><span class="t">Conclusion</span></a></li></ol></nav>
+<div class="hero"><div class="inner">
+<div class="kicker">A data story about vehicle safety complaints</div>
 <h1>What Failed on This Car?</h1>
-<p class="lead">When a car part fails, owners can report it to the US government in their own words. This project asks whether a computer can read those words and name the part that failed.</p>
-<div class="stats"><div class="stat"><div class="num">432,791</div><div class="label">owner complaints, January 2020 to October 2026</div></div><div class="stat"><div class="num">198,505</div><div class="label">complaints kept after cleaning</div></div><div class="stat"><div class="num">10</div><div class="label">groups of car parts</div></div><div class="stat"><div class="num">89 in 100</div><div class="label">new complaints sorted correctly by the best method</div></div></div>
-<figure><a href="img/fig_identified_correctly.png" title="Open the full-size image"><img src="img/fig_identified_correctly.png" alt="Bar chart of how many of every 100 complaints of each kind were sorted correctly, from air bags and steering at 96 to electrical system at 81." width="2100" height="1160" loading="lazy"></a><figcaption>Out of every 100 complaints of each kind, how many the best method put in the right group (complaints from May to October 2026).</figcaption></figure>
+<div class="subtitle">When a car part fails, owners can report it to the US government in their own words, and this project asks whether a computer can read those words and name the part that failed.</div>
+<div class="stats"><div class="stat"><div class="num">198,505</div><div class="label">complaints analyzed after cleaning</div></div><div class="stat"><div class="num">10</div><div class="label">vehicle systems the computer has to tell apart</div></div><div class="stat"><div class="num">89 of 100</div><div class="label">new complaints put in the right system by the best model</div></div><div class="stat is-error"><div class="num">497</div><div class="label">test complaints all three models got wrong (6.8%)</div></div></div>
+</div></div>
+<main id="content">
+<section>
+<h2>How to read this site</h2>
+<div class="section-lead">Five parts, in the order we worked. Each page ends with a link to the next one.</div>
+<ol class="how"><li><a href="introduction.html"><span class="num">1</span><span class="ttl">Introduction</span><span class="what">What owner complaints are, how many there are, and why sorting them is hard.</span></a></li><li><a href="data.html"><span class="num">2</span><span class="ttl">Data</span><span class="what">The NHTSA files, the labels, the cleaning, and the leaks we found and removed.</span></a></li><li><a href="models.html"><span class="num">3</span><span class="ttl">Models</span><span class="what">Three neural networks, from a word-count baseline to DistilBERT.</span></a></li><li><a href="results.html"><span class="num">4</span><span class="ttl">Results</span><span class="what">Scores with intervals, tests, mistakes, and which words drive a prediction.</span></a></li><li><a href="conclusion.html"><span class="num">5</span><span class="ttl">Conclusion</span><span class="what">What we found, in plain language.</span></a></li></ol>
+<aside class="callout plain"><div class="callout-title">Short on time?</div><div class="body"><p>Read the Introduction and the Conclusion. They use plain language and no jargon. The pages in between hold the data, the models and the numbers behind every statement.</p></div></aside>
 
-<div class="cards"><a class="card" href="introduction.html"><strong>Introduction</strong><span>What owner complaints are and why sorting them is hard.</span></a><a class="card" href="data.html"><strong>Data &amp; Prep</strong><span>The NHTSA data, the labels, the cleaning and the leakage audit.</span></a><a class="card" href="models.html"><strong>Models</strong><span>Three neural networks, from a word-count baseline to DistilBERT.</span></a><a class="card" href="results.html"><strong>Results</strong><span>Scores, significance tests, mistakes and word highlights.</span></a><a class="card" href="conclusion.html"><strong>Conclusion</strong><span>What we found, in plain language.</span></a><a class="card" href="about.html"><strong>About</strong><span>The project, the author and the tools.</span></a></div>
-<p class="small">A class project using public NHTSA complaint data. Not an NHTSA product, and not safety advice.</p>
+<figure class="figcard"><a class="zoom" href="img/fig_identified_correctly.png" title="Open the full-size image"><img src="img/fig_identified_correctly.png" alt="Bar chart of how many of every 100 complaints of each kind were sorted correctly, from air bags and steering at 96 to electrical system at 81." width="2100" height="1240" loading="lazy"></a><figcaption>Out of every 100 complaints of each kind, how many the best method put in the right group (complaints from May to October 2026).</figcaption></figure>
+
+<div class="small">A class project using public NHTSA complaint data. Not an NHTSA product, and not safety advice.</div>
+</section>
+<nav class="pager" aria-label="Previous and next page"><a class="next" href="introduction.html"><span class="dir">Next &rarr;</span><span class="ttl">Introduction</span></a></nav>
 </main>
 <footer><div class="inner">
 <div>Complaint data: National Highway Traffic Safety Administration (NHTSA), Office of Defects Investigation, vehicle owner complaints. US government data, public domain.</div>

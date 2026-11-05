@@ -59,25 +59,15 @@ def fmt(n):
 
 # ============================================================================ data tables behind the figures
 def build_funnel():
-    """results/data_funnel.json (raw counts from the raw files, later steps parsed from results/leakage_audit.txt)."""
-    audit = (RESULTS_DIR / "leakage_audit.txt").read_text()
-
-    def num(pattern):
-        m = re.search(pattern, audit)
-        assert m, pattern
-        return int(m.group(1).replace(",", ""))
+    """results/data_funnel.json (raw counts from the raw files, cleaning steps from results/cleaning_funnel.json, written by 03)."""
+    cf = json.loads((RESULTS_DIR / "cleaning_funnel.json").read_text())
 
     raw = pd.concat([pd.read_csv(RAW_DIR / f, sep="\t", header=None, usecols=[1, 11, 16], names=["odino", "compdesc", "ldate"], quoting=csv.QUOTE_NONE,
                                  dtype=str, keep_default_na=False)
                      for f in ["COMPLAINTS_RECEIVED_2020-2024.txt", "COMPLAINTS_RECEIVED_2025-2026.txt"]])
-    f = {
-        "raw_rows": len(raw), "raw_complaints": int(raw.odino.nunique()),
-        "single_label": num(r"single merged top_level: ([\d,]+)"), "in_class_list": num(r"Single-label and in class list: ([\d,]+)"),
-        "dropped_no_failure": num(r"rule 11 drop[^:]*: ([\d,]+) texts"),
-        "dropped_duplicates": num(r"Exact duplicate texts dropped \(after stripping\): ([\d,]+)"),
-        "dropped_short": num(r"Texts under 20 words dropped \(after stripping\): ([\d,]+)"),
-        "cleaned_complaints": num(r"Rows: [\d,]+ -> ([\d,]+)")}
-    assert f["raw_rows"] == num(r"Raw rows: ([\d,]+)") and f["raw_complaints"] == num(r"ODINOs total: ([\d,]+)")
+    f = {k: cf[k] for k in ["raw_rows", "raw_complaints", "single_label", "in_class_list", "dropped_no_failure", "dropped_duplicates", "dropped_short"]}
+    f["cleaned_complaints"] = cf["final_count"]
+    assert f["raw_rows"] == len(raw) and f["raw_complaints"] == int(raw.odino.nunique()), "cleaning_funnel.json does not match the raw files"
     f["complaints_per_year_file"] = "results/eda/complaints_per_year.csv"
     (RESULTS_DIR / "data_funnel.json").write_text(json.dumps(f, indent=2))
     r = raw.drop_duplicates("odino")

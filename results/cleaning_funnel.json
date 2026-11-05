@@ -1,0 +1,28 @@
+{
+  "raw_rows": 629231,
+  "raw_complaints": 432893,
+  "single_label": 304879,
+  "in_class_list": 229063,
+  "dropped_no_failure": 10295,
+  "dropped_duplicates": 1690,
+  "dropped_short": 18575,
+  "final_count": 198503,
+  "masking": {
+    "texts_before_masking": 218768,
+    "texts_containing_each_kind": {
+      "url": 1013,
+      "email": 52,
+      "address": 5960,
+      "phone": 2737,
+      "vin": 85
+    },
+    "texts_changed": 7495,
+    "placeholders_inserted": {
+      "phone": 2930,
+      "email": 59,
+      "address": 6766,
+      "vin": 83,
+      "url": 1303
+    }
+  }
+}

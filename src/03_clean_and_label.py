@@ -72,6 +72,9 @@ def stem(w):
     return w[:-1] if len(w) > 3 and w.endswith("s") else w
 
 
+FUNNEL = {}  # counts at each cleaning step, written to results/cleaning_funnel.json (read by 09_make_figures.py)
+
+
 def label_complaints(df):
     df["top_level"] = df.compdesc.map(top_level).replace(MERGE_MAP)
     n_per = df.groupby("odino").top_level.nunique()
@@ -79,8 +82,10 @@ def label_complaints(df):
     one = df[df.odino.isin(single_ids)].drop_duplicates("odino")
     say(f"ODINOs total: {df.odino.nunique():,}; single merged top_level: {len(one):,}; "
         f"multi top_level (dropped): {(n_per > 1).sum():,}")
+    FUNNEL.update(raw_rows=int(len(df)), raw_complaints=int(df.odino.nunique()), single_label=int(len(one)))
     one = one[one.top_level.isin(CLASSES)].copy()
     say(f"Single-label and in class list: {len(one):,}")
+    FUNNEL["in_class_list"] = int(len(one))
     one["label"] = one.top_level
     return one.drop(columns=["compdesc", "top_level"])
 
@@ -171,6 +176,7 @@ def clean_text(df, names, stems):
         int(nf.sum()), [(x[max(0, NOFAIL_RE.search(x).start() - 150): NOFAIL_RE.search(x).end() + 20], "[whole complaint dropped]") for x in ex])
     say(f"  rule 12 'parts distribution disconnect' present in {pdd.sum():,} texts; "
         f"overlap with rule 11: {(pdd & nf).sum():,}; remaining to strip after rule 11: {(pdd & ~nf).sum():,}")
+    FUNNEL["dropped_no_failure"] = int(nf.sum())
     df = df[~nf].reset_index(drop=True)
     t = run_rule("12 strip 'parts distribution disconnect'", df.text, lambda x: PDD_RE.sub("", x))
     t = run_rule("13 re-collapse whitespace", t, lambda x: re.sub(r"\s+", " ", x).strip())
@@ -190,12 +196,16 @@ def clean_text(df, names, stems):
          "placeholders_inserted": {k: int(df.text.str.count(tag).sum()) for k, tag in
                                    {"phone": "\\[PHONE\\]", "email": "\\[EMAIL\\]", "address": "\\[ADDRESS\\]", "vin": "\\[VIN\\]", "url": "\\[URL\\]"}.items()}}, indent=2))
 
+    FUNNEL["masking"] = json.loads((RESULTS_DIR / "masking_counts.json").read_text())
     dup = df.duplicated("text", keep="first")
+    FUNNEL["dropped_duplicates"] = int(dup.sum())
     say(f"Exact duplicate texts dropped (after stripping and masking): {dup.sum():,}")
     df = df[~dup]
     nw = df.text.str.split().str.len()
     say(f"Texts under {MIN_WORDS} words dropped (after stripping): {(nw < MIN_WORDS).sum():,}")
+    FUNNEL["dropped_short"] = int((nw < MIN_WORDS).sum())
     df = df[nw >= MIN_WORDS]
+    FUNNEL["final_count"] = int(len(df))
     say(f"Rows: {n0:,} -> {len(df):,}")
     return df.reset_index(drop=True)
 
@@ -316,6 +326,7 @@ def main():
     audit(out, names, stems)
     (RESULTS_DIR / "leakage_audit.txt").write_text("\n".join(OUT) + "\n")
     write_rule_log()
+    (RESULTS_DIR / "cleaning_funnel.json").write_text(json.dumps(FUNNEL, indent=2))
 
 
 if __name__ == "__main__":

@@ -483,3 +483,6 @@ Direction from Tejas: a data-journalism feature (Upshot / The Pudding feel) with
 
 ## run_all.sh --from (2026-11-04)
 The full run was stopped manually during 07_train_distilbert_temporal (last DONE step: 06_train_bilstm_random). `run_all.sh` now takes `--from <step>` to skip earlier steps and append to `results/run_all/summary.log`, and `--list` to print step names. Resume with `--from 07_train_distilbert_temporal`.
+
+## 09 funnel fix (2026-11-04)
+`09_make_figures.py` failed because it regex-parsed `results/leakage_audit.txt` and rule 14 changed the wording. `03_clean_and_label.py` now writes `results/cleaning_funnel.json` (raw rows, raw complaints, single label, in class list, dropped no-failure / duplicates / short, final count, masking counts per kind) and 09 reads that file. The file for the current run was backfilled from the audit text and checked against the parquet (final count 198,503 = 229,063 - 10,295 - 1,690 - 18,575). Hard-coded example ODINOs (cleaning example 11308255, quote cards 11745554, 11753120, 11771757) exist and contain no placeholders; no replacement was needed.

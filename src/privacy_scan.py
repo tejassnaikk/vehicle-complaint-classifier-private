@@ -13,11 +13,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from config import CLEAN_DIR, RESULTS_DIR
 
 PATTERNS = {
-    "phone_number": r"(?<!\d)(?:\+?1[ -.]?)?\(?\d{3}\)?[ -.]\d{3}[ -.]\d{4}(?!\d)",
+    "phone_number": r"(?<![\d,])(?:\+?1[ .-]?)?\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}(?![\d,])",
     "email_address": r"[\w.+-]+@[\w-]+\.[\w.]+",
     "vin_like_17_chars": r"\b(?=[a-z0-9]*\d)(?=[a-z0-9]*[a-z])[a-hj-npr-z0-9]{17}\b",
     "url": r"https?://|www\.",
-    "state_and_zip": r"\b[a-z]{2}\s\d{5}\b",
+    "state_and_zip": r"[a-z]{3,},?\s(?:al|ak|az|ar|ca|co|ct|de|dc|fl|ga|ia|il|ks|ky|la|ma|md|mi|mn|ms|mo|mt|ne|nv|nh|nj|nm|ny|nc|nd|pa|ri|sc|sd|tn|tx|ut|vt|va|wa|wv|wi|wy|pr)\s\d{5}\b",
 }
 
 

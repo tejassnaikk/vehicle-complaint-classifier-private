@@ -1,0 +1,53 @@
+{
+  "texts": 198464,
+  "texts_with_each_kind": {
+    "url": 993,
+    "email": 51,
+    "address": 5957,
+    "phone": 2737,
+    "vin": 81
+  },
+  "texts_changed": 7467,
+  "placeholders_inserted": {
+    "phone": 2930,
+    "email": 58,
+    "address": 6763,
+    "vin": 79,
+    "url": 1283
+  },
+  "residual_after_masking": {
+    "phone": 43,
+    "email": 0,
+    "vin_like": 0,
+    "url": 3,
+    "state_and_zip": 894
+  },
+  "newly_duplicate_rows": 0,
+  "examples": [
+    {
+      "kind": "phone",
+      "odino": "11364619",
+      "after": "...ated. the vehicle was towed to terry marxen chevrolet cadillac ([ADDRESS], [PHONE]) where the contact was informed that the vehicle was previously repaired u..."
+    },
+    {
+      "kind": "email",
+      "odino": "11387237",
+      "after": "...t motorcycles dealer in san jose ca. service manager name is: jd his email [EMAIL] phone number [PHONE] - x8 jd has video of throttle control sticking on his..."
+    },
+    {
+      "kind": "address",
+      "odino": "11307746",
+      "after": "...as not determined. the manufacturer and the local dealer forsom lake ford ([ADDRESS], forsom lake ca.) was notified of the failure but no assistance was offere..."
+    },
+    {
+      "kind": "vin",
+      "odino": "11765165",
+      "after": "...vehicle & incident details * vehicle: 2012 kia forte hatchback * vin: [VIN] * incident date: august 21, 2026 * relevant recalls: (recall sc284) & (rec..."
+    },
+    {
+      "kind": "url",
+      "odino": "11432849",
+      "after": "...ube, and its description section pointed me about the recall of this part. [URL] hyundai had also issued a recall to change the steering coupler that seems..."
+    }
+  ]
+}

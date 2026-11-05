@@ -1,6 +1,6 @@
 # Project: What Failed on This Car?
 
-Deep learning class project (open project, individual). Classify NHTSA vehicle owner complaints by the vehicle component that failed, using only the complaint text. Compare three neural network models and publish everything as a public website.
+Deep learning class project (open project, team). Classify NHTSA vehicle owner complaints by the vehicle component that failed, using only the complaint text. Compare three neural network models and publish everything as a public website.
 
 ## Hard deadlines
 
@@ -45,6 +45,11 @@ vehicle-complaint-classifier/
     10_build_site.py        # writes docs/*.html from results/ (all site text lives here)
     style.py                # shared matplotlib style (palette, fonts)
     site_screenshots.py     # headless Chrome screenshots of every page -> results/site_screenshots/
+    masking.py              # contact-detail masking used by 03 (rule 14); mask_preview.py dry-runs it
+    privacy_scan.py         # counts contact details left in data/clean/*.csv -> results/privacy_scan.json
+    update_readme_table.py  # refreshes the results block in README.md from results/
+  run_all.sh                # runs 03 to 10 in order with logs in results/run_all/ (launch with nohup caffeinate -ims)
+  LICENSE                   # MIT (code). NHTSA data is US government public domain.
     check_site.py           # checks site numbers trace to results/, tag balance
     common.py               # shared: dataset loading, metrics, plotting helpers
   notebooks/
@@ -74,7 +79,7 @@ vehicle-complaint-classifier/
 
 ## Privacy rule for published data
 
-The raw file contains VIN, city, dealer name/phone/address, and vehicle operator name. The published cleaned CSV keeps ONLY: `odino, ldate, make, model, year, label, text`. Drop everything else.
+The raw file contains VIN, city, dealer name/phone/address, and vehicle operator name. The published cleaned CSV keeps ONLY: `odino, ldate, make, model, year, label, text`. Drop everything else. Contact details typed into the free text are masked in the pipeline (rule 14, `src/masking.py`): phone numbers -> [PHONE], e-mail addresses -> [EMAIL], VIN-like strings -> [VIN], street addresses -> [ADDRESS], URLs -> [URL]. `src/privacy_scan.py` must find none before the repo is made public.
 
 ## Website writing rules (all site text)
 
@@ -82,6 +87,7 @@ The raw file contains VIN, city, dealer name/phone/address, and vehicle operator
 - Introduction and Conclusion: 100% non-technical. No model names and no metric jargon such as F1 or confusion matrix. Paragraphs of 7 to 10 complete sentences. The Introduction is about the topic only (vehicle safety complaints, who files them, why they matter, the problem of sorting them), not about models or methods.
 - Every page has visuals. Use only figures we generate ourselves or US government public-domain material, with the source credited. No images copied from other websites.
 - Every number on the site must trace to a file in `results/`.
+- This is a team project: write we/our, never I/my, on the site and in the README.
 
 ## Phases
 

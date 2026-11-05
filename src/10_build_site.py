@@ -456,7 +456,8 @@ def build_data():
             9: "Remove standalone recall IDs such as <code>19v757000</code>. The word &ldquo;recall&rdquo; stays.",
             10: "Collapse spaces again.",
             11: "Drop the whole complaint if it says the contact had not experienced a failure (recall-availability calls).",
-            12: "Remove the template phrase &ldquo;parts distribution disconnect&rdquo; and keep the rest.", 13: "Collapse spaces again."}
+            12: "Remove the template phrase &ldquo;parts distribution disconnect&rdquo; and keep the rest.", 13: "Collapse spaces again.",
+            14: "Mask contact details typed into the text: phone numbers, e-mail addresses, VIN-like strings, street addresses and URLs become <code>[PHONE]</code>, <code>[EMAIL]</code>, <code>[VIN]</code>, <code>[ADDRESS]</code> and <code>[URL]</code>."}
     rows = []
     for k in sorted(rl):
         if k in pick and rl[k]["examples"]:
@@ -505,7 +506,7 @@ def build_data():
         priv_extra = (f" Some contact details typed into the complaint text itself remain in the published file: a phone number in {n(ps['phone_number']['texts'])} of {n(ps['rows'])} texts, "
                       f"an e-mail address in {n(ps['email_address']['texts'])} and a VIN-like string in {n(ps['vin_like_17_chars']['texts'])} (results/privacy_scan.json).")
     else:
-        priv_extra = " Phone numbers, e-mail addresses and VIN-like strings in the text were replaced with placeholders (results/privacy_scan.json)."
+        priv_extra = " Contact details typed into the text itself (phone numbers, e-mail addresses, VIN-like strings, street addresses and URLs) are replaced with <code>[PHONE]</code>, <code>[EMAIL]</code>, <code>[VIN]</code>, <code>[ADDRESS]</code> and <code>[URL]</code> by cleaning rule 14, and a scan of the published files finds none left (results/privacy_scan.json)."
     privacy_callout = callout("Privacy", "<p>The raw file also holds the vehicle identification number (VIN), the owner's city, dealer names, phone numbers and addresses, and the vehicle operator's name. Our scripts never read those columns, and the published CSV files contain only the nine columns above. NHTSA already hides some personal details in the text with <code>[xxx]</code>." + priv_extra + "</p>", "plain")
     leak_callout = callout("Key finding", f"<p>The component name was sitting in the text. {n(rules[7]['count'])} complaints ({rules[7]['count'] / funnel['in_class_list'] * 100:.1f}%) carried it, written by NHTSA staff and not by the owner. A model reading it would not be reading the symptom.</p>", "error")
     d_train = (pd.Timestamp(VAL_START) - pd.Timestamp(facts["first_complaint_date"])).days
@@ -528,7 +529,7 @@ def build_data():
 </section>
 <section>
 <h2>Labels: which part failed</h2>
-<p>The label is the first part of NHTSA's component description: the text before the first colon, then before the first comma. For example, <code>SERVICE BRAKES, HYDRAULIC: FOUNDATION COMPONENTS</code> becomes <code>SERVICE BRAKES</code>. The author chose 10 groups with enough complaints to train and test on. All other labels are dropped, including <code>UNKNOWN OR OTHER</code>, <code>TIRES</code>, <code>SEATS</code> and <code>EXTERIOR LIGHTING</code>.</p>
+<p>The label is the first part of NHTSA's component description: the text before the first colon, then before the first comma. For example, <code>SERVICE BRAKES, HYDRAULIC: FOUNDATION COMPONENTS</code> becomes <code>SERVICE BRAKES</code>. We chose 10 groups with enough complaints to train and test on. All other labels are dropped, including <code>UNKNOWN OR OTHER</code>, <code>TIRES</code>, <code>SEATS</code> and <code>EXTERIOR LIGHTING</code>.</p>
 {class_tbl}
 <h3>Merged labels</h3>
 <p>NHTSA renamed some groups over time, so two pairs of labels name the same parts. We merged <code>ENGINE AND ENGINE COOLING</code> into <code>ENGINE</code> and <code>FUEL SYSTEM</code> into <code>FUEL/PROPULSION SYSTEM</code> before any other step. We did not merge <code>VISIBILITY</code> into <code>VISIBILITY/WIPER</code>. Both labels were used through the whole period and they cover different parts (sunroof, windshield, glass and mirrors on one side, wipers on the other), so we dropped <code>VISIBILITY</code>.</p>
@@ -845,13 +846,27 @@ def build_index():
 
 def build_about():
     body = f"""<section>
+<h2>The team</h2>
+<ul>
+<li>Tejas Naik</li>
+<li>[Teammate 2]</li>
+<li>[Teammate 3]</li>
+</ul>
+<p>Course: [Course name], [Semester].</p>
+<p>Code, cleaned data and all results: <a href="{REPO}">{REPO.replace("https://", "")}</a>.</p>
+</section>
+<section>
 <h2>The project</h2>
-<p>This is an open individual project for a deep learning class. The question is whether the words of a vehicle owner complaint are enough to name the vehicle part that failed. We compared three neural networks on {n(funnel['cleaned_complaints'])} cleaned complaints from NHTSA and report where they work and where they do not. The author is Tejas Naik.</p>
+<p>This is an open team project for a deep learning class. The question is whether the words of a vehicle owner complaint are enough to name the vehicle part that failed. We compared three neural networks on {n(funnel['cleaned_complaints'])} cleaned complaints from NHTSA and report where they work and where they do not.</p>
 {fig("fig_pipeline.png", "Pipeline diagram from the raw NHTSA file to the evaluation of three models.", "The project in five steps.")}
 </section>
 <section>
+<h2>How this project was made</h2>
+{callout("AI assistance", "<p>The code, analysis pipeline, figures, and website text were developed with Claude Code (Anthropic). The team directed the project, made the design decisions (class list, merges, leakage rules, splits, model choices), and reviewed the results.</p>", "")}
+</section>
+<section>
 <h2>Data</h2>
-<p>The complaints come from the National Highway Traffic Safety Administration (NHTSA), Office of Defects Investigation. NHTSA publishes them on its <a href="{NHTSA_DATA}">datasets page</a>. This project is not made by, endorsed by or connected to NHTSA. We published a cleaned sample with only the columns <code>odino, ldate, make, model, year, label, text, is_transcript, split</code> and left out all personal fields.</p>
+<p>The complaints come from the National Highway Traffic Safety Administration (NHTSA), Office of Defects Investigation. NHTSA publishes them on its <a href="{NHTSA_DATA}">datasets page</a>, and the data is US government data in the public domain. This project is not made by, endorsed by or connected to NHTSA. We published a cleaned sample with only the columns <code>odino, ldate, make, model, year, label, text, is_transcript, split</code>, left out all personal fields, and replaced contact details inside the text with placeholders.</p>
 </section>
 <section>
 <h2>Tools</h2>
@@ -859,15 +874,14 @@ def build_about():
 <li>Python {env['python']}, PyTorch {env['torch']} (Apple MPS backend), Hugging Face transformers {env['transformers']}, scikit-learn {env['scikit-learn']}, pandas {env['pandas']}, NumPy {env['numpy']}, SciPy {env['scipy']}, matplotlib {env['matplotlib']} and seaborn {env['seaborn']}. Pinned versions are in <a href="{gh('requirements.txt')}">requirements.txt</a>.</li>
 <li>Hardware: a MacBook Air with an M4 chip and 16 GB of memory. No cloud services were used.</li>
 <li>The website is plain HTML, one CSS file and one small JavaScript file for the figure viewer and the matrix tabs (every page works without it). Headings use Barlow Condensed, body text Inter and numbers JetBrains Mono, loaded from Google Fonts; the figures use the same open-licensed fonts, kept in <code>assets/fonts/</code>. It is built from the results files by <a href="{gh('src/10_build_site.py')}">10_build_site.py</a>, so the numbers on each page come from <code>results/</code>.</li>
-<li>Random seed 42 is used everywhere.</li>
+<li>Random seed 42 is used everywhere. The code is released under the MIT license.</li>
 </ul>
 </section>
 <section>
 <h2>Please note</h2>
 {callout("Not a safety assessment", f"<p>These results describe one dataset and one test window. They are not a safety assessment of any vehicle.</p><p>To report a safety problem with a vehicle, use <a href=\"{NHTSA_REPORT}\">NHTSA's reporting page</a>.</p>", "")}
-<p>Source code and all results: <a href="{REPO}">{REPO.replace("https://", "")}</a>.</p>
 </section>"""
-    return page("about.html", "About", body, "About this class project: the question, the data source, the tools and the author.", phead("About", "About", "A class project in deep learning, built by one person, with all code, data and results published."))
+    return page("about.html", "About", body, "About this class project: the team, the question, the data source, how it was made and the tools.", phead("About", "About", "A class project in deep learning, with all code, data and results published."))
 
 
 # ============================================================================ write and check

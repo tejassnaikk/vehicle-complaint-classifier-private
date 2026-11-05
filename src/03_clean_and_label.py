@@ -8,11 +8,14 @@ Steps (in order):
  4. Text cleaning (see RULES below, applied in order; each rule logs docs changed + examples):
     reviewer tags, lowercase, whitespace, is_transcript flag, TL* marker, FOIA text, VIN-tool
     sentences, NHTSA campaign phrase + component name, parenthesized component names, standalone
-    recall IDs. Then exact-duplicate texts dropped and texts under 20 words dropped (after stripping).
+    recall IDs, partial whitespace collapse, then MASKING of contact details (rule 14: phone numbers, e-mail addresses,
+    VIN-like strings, street addresses, URLs; see src/masking.py). Then exact-duplicate texts dropped and texts under
+    20 words dropped (after stripping and masking).
  5. Leakage audit (printed + saved to results/leakage_audit.txt).
 Output: data/interim/complaints_clean.parquet, results/cleaning_rules_log.txt
 """
 import csv
+import json
 import re
 import sys
 from collections import Counter
@@ -24,6 +27,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from config import CLASSES, INTERIM_DIR, MERGE_MAP, RAW_DIR, RESULTS_DIR, TEST_START, VAL_START
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from masking import mask_contact_details, tag_counts
 
 FILES = ["COMPLAINTS_RECEIVED_2020-2024.txt", "COMPLAINTS_RECEIVED_2025-2026.txt"]
 # Published columns only (privacy rule); field positions from the NHTSA dictionary (0-based).
@@ -171,8 +176,22 @@ def clean_text(df, names, stems):
     t = run_rule("13 re-collapse whitespace", t, lambda x: re.sub(r"\s+", " ", x).strip())
     df = df.assign(text=t)
 
+    # Rule 14: mask contact details typed into the text (placeholders [PHONE] [EMAIL] [VIN] [ADDRESS] [URL]).
+    kinds = tag_counts(df.text)
+    say("\n  rule 14 mask contact details. Texts containing each kind before masking: " + ", ".join(f"{k} {v:,}" for k, v in kinds.items()))
+    t = run_rule("14 mask contact details", df.text, mask_contact_details)
+    name14 = "14 mask contact details"
+    n14, ex14 = RULE_LOG[name14]
+    # the "before" side of this rule would show real contact details, so the log keeps only the masked side
+    RULE_LOG[name14] = (n14, [("(original not saved: it contains contact details)", a) for _, a in ex14])
+    df = df.assign(text=t)
+    (RESULTS_DIR / "masking_counts.json").write_text(json.dumps(
+        {"texts_before_masking": int(len(df)), "texts_containing_each_kind": kinds, "texts_changed": n14,
+         "placeholders_inserted": {k: int(df.text.str.count(tag).sum()) for k, tag in
+                                   {"phone": "\\[PHONE\\]", "email": "\\[EMAIL\\]", "address": "\\[ADDRESS\\]", "vin": "\\[VIN\\]", "url": "\\[URL\\]"}.items()}}, indent=2))
+
     dup = df.duplicated("text", keep="first")
-    say(f"Exact duplicate texts dropped (after stripping): {dup.sum():,}")
+    say(f"Exact duplicate texts dropped (after stripping and masking): {dup.sum():,}")
     df = df[~dup]
     nw = df.text.str.split().str.len()
     say(f"Texts under {MIN_WORDS} words dropped (after stripping): {(nw < MIN_WORDS).sum():,}")

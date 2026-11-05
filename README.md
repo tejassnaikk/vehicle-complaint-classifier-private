@@ -1,6 +1,6 @@
 # What Failed on This Car?
 
-A deep learning class project. It classifies vehicle owner complaints filed with the US National Highway Traffic Safety Administration (NHTSA) by the component that failed, using only the complaint text. Three models are compared (an MLP on TF-IDF features, a BiLSTM, and a fine-tuned DistilBERT) and everything is published as a static website.
+A deep learning class project by a team. It classifies vehicle owner complaints filed with the US National Highway Traffic Safety Administration (NHTSA) by the component that failed, using only the complaint text. Three models are compared (an MLP on TF-IDF features, a BiLSTM, and a fine-tuned DistilBERT) and everything is published as a static website.
 
 - Website: <https://tejassnaikk.github.io/vehicle-complaint-classifier/> (live once GitHub Pages is enabled from `/docs`)
 - Data source: NHTSA complaint flat files, <https://www.nhtsa.gov/nhtsa-datasets-and-apis> (field dictionary: <https://static.nhtsa.gov/odi/ffdd/cmpl/CMPL.txt>)
@@ -9,6 +9,7 @@ A deep learning class project. It classifies vehicle owner complaints filed with
 
 Test set scored once per model with its best validation checkpoint. Main result = temporal split (train before 2025-11-01, validation 2025-11 to 2026-04, test 2026-05 to 2026-10). Full tables, intervals and significance tests: `results/summary_table.csv`, `results/significance.json`, and the Results page.
 
+<!-- RESULTS_START -->
 | Model | Split | Test accuracy | Test macro-F1 (95% bootstrap interval) | Training time |
 |---|---|---|---|---|
 | MLP (TF-IDF) | temporal | 0.8762 | 0.8771 (0.8687 to 0.8843) | 24 s |
@@ -18,7 +19,8 @@ Test set scored once per model with its best validation checkpoint. Main result 
 | BiLSTM | random | 0.8835 | 0.8840 (0.8772 to 0.8908) | 30 min |
 | DistilBERT | random | 0.9060 | 0.9066 (0.9000 to 0.9128) | 43 min |
 
-Ten classes, 198,505 cleaned complaints, 64,445 in the published temporal sample. Electrical system is the hardest class for every model.
+10 classes, 198,505 cleaned complaints, 64,445 in the published temporal sample. Electrical system is the weakest class for every model on the temporal test set.
+<!-- RESULTS_END -->
 
 ## Repository layout
 
@@ -83,6 +85,15 @@ python src/site_screenshots.py            # optional; about 1.5 min; screenshots
 python src/check_site.py                  # checks numbers, tags
 ```
 
+One command for steps 2 to 4 (about 2.5 to 3 hours; run it from the Terminal app so closing the editor cannot stop it):
+
+```zsh
+mkdir -p results/run_all && nohup caffeinate -ims ./run_all.sh > results/run_all/launch.out 2>&1 &
+tail -f results/run_all/summary.log      # progress; each step also logs to results/run_all/<step>.log
+```
+
+`run_all.sh` runs 03 to 10 in order, stops at the first error and sets `TOKENIZERS_PARALLELISM=false`. It also refreshes the results table above (`src/update_readme_table.py`).
+
 Notes:
 
 - Seed 42 is used everywhere. Time-based splits are deterministic. In a fresh clone of this repository, re-training the MLP on the temporal split gave exactly the same validation and test metrics as the committed ones, and rebuilding the site changed nothing in `docs/`. Training the BiLSTM and DistilBERT on the Apple GPU (MPS) may differ in the last digits across PyTorch versions and machines.
@@ -95,8 +106,8 @@ Notes:
 
 - The complaints are NHTSA data, published by the US government for public use. This project is not made by or endorsed by NHTSA.
 - The raw files also contain the VIN, city, dealer name, phone and address, and vehicle operator name. The scripts never read those columns, and the published CSVs keep only `odino, ldate, make, model, year, label, text, is_transcript, split`.
-- The `text` column is NHTSA's complaint text. NHTSA hides some personal details in it as `[xxx]`, but some phone numbers, e-mail addresses and VIN-like strings written inside the text remain (see `PROGRESS.md`, Phase 9).
-- No license file has been added for the code yet.
+- The `text` column is NHTSA's complaint text. NHTSA hides some personal details in it as `[xxx]`. Contact details that people typed into the text (phone numbers, e-mail addresses, VIN-like strings, street addresses and URLs) are replaced with `[PHONE]`, `[EMAIL]`, `[VIN]`, `[ADDRESS]` and `[URL]` by rule 14 of `src/masking.py`, applied in `03_clean_and_label.py` before the data is split. `src/privacy_scan.py` checks the published CSVs for what is left (`results/privacy_scan.json`). Status of this commit: the rule is written and tested on a copy of the cleaned data, and `run_all.sh` regenerates the published CSVs and every result with the rule applied (see `PROGRESS.md`).
+- Code license: MIT (see `LICENSE`). The NHTSA complaint data is US government data and is in the public domain. The cleaned samples in `data/clean/` are derived from it. Fonts in `assets/fonts/` are under the SIL Open Font License.
 
 ## Limits
 

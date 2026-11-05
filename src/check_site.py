@@ -138,12 +138,22 @@ def brace_scan():
 
 
 
+def placeholder_scan():
+    """Bracketed placeholders still to be filled in by the team (a warning, not a failure)."""
+    out = []
+    for page in DOCS.glob("*.html"):
+        txt = html.unescape(re.sub(r"<[^>]+>", " ", page.read_text()))
+        out += [f"{page.name}: {m}" for m in re.findall(r"\[(?:Teammate \d|Course name|Semester)[^\]]*\]", txt)]
+    return out
+
+
 def main():
     print("Contrast (WCAG AA):")
     cb = contrast_check()
     print("contrast failures:", cb or "none")
     print("asset scan:", asset_scan() or "clean")
     print("unfilled template text:", brace_scan() or "none")
+    print("placeholders still to fill before release:", placeholder_scan() or "none")
     for page in sorted(DOCS.glob("*.html")):
         bad = tag_balance(page.read_text())
         print(f"{page.name}: tag balance {'OK' if not bad else bad[:5]}")

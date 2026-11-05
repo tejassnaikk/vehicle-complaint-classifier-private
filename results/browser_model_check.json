@@ -1,0 +1,12 @@
+{
+  "what": "Python (scikit-learn TF-IDF + float32 PyTorch MLP) versus the browser code (docs/js/mlp.js, int8 weights with per-row float32 scales) on the same texts",
+  "n_texts": 1000,
+  "texts": "random sample of the temporal test set, seed 42",
+  "agreement_pct": 100,
+  "n_disagree": 0,
+  "max_abs_probability_difference": 0.002782,
+  "mean_max_abs_probability_difference": 0.0002463,
+  "weights_bytes": 15551976,
+  "node": "v24.21.0",
+  "disagreements": []
+}

@@ -1,0 +1,13 @@
+{
+  "files_bytes": {
+    "mlp_vocab.json": 647135,
+    "mlp_weights.bin": 15551976,
+    "sample_complaints.json": 122304
+  },
+  "files_mb": {
+    "mlp_vocab.json": 0.6,
+    "mlp_weights.bin": 15.6,
+    "sample_complaints.json": 0.1
+  },
+  "mlp_page_download_mb": 16.2
+}

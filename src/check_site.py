@@ -95,7 +95,7 @@ def contrast_check():
     text_pairs = [("ink", "paper"), ("ink", "card"), ("ink-2", "paper"), ("muted", "paper"), ("muted", "card"), ("on-dark", "asphalt"),
                   ("on-dark-2", "asphalt"), ("on-dark-2", "asphalt-2"), ("amber", "asphalt"), ("asphalt", "amber"), ("asphalt", "amber-soft"),
                   ("red-text", "card"), ("red-text", "red-soft"), ("red-text", "paper"), ("amber-deep", "paper"), ("amber-deep", "amber-wash"),
-                  ("asphalt", "amber-wash"), ("on-dark", "asphalt-2")]
+                  ("asphalt", "amber-wash"), ("on-dark", "asphalt-2"), ("ink-2", "amber-wash"), ("ink", "amber-soft")]
     graphic_pairs = [("asphalt", "paper"), ("steel", "paper"), ("asphalt", "card")]
     bad = []
     for a, b in text_pairs:
@@ -138,6 +138,27 @@ def brace_scan():
 
 
 
+def link_scan():
+    """Every relative link, image, stylesheet, script and data file used by a page or a script must exist; every page must be reachable from the home page."""
+    out, linked = [], {"index.html"}
+    for page in sorted(DOCS.glob("*.html")):
+        h = page.read_text()
+        for u in re.findall(r'(?:href|src)="([^"]+)"', h):
+            if re.match(r"(https?:|mailto:|#|data:)", u):
+                continue
+            path = u.split("#")[0].split("?")[0]
+            if path and not (DOCS / path).exists():
+                out.append(f"{page.name}: broken reference {u}")
+            if path.endswith(".html"):
+                linked.add(path)
+    for js in sorted((DOCS / "js").glob("*.js")):
+        for u in re.findall(r"""["'](data/[\w.-]+)["']""", js.read_text()):
+            if not (DOCS / u).exists():
+                out.append(f"js/{js.name}: missing data file {u}")
+    out += [f"{p.name}: not linked from any page" for p in sorted(DOCS.glob("*.html")) if p.name not in linked]
+    return out
+
+
 def placeholder_scan():
     """Bracketed placeholders still to be filled in by the team (a warning, not a failure)."""
     out = []
@@ -160,6 +181,11 @@ def main():
     braces = brace_scan()
     print("unfilled template text:", braces or "none")
     failures += braces
+    links = link_scan()
+    print("links, scripts and data files:", links or "all resolve")
+    failures += links
+    size = sum(f.stat().st_size for f in DOCS.rglob("*") if f.is_file())
+    print(f"site size (docs/): {size / 1e6:.1f} MB")
     holders = placeholder_scan()
     if holders:
         # a warning in the normal run (run_all.sh), a hard failure with --strict (final pre-publish check)
@@ -185,9 +211,13 @@ def main():
         for f in failures:
             print("  -", f)
         return 1 if failures else 0
+    if failures:
+        print("\nFAILED:")
+        for f in failures:
+            print("  -", f)
     if warnings:
         print(f"\n{len(warnings)} warning(s) (not failing this run). Use `python src/check_site.py --strict` for the final pre-publish check.")
-    return 0
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":

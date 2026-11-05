@@ -37,7 +37,8 @@ def main():
     docs = {f.name: html.unescape(re.sub(r"<[^>]+>", " ", re.sub(r"(?s)<(script|style).*?</\1>", "", f.read_text()))) for f in sorted((ROOT / "docs").glob("*.html"))}
     res = {str(f.relative_to(ROOT)): f.read_text(errors="ignore") for f in sorted(RESULTS_DIR.rglob("*")) if f.suffix in {".csv", ".json", ".html"}
            and f.name not in {"privacy_scan.json", "masking_preview.json"} and "site_screenshots" not in f.parts}
-    for label, texts in [("docs/*.html (visible text)", docs), ("results/**/*.csv|json|html", res)]:
+    data = {str(f.relative_to(ROOT)): f.read_text(errors="ignore") for f in sorted((ROOT / "docs" / "data").glob("*.json"))}  # data files of the Explore pages
+    for label, texts in [("docs/*.html (visible text)", docs), ("docs/data/*.json", data), ("results/**/*.csv|json|html", res)]:
         hits = {k: sum(len(re.findall(p, t, flags=re.I)) for t in texts.values()) for k, p in PATTERNS.items()}
         out["files"][label] = {"files": len(texts), **{k: {"matches": v} for k, v in hits.items()}}
         print(label, hits)

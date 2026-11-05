@@ -54,7 +54,25 @@
       }
     },
     "docs/*.html (visible text)": {
-      "files": 7,
+      "files": 8,
+      "phone_number": {
+        "matches": 0
+      },
+      "email_address": {
+        "matches": 0
+      },
+      "vin_like_17_chars": {
+        "matches": 0
+      },
+      "url": {
+        "matches": 0
+      },
+      "state_and_zip": {
+        "matches": 0
+      }
+    },
+    "docs/data/*.json": {
+      "files": 2,
       "phone_number": {
         "matches": 0
       },
@@ -72,7 +90,7 @@
       }
     },
     "results/**/*.csv|json|html": {
-      "files": 98,
+      "files": 100,
       "phone_number": {
         "matches": 0
       },

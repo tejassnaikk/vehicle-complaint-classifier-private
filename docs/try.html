@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1c1f24">
+<title>Try it | What Failed on This Car?</title>
+<meta name="description" content="Run our trained MLP in your browser: type a vehicle complaint and see which of ten systems it is sorted into.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
+<link rel="stylesheet" href="css/style.css">
+<script src="js/site.js" defer></script>
+<script src="js/mlp.js" defer></script>
+<script src="js/try.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Skip to the content</a>
+<header class="site-header"><div class="bar">
+<a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span>What Failed on This Car?</a>
+<nav class="main" aria-label="Main"><ul><li><a href="introduction.html">Introduction</a></li><li><a href="data.html">Data &amp; Prep</a></li><li><a href="models.html">Models</a></li><li><a href="results.html">Results</a></li><li><a href="conclusion.html">Conclusion</a></li><li><a href="about.html">About</a></li><li><a href="try.html" aria-current="page" class=explore-link>Explore</a></li></ul></nav>
+</div></header>
+<nav class="explore-bar" aria-label="Explore"><div class="inner"><span class="lab">Explore</span><ul><li><a href="try.html" aria-current="page">Try it</a></li></ul></div></nav>
+<div class="page-head"><div class="inner"><div class="kicker">Explore</div><h1>Try it yourself</h1><div class="subtitle">Type a complaint, or load a real one, and watch our simplest model sort it into one of the ten systems. It runs inside your browser.</div></div></div>
+<main id="content">
+<section>
+<aside class="callout plain"><div class="callout-title">Which model is this?</div><div class="body"><p>This is the MLP (TF-IDF), our simplest model. On the time-based test it has a macro-F1 of 0.8739 and an accuracy of 0.8738. DistilBERT, our best model, scores 0.8945 and 0.8943, but it has too many weights to download into a web page, so it is not here. The scores come from the <a href="results.html">Results</a> page.</p></div></aside>
+
+<noscript><div class="callout error"><div class="callout-title">JavaScript is off</div><div class="body"><p>This page runs the model in your browser, so it needs JavaScript. Without it you can still read how it works: the page loads the TF-IDF vocabulary and the weights of the MLP, turns your text into word-count scores, and passes them through three layers to get one score per system. The <a href="models.html">Models</a> page explains the same steps, and the <a href="results.html">Results</a> page shows how the model did on real test complaints.</p></div></div></noscript>
+<div class="tool" id="try-app" hidden>
+<div class="loadbar" id="try-load"><div class="loadtext" id="try-load-text">Loading the model: 0.0 of 16.2 MB</div><progress id="try-progress" max="100" value="0" aria-label="Model download progress"></progress><div class="small">Download size: 0.6 MB of vocabulary and 15.6 MB of weights (about 0.1 MB more if you load a real complaint). Nothing you type leaves your device.</div></div>
+<label class="field-label" for="try-text">Complaint text</label>
+<textarea id="try-text" rows="7" maxlength="4000" placeholder="Describe what failed, in your own words. For example: the steering wheel locked up while I was driving." disabled></textarea>
+<div class="btns"><button class="btn primary" id="try-go" type="button" disabled>Predict</button><button class="btn" id="try-real" type="button" disabled>Load a real complaint</button><button class="btn quiet" id="try-clear" type="button" disabled>Clear</button></div>
+<div id="try-out" aria-live="polite"></div>
+<div class="small" id="try-source" hidden></div>
+</div>
+</section>
+<section>
+<h2>How to read the result</h2>
+<ul>
+<li><strong>The bars</strong> show the three systems the model finds most likely. The percentages are the model's own confidence and they add up to 100% across all ten systems. A high number is not a promise: the model can be confident and wrong.</li>
+<li><strong>The highlighted words</strong> come from removing one word at a time and checking how the confidence in the top answer changes. Amber words push toward the top answer. Gray words push away from it.</li>
+<li><strong>Real complaints</strong> come from a sample of 200 complaints in our time-based test set, 20 per system. They are the masked text from the published data, and the model never saw them in training. After you predict, the page shows where NHTSA filed the complaint.</li>
+</ul>
+</section>
+<section>
+<h2>Is the browser copy the same as the trained model?</h2>
+<p>We rewrote the word-count scoring (TF-IDF with single words and two-word phrases) and the three layers in JavaScript. To keep the download small, the weights are stored as 8-bit integers with one scale per row. We then ran the original Python model and this browser code on the same 1,000 test complaints. They picked the same system for 100% of them, and the largest difference in any probability was 0.0028. The report is in <a href="https://github.com/tejassnaikk/vehicle-complaint-classifier/blob/main/results/browser_model_check.json">results/browser_model_check.json</a>.</p>
+<aside class="callout plain"><div class="callout-title">Not a safety tool</div><div class="body"><p>The model sees only the words you give it. It was trained on one source of complaints, and it knows nothing about your vehicle. Do not use it to decide whether a car is safe. To report a problem, use <a href="https://www.nhtsa.gov/report-a-safety-problem">NHTSA's reporting page</a>.</p></div></aside>
+
+</section>
+<nav class="pager" aria-label="Previous and next page"><a class="prev" href="index.html"><span class="dir">&larr; Previous</span><span class="ttl">Home</span></a><a class="next" href="results.html"><span class="dir">Back to the story</span><span class="ttl">Results</span></a></nav>
+</main>
+<footer><div class="inner">
+<div>Complaint data: National Highway Traffic Safety Administration (NHTSA), Office of Defects Investigation, vehicle owner complaints. US government data, public domain.</div>
+<div>A class project. Code, cleaned data and results: <a href="https://github.com/tejassnaikk/vehicle-complaint-classifier">github.com/tejassnaikk/vehicle-complaint-classifier</a>.</div>
+</div></footer>
+</body>
+</html>

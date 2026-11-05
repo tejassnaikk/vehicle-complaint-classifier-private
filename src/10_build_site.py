@@ -27,7 +27,11 @@ NHTSA_REPORT = "https://www.nhtsa.gov/report-a-safety-problem"
 MODELS = ["mlp", "bilstm", "distilbert"]
 NICE = {"mlp": "MLP (TF-IDF)", "bilstm": "BiLSTM", "distilbert": "DistilBERT"}
 PAGES = [("introduction.html", "Introduction"), ("data.html", "Data & Prep"), ("models.html", "Models"),
-         ("results.html", "Results"), ("conclusion.html", "Conclusion"), ("about.html", "About")]
+         ("results.html", "Results"), ("conclusion.html", "Conclusion"), ("about.html", "About"), ("try.html", "Explore")]
+# Interactive pages, linked from the Explore group in the nav and from the home page. Add a page here when its builder exists.
+EXPLORE = [("try.html", "Try it", "Type or load a complaint and watch our simplest model sort it, running in your browser."),
+           ]
+EXPLORE_FILES = [f for f, _, _ in EXPLORE]
 SPLITS = ["temporal", "random"]
 
 
@@ -134,6 +138,13 @@ def phead(kicker, title, subtitle=None):
 
 
 def pager(fname):
+    if fname in EXPLORE_FILES:
+        i = EXPLORE_FILES.index(fname)
+        pv = EXPLORE[i - 1][:2] if i > 0 else ("index.html", "Home")
+        prev = f'<a class="prev" href="{pv[0]}"><span class="dir">&larr; Previous</span><span class="ttl">{esc(pv[1])}</span></a>'
+        nxt = (f'<a class="next" href="{EXPLORE[i + 1][0]}"><span class="dir">Next &rarr;</span><span class="ttl">{esc(EXPLORE[i + 1][1])}</span></a>'
+               if i < len(EXPLORE) - 1 else '<a class="next" href="results.html"><span class="dir">Back to the story</span><span class="ttl">Results</span></a>')
+        return f'<nav class="pager" aria-label="Previous and next page">{prev}{nxt}</nav>\n'
     names = [f for f, _ in ORDER]
     i = names.index(fname)
     prev = f'<a class="prev" href="{ORDER[i - 1][0]}"><span class="dir">&larr; Previous</span><span class="ttl">{esc(ORDER[i - 1][1])}</span></a>' if i > 0 else ""
@@ -141,8 +152,16 @@ def pager(fname):
     return f'<nav class="pager" aria-label="Previous and next page">{prev}{nxt}</nav>\n'
 
 
-def page(fname, title, body, desc, head=""):
-    nav = "".join(f'<li><a href="{f}"{" aria-current=\"page\"" if f == fname else ""}>{esc(t)}</a></li>' for f, t in PAGES)
+def page(fname, title, body, desc, head="", scripts=()):
+    on_explore = fname in EXPLORE_FILES
+    nav = "".join(f'<li><a href="{f}"{" aria-current=\"page\"" if (f == fname or (t == "Explore" and on_explore)) else ""}{" class=explore-link" if t == "Explore" else ""}>{esc(t)}</a></li>'
+                  for f, t in PAGES if t != "Explore" or EXPLORE)
+    if on_explore:
+        strip = ('<nav class="explore-bar" aria-label="Explore"><div class="inner"><span class="lab">Explore</span><ul>'
+                 + "".join(f'<li><a href="{f}"{" aria-current=\"page\"" if f == fname else ""}>{esc(t)}</a></li>' for f, t, _ in EXPLORE) + '</ul></div></nav>')
+    else:
+        strip = None
+    extra = "".join(f'<script src="js/{x}" defer></script>\n' for x in scripts)
     prog = "".join(f'<li><a href="{f}"{" aria-current=\"step\"" if f == fname else ""}><span class="n">{i}</span><span class="t">{esc(t)}</span></a></li>'
                    for i, (f, t) in enumerate(STEPS, 1))
     return f"""<!doctype html>
@@ -158,14 +177,14 @@ def page(fname, title, body, desc, head=""):
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap">
 <link rel="stylesheet" href="css/style.css">
 <script src="js/site.js" defer></script>
-</head>
+{extra}</head>
 <body>
 <a class="skip" href="#content">Skip to the content</a>
 <header class="site-header"><div class="bar">
 <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true"></span>What Failed on This Car?</a>
 <nav class="main" aria-label="Main"><ul>{nav}</ul></nav>
 </div></header>
-<nav class="progress" aria-label="Progress through the site"><ol>{prog}</ol></nav>
+{strip if strip else '<nav class="progress" aria-label="Progress through the site"><ol>' + prog + '</ol></nav>'}
 {head}<main id="content">
 {body}
 {pager(fname)}</main>
@@ -832,6 +851,14 @@ def build_results():
     return page("results.html", "Results", body, "Test results for the MLP, BiLSTM and DistilBERT on both splits, with significance tests, confusion matrices, error analysis and word highlights.", phead("4 of 5 \u00b7 Results", "Results", "DistilBERT is the best model on both splits. The MLP and the BiLSTM are close to each other. Electrical system complaints are the hardest class for every model."))
 
 
+def explore_home():
+    if not EXPLORE:
+        return ""
+    cards = "".join(f'<li><a href="{f}"><span class="ttl">{esc(t)}</span><span class="what">{esc(d)}</span></a></li>' for f, t, d in EXPLORE)
+    return (f'<section id="explore"><h2>Explore</h2><div class="section-lead">Hands-on pages that sit beside the story. They use the same data and the same results.</div>'
+            f'<ol class="how explore-cards">{cards}</ol></section>')
+
+
 def build_index():
     st = "".join([stat(n(funnel["cleaned_complaints"]), "complaints analyzed after cleaning"),
                   stat(str(len(CLASSES)), "vehicle systems the computer has to tell apart"),
@@ -857,7 +884,8 @@ def build_index():
 {callout("Short on time?", '<p>Read the Introduction and the Conclusion. They use plain language and no jargon. The pages in between hold the data, the models and the numbers behind every statement.</p>', "plain")}
 {fig("fig_identified_correctly.png", "Bar chart of how many of every 100 complaints of each kind were sorted correctly, from air bags and steering at 96 to electrical system at 81.", "Out of every 100 complaints of each kind, how many the best method put in the right group (complaints from May to October 2026).")}
 <div class="small">A class project using public NHTSA complaint data. Not an NHTSA product, and not safety advice.</div>
-</section>"""
+</section>
+{explore_home()}"""
     return page("index.html", "Home", body, "A class project that sorts NHTSA vehicle owner complaints by the failing part using three neural network models.", head)
 
 
@@ -901,6 +929,48 @@ def build_about():
     return page("about.html", "About", body, "About this class project: the team, the question, the data source, how it was made and the tools.", phead("About", "About", "A class project in deep learning, with all code, data and results published."))
 
 
+# ============================================================================ explore pages
+def mb(x):
+    return f"{x / 1e6:.1f} MB"
+
+
+def build_try():
+    chk = jl(R / "browser_model_check.json")
+    mlp_row, dil_row = S("mlp", "temporal"), S("distilbert", "temporal")
+    meta_bytes = (DOCS / "data" / "mlp_vocab.json").stat().st_size
+    w_bytes = (DOCS / "data" / "mlp_weights.bin").stat().st_size
+    smp_bytes = (DOCS / "data" / "sample_complaints.json").stat().st_size
+    smp = jl(DOCS / "data" / "sample_complaints.json")
+    n_smp, per_cls = len(smp["items"]), len(smp["items"]) // len(CLASSES)
+    head = phead("Explore", "Try it yourself", "Type a complaint, or load a real one, and watch our simplest model sort it into one of the ten systems. It runs inside your browser.")
+    body = f"""<section>
+{callout("Which model is this?", f"<p>This is the MLP (TF-IDF), our simplest model. On the time-based test it has a macro-F1 of {f4(mlp_row.test_macro_f1)} and an accuracy of {f4(mlp_row.test_accuracy)}. DistilBERT, our best model, scores {f4(dil_row.test_macro_f1)} and {f4(dil_row.test_accuracy)}, but it has too many weights to download into a web page, so it is not here. The scores come from the <a href=\"results.html\">Results</a> page.</p>", "plain")}
+<noscript><div class="callout error"><div class="callout-title">JavaScript is off</div><div class="body"><p>This page runs the model in your browser, so it needs JavaScript. Without it you can still read how it works: the page loads the TF-IDF vocabulary and the weights of the MLP, turns your text into word-count scores, and passes them through three layers to get one score per system. The <a href="models.html">Models</a> page explains the same steps, and the <a href="results.html">Results</a> page shows how the model did on real test complaints.</p></div></div></noscript>
+<div class="tool" id="try-app" hidden>
+<div class="loadbar" id="try-load"><div class="loadtext" id="try-load-text">Loading the model: 0.0 of {mb(meta_bytes + w_bytes)}</div><progress id="try-progress" max="100" value="0" aria-label="Model download progress"></progress><div class="small">Download size: {mb(meta_bytes)} of vocabulary and {mb(w_bytes)} of weights (about {mb(smp_bytes)} more if you load a real complaint). Nothing you type leaves your device.</div></div>
+<label class="field-label" for="try-text">Complaint text</label>
+<textarea id="try-text" rows="7" maxlength="4000" placeholder="Describe what failed, in your own words. For example: the steering wheel locked up while I was driving." disabled></textarea>
+<div class="btns"><button class="btn primary" id="try-go" type="button" disabled>Predict</button><button class="btn" id="try-real" type="button" disabled>Load a real complaint</button><button class="btn quiet" id="try-clear" type="button" disabled>Clear</button></div>
+<div id="try-out" aria-live="polite"></div>
+<div class="small" id="try-source" hidden></div>
+</div>
+</section>
+<section>
+<h2>How to read the result</h2>
+<ul>
+<li><strong>The bars</strong> show the three systems the model finds most likely. The percentages are the model's own confidence and they add up to 100% across all ten systems. A high number is not a promise: the model can be confident and wrong.</li>
+<li><strong>The highlighted words</strong> come from removing one word at a time and checking how the confidence in the top answer changes. Amber words push toward the top answer. Gray words push away from it.</li>
+<li><strong>Real complaints</strong> come from a sample of {n(n_smp)} complaints in our time-based test set, {per_cls} per system. They are the masked text from the published data, and the model never saw them in training. After you predict, the page shows where NHTSA filed the complaint.</li>
+</ul>
+</section>
+<section>
+<h2>Is the browser copy the same as the trained model?</h2>
+<p>We rewrote the word-count scoring (TF-IDF with single words and two-word phrases) and the three layers in JavaScript. To keep the download small, the weights are stored as 8-bit integers with one scale per row. We then ran the original Python model and this browser code on the same {n(chk['n_texts'])} test complaints. They picked the same system for {chk['agreement_pct']:g}% of them, and the largest difference in any probability was {chk['max_abs_probability_difference']:.4f}. The report is in <a href="{gh('results/browser_model_check.json')}">results/browser_model_check.json</a>.</p>
+{callout("Not a safety tool", "<p>The model sees only the words you give it. It was trained on one source of complaints, and it knows nothing about your vehicle. Do not use it to decide whether a car is safe. To report a problem, use <a href=\"" + NHTSA_REPORT + "\">NHTSA's reporting page</a>.</p>", "plain")}
+</section>"""
+    return page("try.html", "Try it", body, "Run our trained MLP in your browser: type a vehicle complaint and see which of ten systems it is sorted into.", head, scripts=["mlp.js", "try.js"])
+
+
 # ============================================================================ write and check
 BANNED = ["revolutionary", "cutting-edge", "robust", "leverage", "delve", "seamless", "crucial", "powerful", "state-of-the-art", "game-chang",
           "unlock", "harness", "comprehensive", "novel", "groundbreaking", "innovative", "pivotal", "journey", "deep dive", "dive into", "landscape", "tapestry"]
@@ -925,6 +995,9 @@ def check(pages):
         for src in re.findall(r'src="(img/[^"]+)"', h):
             if not (DOCS / src).exists():
                 problems.append(f"{fname}: missing image {src}")
+        for src in re.findall(r'<script src="(js/[^"]+)"', h):
+            if not (DOCS / src).exists():
+                problems.append(f"{fname}: missing script {src}")
         for href in re.findall(r'href="([^"#:]+\.(?:html|css))', h):
             if not (DOCS / href).exists():
                 problems.append(f"{fname}: broken link {href}")
@@ -943,6 +1016,9 @@ def check(pages):
 def main():
     pages = {"index.html": build_index(), "introduction.html": build_intro(), "data.html": build_data(), "models.html": build_models(),
              "results.html": build_results(), "conclusion.html": build_conclusion(), "about.html": build_about()}
+    builders = {"try.html": build_try}
+    for f in EXPLORE_FILES:
+        pages[f] = builders[f]()
     for fname, h in pages.items():
         (DOCS / fname).write_text(h)
     (DOCS / ".nojekyll").write_text("")

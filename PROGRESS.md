@@ -480,3 +480,6 @@ Direction from Tejas: a data-journalism feature (Upshot / The Pudding feel) with
 ## Placeholder check: warning in `run_all.sh`, hard failure before publishing
 
 `src/check_site.py` now has two modes. Normal mode (what `run_all.sh` runs) prints the About-page placeholders (`[Teammate 2]`, `[Teammate 3]`, `[Course name]`, `[Semester]`) as a WARNING and exits 0, so the re-run does not fail on them. `python src/check_site.py --strict` is the final pre-publish check: any placeholder, contrast failure, stray template text, external resource or unbalanced tag makes it exit 1. Tested both ways on the current site: normal mode exit 0 with 4 warnings, strict mode exit 1 listing the same 4 placeholders. Run the strict check once the About page is filled in and before making the repo public. The About page placeholders are still to be filled (`build_about()` in `src/10_build_site.py`).
+
+## run_all.sh --from (2026-11-04)
+The full run was stopped manually during 07_train_distilbert_temporal (last DONE step: 06_train_bilstm_random). `run_all.sh` now takes `--from <step>` to skip earlier steps and append to `results/run_all/summary.log`, and `--list` to print step names. Resume with `--from 07_train_distilbert_temporal`.

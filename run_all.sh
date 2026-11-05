@@ -7,6 +7,8 @@
 # Watch progress:   tail -f results/run_all/summary.log
 # Each step logs to results/run_all/<step>.log. The script stops at the first failing step.
 # It overwrites data/interim, data/clean, models/, results/ and docs/ with freshly generated files.
+# Resume after a stop:  ./run_all.sh --from <step>   (skips every step before <step>; the summary log is appended to, not reset)
+#   Step names are the first word after "step" below, e.g. 07_train_distilbert_temporal. Use --list to print them.
 # Expected time on a MacBook Air M4: about 2.5 to 3 hours (BiLSTM about 65 min, DistilBERT about 75 to 90 min, the rest a few minutes).
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -16,10 +18,25 @@ PY=venv/bin/python
 LOG=results/run_all
 mkdir -p "$LOG"
 SUMMARY="$LOG/summary.log"
-: > "$SUMMARY"
+
+FROM=""
+case "${1:-}" in
+  --list) grep -E '^step ' "$0" | awk '{print $2}'; exit 0 ;;
+  --from)
+    FROM="${2:-}"
+    if [ -z "$FROM" ] || ! grep -qE "^step +$FROM( |$)" "$0"; then
+      echo "Unknown or missing step '$FROM'. Valid steps:" >&2; grep -E '^step ' "$0" | awk '{print "  " $2}' >&2; exit 2
+    fi ;;
+  "") ;;
+  *) echo "Usage: $0 [--from <step> | --list]" >&2; exit 2 ;;
+esac
+if [ -z "$FROM" ]; then : > "$SUMMARY"; else echo "$(date '+%F %T') RESUME from $FROM" | tee -a "$SUMMARY"; fi
 
 step() {
   local name="$1"; shift
+  if [ -n "$FROM" ]; then
+    if [ "$name" = "$FROM" ]; then FROM=""; else echo "$(date '+%F %T') SKIP   $name (before --from)" | tee -a "$SUMMARY"; return 0; fi
+  fi
   local start; start=$(date +%s)
   echo "$(date '+%F %T') START  $name" | tee -a "$SUMMARY"
   if "$@" > "$LOG/$name.log" 2>&1; then

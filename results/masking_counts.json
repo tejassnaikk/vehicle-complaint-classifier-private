@@ -4,12 +4,12 @@
     "url": 1013,
     "email": 52,
     "address": 5960,
-    "phone": 2737,
+    "phone": 2775,
     "vin": 85
   },
-  "texts_changed": 7495,
+  "texts_changed": 7497,
   "placeholders_inserted": {
-    "phone": 2930,
+    "phone": 2954,
     "email": 59,
     "address": 6766,
     "vin": 83,

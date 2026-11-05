@@ -40,7 +40,8 @@ STREET_CORE = rf"(?:{STREET_NAMED}|{ROUTE})"
 YEAR = r"(?:19[89]\d|20[0-3]\d)"
 STREET_RE = re.compile(rf"(?<![\d,$.])\b(?!{YEAR}\b)\d{{3,6}}\s+{STREET_CORE}(?:{TAIL})?|\b\d{{1,6}}\s+{STREET_CORE}{TAIL}")
 CITY_ST_ZIP_RE = re.compile(rf"\b{CITY},?\s+{ST}\s+{ZIP}\b")
-PHONE_RE = re.compile(r"(?<![\w-])(?:\+?1[ .-]?)?(?:\(\d{3}\)[ .-]*|\d{3}[ .-])\d{3}[ .-]+\d{4}(?![\w-])")
+# Formats: "(555) 010-0123", "555-010-0123", a leading dash "-800-555-0100", and an area code whose opening bracket was lost: "555) 010-0123".
+PHONE_RE = re.compile(r"(?<![\w-])-?(?:\+?1[ .-]?)?(?:\(?\d{3}\)[ .-]*|\d{3}[ .-])\d{3}[ .-]+\d{4}(?![\w-])")
 VIN_RE = re.compile(r"\b(?=[a-hj-npr-z0-9]*\d)(?=[a-hj-npr-z0-9]*[a-z])[a-hj-npr-z0-9]{17}\b")
 
 RULES = [("[URL]", "url", URL_RE), ("[EMAIL]", "email", EMAIL_RE), ("[ADDRESS]", "address", STREET_RE),

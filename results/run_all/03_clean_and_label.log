@@ -35,8 +35,8 @@ VISIBILITY/WIPER                  10         8598           0.1
   rule 12 strip 'parts distribution disconnect' changed   1,078 texts
   rule 13 re-collapse whitespace          changed       0 texts
 
-  rule 14 mask contact details. Texts containing each kind before masking: url 1,013, email 52, address 5,960, phone 2,737, vin 85
-  rule 14 mask contact details            changed   7,495 texts
+  rule 14 mask contact details. Texts containing each kind before masking: url 1,013, email 52, address 5,960, phone 2,775, vin 85
+  rule 14 mask contact details            changed   7,497 texts
 Exact duplicate texts dropped (after stripping and masking): 1,690
 Texts under 20 words dropped (after stripping): 18,575
 Rows: 229,063 -> 198,503
@@ -201,7 +201,7 @@ D. Form-artifact patterns (docs containing / class distribution of those docs)
   url                             3 docs (0.0%);  top: SERVICE BRAKES 33%, POWER TRAIN 33%, STEERING 33%
   vin mention                 16408 docs (8.3%);  top: ENGINE 27%, POWER TRAIN 19%, STEERING 16%
   'component' wording          3826 docs (1.9%);  top: ENGINE 22%, POWER TRAIN 18%, ELECTRICAL SYSTEM 14%
-  bracketed [..]              14054 docs (7.1%);  top: ENGINE 28%, POWER TRAIN 15%, ELECTRICAL SYSTEM 12%
+  bracketed [..]              14055 docs (7.1%);  top: ENGINE 28%, POWER TRAIN 15%, ELECTRICAL SYSTEM 12%
   owner/'consumer' voice       1861 docs (0.9%);  top: ENGINE 28%, POWER TRAIN 16%, AIR BAGS 12%
 
 E. Complaints per class per year

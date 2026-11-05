@@ -1,0 +1,21 @@
+{
+  "note": "Texts whose phone numbers were masked by a later extension of the rule-14 phone pattern, after the models had been trained on the earlier text. Compared the published CSVs before and after; only the text column changed.",
+  "files": {
+    "complaints_temporal.csv": {
+      "rows": 64445,
+      "texts_changed": 6,
+      "by_split": {
+        "train": 6
+      }
+    },
+    "complaints_random.csv": {
+      "rows": 65416,
+      "texts_changed": 6,
+      "by_split": {
+        "train": 5,
+        "val": 1
+      }
+    }
+  },
+  "distinct_complaints_changed": 10
+}

@@ -510,6 +510,9 @@ def build_data():
                       f"an e-mail address in {n(ps['email_address']['texts'])} and a VIN-like string in {n(ps['vin_like_17_chars']['texts'])} (results/privacy_scan.json).")
     else:
         priv_extra = " Contact details typed into the text itself (phone numbers, e-mail addresses, VIN-like strings, street addresses and URLs) are replaced with <code>[PHONE]</code>, <code>[EMAIL]</code>, <code>[VIN]</code>, <code>[ADDRESS]</code> and <code>[URL]</code> by cleaning rule 14, and a scan of the published files finds none left (results/privacy_scan.json)."
+        late = jl(R / "late_phone_masking.json")
+        priv_extra += (f" {n(late['distinct_complaints_changed'])} texts had an additional phone format masked after training; the models saw those digits, and the effect on results is negligible. "
+                       "None of them is in a test set (results/late_phone_masking.json).")
     privacy_callout = callout("Privacy", "<p>The raw file also holds the vehicle identification number (VIN), the owner's city, dealer names, phone numbers and addresses, and the vehicle operator's name. Our scripts never read those columns, and the published CSV files contain only the nine columns above. NHTSA already hides some personal details in the text with <code>[xxx]</code>." + priv_extra + "</p>", "plain")
     leak_callout = callout("Key finding", f"<p>The component name was sitting in the text. {n(rules[7]['count'])} complaints ({rules[7]['count'] / funnel['in_class_list'] * 100:.1f}%) carried it, written by NHTSA staff and not by the owner. A model reading it would not be reading the symptom.</p>", "error")
     d_train = (pd.Timestamp(VAL_START) - pd.Timestamp(facts["first_complaint_date"])).days

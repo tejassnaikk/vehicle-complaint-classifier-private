@@ -2,7 +2,7 @@
   "patterns": {
     "phone_number": "(?<![\\d,])(?:\\+?1[ .-]?)?\\(?\\d{3}\\)?[ .-]\\d{3}[ .-]\\d{4}(?![\\d,])",
     "email_address": "[\\w.+-]+@[\\w-]+\\.[\\w.]+",
-    "vin_like_17_chars": "\\b(?=[a-z0-9]*\\d)(?=[a-z0-9]*[a-z])[a-hj-npr-z0-9]{17}\\b",
+    "vin_like_17_chars": "\\b(?=[a-z0-9]*\\d)(?=[a-z0-9]*[a-z])[a-hj-npr-z0-9]{17}\\b(?![-+]\\d)",
     "url": "https?://|www\\.",
     "state_and_zip": "[a-z]{3,},?\\s(?:al|ak|az|ar|ca|co|ct|de|dc|fl|ga|ia|il|ks|ky|la|ma|md|mi|mn|ms|mo|mt|ne|nv|nh|nj|nm|ny|nc|nd|pa|ri|sc|sd|tn|tx|ut|vt|va|wa|wv|wi|wy|pr)\\s\\d{5}\\b"
   },
@@ -10,8 +10,8 @@
     "complaints_temporal.csv": {
       "rows": 64445,
       "phone_number": {
-        "texts": 4,
-        "pct_of_texts": 0.01
+        "texts": 0,
+        "pct_of_texts": 0.0
       },
       "email_address": {
         "texts": 0,
@@ -33,8 +33,8 @@
     "complaints_random.csv": {
       "rows": 65416,
       "phone_number": {
-        "texts": 6,
-        "pct_of_texts": 0.01
+        "texts": 0,
+        "pct_of_texts": 0.0
       },
       "email_address": {
         "texts": 0,
@@ -51,6 +51,42 @@
       "state_and_zip": {
         "texts": 0,
         "pct_of_texts": 0.0
+      }
+    },
+    "docs/*.html (visible text)": {
+      "files": 7,
+      "phone_number": {
+        "matches": 0
+      },
+      "email_address": {
+        "matches": 0
+      },
+      "vin_like_17_chars": {
+        "matches": 0
+      },
+      "url": {
+        "matches": 0
+      },
+      "state_and_zip": {
+        "matches": 0
+      }
+    },
+    "results/**/*.csv|json|html": {
+      "files": 98,
+      "phone_number": {
+        "matches": 0
+      },
+      "email_address": {
+        "matches": 0
+      },
+      "vin_like_17_chars": {
+        "matches": 0
+      },
+      "url": {
+        "matches": 0
+      },
+      "state_and_zip": {
+        "matches": 0
       }
     }
   }

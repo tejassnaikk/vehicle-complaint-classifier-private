@@ -17,5 +17,6 @@
       }
     }
   },
-  "distinct_complaints_changed": 10
+  "distinct_complaints_changed": 10,
+  "training_texts_temporal": 50000
 }

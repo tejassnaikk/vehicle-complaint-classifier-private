@@ -2,7 +2,8 @@
 
 A deep learning class project by a team. It classifies vehicle owner complaints filed with the US National Highway Traffic Safety Administration (NHTSA) by the component that failed, using only the complaint text. Three models are compared (an MLP on TF-IDF features, a BiLSTM, and a fine-tuned DistilBERT) and everything is published as a static website.
 
-- Website: <https://tejassnaikk.github.io/vehicle-complaint-classifier/> (live once GitHub Pages is enabled from `/docs`)
+- Website: <https://tejassnaikk.github.io/vehicle-complaint-classifier/>
+- Contributing (teammates): [CONTRIBUTING.md](CONTRIBUTING.md)
 - Data source: NHTSA complaint flat files, <https://www.nhtsa.gov/nhtsa-datasets-and-apis> (field dictionary: <https://static.nhtsa.gov/odi/ffdd/cmpl/CMPL.txt>)
 
 ## Results at a glance
